@@ -17,11 +17,11 @@ Acceptance criteria:
 ---
 
 ## Step 2 — Core types and storage
-- [ ] Create src/core/Types.ts — all shared interfaces and enums
-- [ ] Create src/storage/StorageService.ts — safe localStorage wrapper
-- [ ] Create src/storage/MigrationService.ts — version migration
-- [ ] Default settings defined
-- [ ] Save/load matemate_settings and matemate_results
+- [x] Create src/core/Types.ts — all shared interfaces and enums
+- [x] Create src/storage/StorageService.ts — safe localStorage wrapper
+- [x] Create src/storage/MigrationService.ts — version migration
+- [x] Default settings defined
+- [x] Save/load matemate_settings and matemate_results
 
 Acceptance criteria:
 - StorageService can save and load settings and results
