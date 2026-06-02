@@ -107,12 +107,13 @@ Acceptance criteria:
 ---
 
 ## Step 8 — Pixel art rendering
-- [ ] Create src/graphics/PixelArtRenderer.ts — canvas draw utilities
-- [ ] Create src/graphics/SpriteFactory.ts — sprite builder
-- [ ] Create src/graphics/AnimalSprites.ts — dino, opossum, capybara
-- [ ] Create src/graphics/ObstacleSprites.ts — wall, rock, cactus sprites
-- [ ] Road/path background tiles
-- [ ] Retro UI panel borders
+- [x] Create src/graphics/PixelArtRenderer.ts — canvas draw utilities
+- [x] Create src/graphics/SpriteFactory.ts — sprite builder
+- [x] Create src/graphics/AnimalSprites.ts — dino, opossum, capybara
+- [x] Create src/graphics/ObstacleSprites.ts — wall, rock, cactus sprites
+- [x] Create src/graphics/Confetti.ts — particle system
+- [x] Road/path background tiles
+- [x] Retro UI panel borders
 
 Acceptance criteria:
 - All 3 animals render on canvas without external images
