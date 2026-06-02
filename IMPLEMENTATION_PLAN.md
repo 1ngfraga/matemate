@@ -123,11 +123,11 @@ Acceptance criteria:
 ---
 
 ## Step 9 — Animation system
-- [ ] Create src/animation/AnimationController.ts — frame loop manager
-- [ ] Create src/animation/AnimalAnimation.ts — run, victory, hit frames
-- [ ] Create src/graphics/Confetti.ts — particle confetti system
-- [ ] Create src/animation/DamageEffect.ts — red flash on wrong answer
-- [ ] Obstacle break/disappear on correct answer
+- [x] Create src/animation/AnimationController.ts — frame loop manager
+- [x] Create src/animation/AnimalAnimation.ts — run, victory, hit frames
+- [x] Create src/graphics/Confetti.ts — particle confetti system
+- [x] Create src/animation/DamageEffect.ts — red flash on wrong answer
+- [x] Obstacle break/disappear on correct answer
 
 Acceptance criteria:
 - Animal runs continuously during question
