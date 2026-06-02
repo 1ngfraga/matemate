@@ -93,11 +93,11 @@ Acceptance criteria:
 ---
 
 ## Step 7 — Answer generator
-- [ ] Create src/math/AnswerGenerator.ts
-- [ ] 1 correct answer
-- [ ] 2 plausible distractors (nearby values, common mistakes)
-- [ ] Shuffled order
-- [ ] No duplicate answers
+- [x] Create src/math/AnswerGenerator.ts
+- [x] 1 correct answer
+- [x] 2 plausible distractors (nearby values, common mistakes)
+- [x] Shuffled order
+- [x] No duplicate answers
 
 Acceptance criteria:
 - All 3 answers distinct
