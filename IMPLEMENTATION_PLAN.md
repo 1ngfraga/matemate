@@ -158,12 +158,12 @@ Acceptance criteria:
 ---
 
 ## Step 11 — Result screen and persistence
-- [ ] Create src/screens/ResultScreen.ts
-- [ ] Show % correct, total time, correct/incorrect counts
-- [ ] Motivational message based on score band
-- [ ] Auto-save attempt to matemate_results on game end
-- [ ] Retry button (same operation)
-- [ ] Home button
+- [x] Create src/screens/ResultScreen.ts
+- [x] Show % correct, total time, correct/incorrect counts
+- [x] Motivational message based on score band
+- [x] Auto-save attempt to matemate_results on game end
+- [x] Retry button (same operation)
+- [x] Home button
 
 Acceptance criteria:
 - Result saved with date, operation, score, time
