@@ -47,12 +47,12 @@ Acceptance criteria:
 ---
 
 ## Step 4 — Home screen and progress chart
-- [ ] Create src/screens/HomeScreen.ts
-- [ ] Create src/chart/ProgressAggregator.ts — aggregate results by day
-- [ ] Create src/chart/ChartRenderer.ts — pixel-art bar chart with tooltip
-- [ ] Operation selector buttons (+ - × ÷)
-- [ ] Animal selector (dinosaur, opossum, capybara)
-- [ ] Settings button (leads to PIN prompt)
+- [x] Create src/screens/HomeScreen.ts
+- [x] Create src/chart/ProgressAggregator.ts — aggregate results by day
+- [x] Create src/chart/ChartRenderer.ts — pixel-art bar chart with tooltip
+- [x] Operation selector buttons (+ - × ÷)
+- [x] Animal selector (dinosaur, opossum, capybara)
+- [x] Settings button (leads to PIN prompt)
 
 Acceptance criteria:
 - Chart shows last 14 days of results
