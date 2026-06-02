@@ -1,27 +1,27 @@
-import { Screen } from '../core/Types'
-import { NavigateFn } from '../app/Router'
-import { BaseScreen } from '../app/ScreenManager'
-import { requestFullscreen } from '../core/Fullscreen'
+import { Screen } from "../core/Types";
+import { NavigateFn } from "../app/Router";
+import { BaseScreen } from "../app/ScreenManager";
+import { requestFullscreen } from "../core/Fullscreen";
 
 export class WelcomeScreen implements BaseScreen {
-  private container: HTMLElement | null = null
-  private raf: number | null = null
-  private frame = 0
+  private container: HTMLElement | null = null;
+  private raf: number | null = null;
+  private frame = 0;
 
   constructor(private navigate: NavigateFn) {}
 
   mount(container: HTMLElement): void {
-    this.container = container
-    container.innerHTML = this.html()
-    this.attachEvents(container)
-    this.startAnimation(container)
+    this.container = container;
+    container.innerHTML = this.html();
+    this.attachEvents(container);
+    this.startAnimation(container);
   }
 
   unmount(): void {
-    if (this.raf !== null) cancelAnimationFrame(this.raf)
-    this.raf = null
-    if (this.container) this.container.innerHTML = ''
-    this.container = null
+    if (this.raf !== null) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    if (this.container) this.container.innerHTML = "";
+    this.container = null;
   }
 
   // ── HTML ─────────────────────────────────────────────────────────────────
@@ -138,54 +138,54 @@ export class WelcomeScreen implements BaseScreen {
           height: clamp(60px, 12vw, 96px);
         }
       </style>
-    `
+    `;
   }
 
   // ── Events ────────────────────────────────────────────────────────────────
 
   private attachEvents(container: HTMLElement): void {
-    const btn  = container.querySelector<HTMLButtonElement>('#wPlay')!
-    const hint = container.querySelector<HTMLElement>('#wHint')!
+    const btn = container.querySelector<HTMLButtonElement>("#wPlay")!;
+    const hint = container.querySelector<HTMLElement>("#wHint")!;
 
-    btn.addEventListener('click', async () => {
-      btn.disabled = true
-      btn.textContent = '...'
-      try {
-        await requestFullscreen(document.documentElement)
-      } catch {
-        hint.textContent = 'Fullscreen no disponible'
-      }
-      this.navigate(Screen.Home)
-    })
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "...";
+      // try {
+      //   await requestFullscreen(document.documentElement)
+      // } catch {
+      //   hint.textContent = 'Fullscreen no disponible'
+      // }
+      this.navigate(Screen.Home);
+    });
   }
 
   // ── Pixel-art dino animation ──────────────────────────────────────────────
 
   private startAnimation(container: HTMLElement): void {
-    const canvas = container.querySelector<HTMLCanvasElement>('#wAnimal')
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')!
+    const canvas = container.querySelector<HTMLCanvasElement>("#wAnimal");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
 
-    const stars = container.querySelector<HTMLElement>('#wStars')!
-    this.buildStars(stars)
+    const stars = container.querySelector<HTMLElement>("#wStars")!;
+    this.buildStars(stars);
 
     const loop = () => {
-      this.frame++
-      this.drawDino(ctx, canvas.width, canvas.height, this.frame)
-      this.raf = requestAnimationFrame(loop)
-    }
-    this.raf = requestAnimationFrame(loop)
+      this.frame++;
+      this.drawDino(ctx, canvas.width, canvas.height, this.frame);
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
   }
 
   private buildStars(el: HTMLElement): void {
-    const count = 60
-    let html = ''
+    const count = 60;
+    let html = "";
     for (let i = 0; i < count; i++) {
-      const x    = Math.random() * 100
-      const y    = Math.random() * 80
-      const size = Math.random() < 0.2 ? 3 : 2
-      const dur  = 1.5 + Math.random() * 3
-      const del  = Math.random() * 3
+      const x = Math.random() * 100;
+      const y = Math.random() * 80;
+      const size = Math.random() < 0.2 ? 3 : 2;
+      const dur = 1.5 + Math.random() * 3;
+      const del = Math.random() * 3;
       html += `<div style="
         position:absolute;
         left:${x}%;top:${y}%;
@@ -193,86 +193,109 @@ export class WelcomeScreen implements BaseScreen {
         background:#fff;
         opacity:0;
         animation:starTwinkle ${dur}s ${del}s ease-in-out infinite alternate;
-      "></div>`
+      "></div>`;
     }
-    el.innerHTML = html + `
+    el.innerHTML =
+      html +
+      `
       <style>
         @keyframes starTwinkle {
           from { opacity:0.1; }
           to   { opacity:0.9; }
         }
-      </style>`
+      </style>`;
   }
 
-  private drawDino(ctx: CanvasRenderingContext2D, w: number, h: number, frame: number): void {
-    ctx.clearRect(0, 0, w, h)
-    const s = 4   // pixel size
-    const bobY = Math.sin(frame * 0.08) * 2
+  private drawDino(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    frame: number,
+  ): void {
+    ctx.clearRect(0, 0, w, h);
+    const s = 4; // pixel size
+    const bobY = Math.sin(frame * 0.08) * 2;
 
     // Color palette
-    const GREEN      = '#5ad45a'
-    const GREEN_DARK = '#2a8c2a'
-    const GREEN_EYE  = '#ffffff'
-    const YELLOW     = '#f0c040'
+    const GREEN = "#5ad45a";
+    const GREEN_DARK = "#2a8c2a";
+    const GREEN_EYE = "#ffffff";
+    const YELLOW = "#f0c040";
 
     const px = (col: string, gx: number, gy: number, gw = 1, gh = 1) => {
-      ctx.fillStyle = col
+      ctx.fillStyle = col;
       ctx.fillRect(
         Math.floor(w / 2 + gx * s - (10 * s) / 2),
         Math.floor(h / 2 + gy * s + bobY - (10 * s) / 2),
-        gw * s, gh * s,
-      )
-    }
+        gw * s,
+        gh * s,
+      );
+    };
 
     // Legs (alternate stride)
-    const legPhase = Math.floor(frame / 8) % 2
+    const legPhase = Math.floor(frame / 8) % 2;
     if (legPhase === 0) {
-      px(GREEN_DARK, 3, 8); px(GREEN_DARK, 4, 8)
-      px(GREEN_DARK, 6, 8); px(GREEN_DARK, 7, 9)
+      px(GREEN_DARK, 3, 8);
+      px(GREEN_DARK, 4, 8);
+      px(GREEN_DARK, 6, 8);
+      px(GREEN_DARK, 7, 9);
     } else {
-      px(GREEN_DARK, 3, 8); px(GREEN_DARK, 4, 9)
-      px(GREEN_DARK, 6, 8); px(GREEN_DARK, 7, 8)
+      px(GREEN_DARK, 3, 8);
+      px(GREEN_DARK, 4, 9);
+      px(GREEN_DARK, 6, 8);
+      px(GREEN_DARK, 7, 8);
     }
 
     // Tail
-    px(GREEN, 0, 5); px(GREEN, 1, 5)
-    px(GREEN_DARK, 0, 6)
+    px(GREEN, 0, 5);
+    px(GREEN, 1, 5);
+    px(GREEN_DARK, 0, 6);
 
     // Body
-    px(GREEN, 2, 4, 6, 4)
-    px(GREEN_DARK, 2, 4); px(GREEN_DARK, 7, 4)
-    px(GREEN_DARK, 2, 7); px(GREEN_DARK, 7, 7)
+    px(GREEN, 2, 4, 6, 4);
+    px(GREEN_DARK, 2, 4);
+    px(GREEN_DARK, 7, 4);
+    px(GREEN_DARK, 2, 7);
+    px(GREEN_DARK, 7, 7);
 
     // Belly
-    px('#8aec8a', 3, 5, 3, 2)
+    px("#8aec8a", 3, 5, 3, 2);
 
     // Neck
-    px(GREEN, 6, 3, 2, 2)
+    px(GREEN, 6, 3, 2, 2);
 
     // Head
-    px(GREEN, 6, 1, 3, 3)
-    px(GREEN_DARK, 6, 1); px(GREEN_DARK, 8, 1)
-    px(GREEN_DARK, 6, 3); px(GREEN_DARK, 8, 3)
+    px(GREEN, 6, 1, 3, 3);
+    px(GREEN_DARK, 6, 1);
+    px(GREEN_DARK, 8, 1);
+    px(GREEN_DARK, 6, 3);
+    px(GREEN_DARK, 8, 3);
 
     // Eye
-    px(GREEN_EYE, 7, 2); px('#000', 7, 2)  // overwrite with pupil
-    ctx.fillStyle = '#000'
+    px(GREEN_EYE, 7, 2);
+    px("#000", 7, 2); // overwrite with pupil
+    ctx.fillStyle = "#000";
     ctx.fillRect(
       Math.floor(w / 2 + 7 * s - (10 * s) / 2),
       Math.floor(h / 2 + 2 * s + bobY - (10 * s) / 2),
-      s, s,
-    )
-    ctx.fillStyle = GREEN_EYE
+      s,
+      s,
+    );
+    ctx.fillStyle = GREEN_EYE;
     ctx.fillRect(
       Math.floor(w / 2 + 7 * s - (10 * s) / 2) + s / 2,
       Math.floor(h / 2 + 2 * s + bobY - (10 * s) / 2),
-      s / 2, s / 2,
-    )
+      s / 2,
+      s / 2,
+    );
 
     // Arms
-    px(GREEN, 5, 5); px(GREEN_DARK, 5, 6)
+    px(GREEN, 5, 5);
+    px(GREEN_DARK, 5, 6);
 
     // Spikes on back
-    px(YELLOW, 3, 3); px(YELLOW, 4, 2); px(YELLOW, 5, 3)
+    px(YELLOW, 3, 3);
+    px(YELLOW, 4, 2);
+    px(YELLOW, 5, 3);
   }
 }

@@ -138,15 +138,15 @@ Acceptance criteria:
 ---
 
 ## Step 10 — Game loop
-- [ ] Create src/core/GameLoop.ts — requestAnimationFrame loop
-- [ ] Create src/core/GameState.ts — question index, score, lives
-- [ ] Create src/core/Timer.ts — countdown per question
-- [ ] Create src/core/Random.ts — seeded shuffle utility
-- [ ] Create src/screens/GameScreen.ts
-- [ ] 50 questions per session
-- [ ] Timer: 5/10/15s per question + 1s grace
-- [ ] Auto-advance after answer or timeout
-- [ ] Exit button mid-game
+- [x] Create src/core/GameLoop.ts — requestAnimationFrame loop
+- [x] Create src/core/GameState.ts — question index, score, lives
+- [x] Create src/core/Timer.ts — countdown per question
+- [x] Create src/core/Random.ts — seeded shuffle utility
+- [x] Create src/screens/GameScreen.ts
+- [x] 50 questions per session
+- [x] Timer: 5/10/15s per question + 1s grace
+- [x] Auto-advance after answer or timeout
+- [x] Exit button mid-game
 
 Acceptance criteria:
 - Full 50-question game runs from start to finish
