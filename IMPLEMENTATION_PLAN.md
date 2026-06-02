@@ -63,11 +63,11 @@ Acceptance criteria:
 ---
 
 ## Step 5 — Settings screen protected by PIN
-- [ ] Create src/screens/SettingsScreen.ts
-- [ ] PIN modal/overlay (hardcoded 556677)
-- [ ] Editable settings: timer duration, active multiplication tables
-- [ ] At least one multiplication table must remain selected
-- [ ] Save to localStorage on confirm
+- [x] Create src/screens/SettingsScreen.ts
+- [x] PIN modal/overlay (hardcoded 556677)
+- [x] Editable settings: timer duration, active multiplication tables
+- [x] At least one multiplication table must remain selected
+- [x] Save to localStorage on confirm
 
 Acceptance criteria:
 - Wrong PIN rejected
