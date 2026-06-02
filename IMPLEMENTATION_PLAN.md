@@ -31,12 +31,12 @@ Acceptance criteria:
 ---
 
 ## Step 3 — Screen manager and welcome flow
-- [ ] Create src/app/ScreenManager.ts — mount/unmount screens
-- [ ] Create src/app/Router.ts — screen navigation
-- [ ] Create src/app/App.ts — root controller
-- [ ] Create src/screens/WelcomeScreen.ts
-- [ ] Fullscreen API on play button
-- [ ] Rotate device notice for portrait mobile
+- [x] Create src/app/ScreenManager.ts — mount/unmount screens
+- [x] Create src/app/Router.ts — screen navigation
+- [x] Create src/app/App.ts — root controller
+- [x] Create src/screens/WelcomeScreen.ts
+- [x] Fullscreen API on play button
+- [x] Rotate device notice for portrait mobile
 
 Acceptance criteria:
 - App boots to WelcomeScreen
