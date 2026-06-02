@@ -78,12 +78,12 @@ Acceptance criteria:
 ---
 
 ## Step 6 — Question generator
-- [ ] Create src/math/Operations.ts — difficulty rules per operation
-- [ ] Create src/math/QuestionGenerator.ts — generate question by operation
-- [ ] Suma: 1–100 range, no negatives in result
-- [ ] Resta: result ≥ 0
-- [ ] Multiplicación: only selected tables
-- [ ] División: exact (no remainders), divisor from selected tables
+- [x] Create src/math/Operations.ts — difficulty rules per operation
+- [x] Create src/math/QuestionGenerator.ts — generate question by operation
+- [x] Suma: 1–100 range, no negatives in result
+- [x] Resta: result ≥ 0
+- [x] Multiplicación: only selected tables
+- [x] División: exact (no remainders), divisor from selected tables
 
 Acceptance criteria:
 - 50 unique questions generated per game session
