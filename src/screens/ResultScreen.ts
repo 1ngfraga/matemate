@@ -226,7 +226,50 @@ export class ResultScreen implements BaseScreen {
       }
       .rs-btn { flex:1; font-size:clamp(14px,2.5vw,20px); padding:12px; min-height:48px; }
 
-      @media (max-width: 900px), (max-aspect-ratio: 1/1) {
+      @media (orientation: landscape) and (max-height: 520px) {
+        .rs-header {
+          padding:8px 12px;
+        }
+        .rs-body {
+          grid-template-columns:minmax(95px, 0.8fr) minmax(120px, 0.9fr) minmax(0, 1.3fr);
+          gap:10px;
+          padding:8px 12px;
+        }
+        .rs-score {
+          font-size:clamp(34px, 7vw, 64px);
+        }
+        .rs-score-sub,
+        .rs-message,
+        .rs-stat-label {
+          font-size:10px;
+        }
+        .rs-animal {
+          width:min(170px, 24vw);
+        }
+        .rs-stat-row {
+          padding:8px 10px;
+          gap:6px;
+        }
+        .rs-stat-icon {
+          width:16px;
+          font-size:14px;
+        }
+        .rs-stat-val {
+          min-width:28px;
+          font-size:clamp(14px, 2.5vw, 20px);
+        }
+        .rs-actions {
+          gap:8px;
+          padding:8px 12px;
+        }
+        .rs-btn {
+          min-height:42px;
+          padding:10px;
+          font-size:clamp(13px, 2.1vw, 18px);
+        }
+      }
+
+      @media (max-width: 700px) and (orientation: portrait), (max-aspect-ratio: 1/1) {
         .rs-root { overflow:auto; }
         .rs-body {
           grid-template-columns:1fr;
