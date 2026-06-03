@@ -1,6 +1,5 @@
 // PNG-based sprite system.
-// Characters use a fixed logical bounding box (CHAR_W × CHAR_H) so positioning
-// is identical regardless of which animal is selected.
+// Character size comes directly from the PNG frame dimensions.
 
 import { Animal } from '../core/Types'
 import { loadSprite } from './SpriteLoader'
@@ -15,11 +14,6 @@ export interface GameSheet  { frames: GameSprite[] }
 
 export const F_RUN0 = 0, F_RUN1 = 1, F_RUN2 = 2, F_RUN3 = 3
 export const F_VICTORY = 4, F_HIT = 5
-
-// ── Fixed character bounding box (all animals rendered at the same size) ──────
-
-export const CHAR_W = 40   // logical grid units
-export const CHAR_H = 28   // logical grid units
 
 // Each character PNG has 3 walk frames in a horizontal strip.
 // Map game frame index → PNG column (ping-pong: 0→1→2→1)
@@ -40,13 +34,17 @@ function makePngCharSprite(
   const isHit = gameFrame === F_HIT
 
   return {
-    gridW: CHAR_W,
-    gridH: CHAR_H,
+    get gridW() {
+      return img.naturalWidth > 0 ? img.naturalWidth / 3 : 1
+    },
+    get gridH() {
+      return img.naturalHeight > 0 ? img.naturalHeight : 1
+    },
     draw(ctx, ox, oy, s) {
       if (!img.complete || img.naturalWidth === 0) return
       const fw = img.naturalWidth / 3
-      const dw = CHAR_W * s
-      const dh = CHAR_H * s
+      const dw = fw * s
+      const dh = img.naturalHeight * s
 
       ctx.save()
       ctx.imageSmoothingEnabled = false

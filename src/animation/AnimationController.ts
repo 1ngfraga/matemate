@@ -97,10 +97,9 @@ export class AnimationController {
 
   update(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number): void {
     this.groundY = H * GROUND_FRAC
-    // Use actual sprite gridH so any-size sprite lands feet on ground
     const frame0 = this.sheet.frames[0]
-    const sprH   = frame0 ? frame0.gridH : 28
-    this.spr     = Math.max(2, Math.min(4, Math.floor(H * 0.32 / sprH)))
+    const sprH   = frame0 ? frame0.gridH : 1
+    this.spr     = 1
     this.animalX = W * 0.10
     this.animalY = this.groundY - sprH * this.spr
 
