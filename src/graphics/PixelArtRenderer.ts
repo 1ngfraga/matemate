@@ -208,14 +208,16 @@ function drawTrees(
   ctx.save()
   ctx.imageSmoothingEnabled = false
 
-  const scrollIdx = Math.floor(scroll / PERIOD)
-
   for (let pi = 0; pi < positions.length; pi++) {
     const { rx, scale } = positions[pi]
     const base = ((rx - scroll) % PERIOD + PERIOD) % PERIOD
+    // Tie the variant to the tree's world slot, not the current scroll bucket.
+    // This keeps the same sprite visible until that tree fully leaves the screen.
+    const firstWorldIdx = -Math.floor((rx - scroll) / PERIOD)
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
       const tx = base + rep * PERIOD
-      const img = treeImgs[treeVariant((scrollIdx + rep) * positions.length + pi)]
+      const worldIdx = firstWorldIdx + rep
+      const img = treeImgs[treeVariant(worldIdx * positions.length + pi)]
       if (!img.complete || img.naturalWidth === 0) continue
       const tdw = Math.round(img.naturalWidth  * scale)
       const tdh = Math.round(img.naturalHeight * scale)
