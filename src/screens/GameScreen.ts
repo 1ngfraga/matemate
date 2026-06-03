@@ -202,8 +202,8 @@ export class GameScreen implements BaseScreen {
         break
     }
 
-    // Scroll background
-    this.scrollX += dt * 0.14
+    // Scroll synchronized to run cycle: FRAME_MS=150ms, target ~40px per frame
+    this.scrollX += dt * 0.267
 
     // Render canvas
     this.renderCanvas(dt)
