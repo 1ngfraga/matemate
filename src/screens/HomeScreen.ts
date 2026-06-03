@@ -7,9 +7,9 @@ import { ChartRenderer } from '../chart/ChartRenderer'
 import { getAnimalGameSheet } from '../graphics/GameSprites'
 
 const ANIMAL_META: Record<Animal, { label: string; colors: string[] }> = {
-  [Animal.Dinosaur]: { label: 'DINO',      colors: ['#5ad45a', '#2a8c2a', '#f0c040'] },
-  [Animal.Opossum]:  { label: 'TLACUACHE', colors: ['#aaaaaa', '#606060', '#ffaaaa'] },
-  [Animal.Capybara]: { label: 'CAPIBARA',  colors: ['#c8843c', '#7a4a18', '#e8c890'] },
+  [Animal.Dinosaur]: { label: 'T-REX',  colors: ['#5ad45a', '#2a8c2a', '#f0c040'] },
+  [Animal.Opossum]:  { label: 'TLACUA', colors: ['#aaaaaa', '#606060', '#ffaaaa'] },
+  [Animal.Capybara]: { label: 'CAPI',   colors: ['#c8843c', '#7a4a18', '#e8c890'] },
 }
 
 const OP_META: Array<{ op: Operation; symbol: string; label: string; color: string }> = [
