@@ -1,4 +1,4 @@
-import { AnswerChoice, Operation, Screen, Settings } from '../core/Types'
+import { Animal, AnswerChoice, Operation, Screen, Settings } from '../core/Types'
 import { NavigateFn } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 import { QuestionGenerator } from '../math/QuestionGenerator'
@@ -11,6 +11,7 @@ import { buildStarField, StarField, drawBackground, drawPixelText } from '../gra
 import { randomObstacleKind } from '../graphics/ObstacleSprites'
 import { storage } from '../storage/StorageService'
 import { SoundService } from '../audio/SoundService'
+import { getAnimalFaceImage } from '../graphics/GameSprites'
 
 const FEEDBACK_MS  = 700
 const GRACE_MS     = 1000
@@ -19,6 +20,7 @@ const ANS_CORRECT  = '#0e5a28'
 const ANS_WRONG    = '#6a1414'
 
 type Phase = 'question' | 'grace' | 'feedback' | 'done'
+type FaceMood = 'neutral' | 'success' | 'hurt'
 
 export class GameScreen implements BaseScreen {
   private container: HTMLElement | null = null
@@ -41,6 +43,7 @@ export class GameScreen implements BaseScreen {
   private lastTickSec = -1
   private graceTriggered = false
   private streakPulseTimeout: number | null = null
+  private faceMood: FaceMood = 'neutral'
 
   constructor(
     private navigate: NavigateFn,
@@ -104,6 +107,7 @@ export class GameScreen implements BaseScreen {
     this.pickedIdx      = null
     this.lastTickSec    = -1
     this.graceTriggered = false
+    this.faceMood       = 'neutral'
 
     // Timer
     this.timer.start(this.settings.timerDuration * 1000, GRACE_MS)
@@ -132,11 +136,13 @@ export class GameScreen implements BaseScreen {
       this.state.recordCorrect()
       this.sound.playCorrect()
       this.anim.onCorrectAnswer()
+      this.faceMood = 'success'
       this.bumpStreak(true)
     } else {
       this.state.recordIncorrect()
       this.sound.playWrong()
       this.anim.onWrongAnswer()
+      this.faceMood = 'hurt'
       this.bumpStreak(false)
     }
 
@@ -148,6 +154,7 @@ export class GameScreen implements BaseScreen {
     this.state.recordIncorrect()
     this.sound.playWrong()
     this.anim.onTimeout()
+    this.faceMood = 'hurt'
     this.bumpStreak(false)
     this.showFeedback(false)
   }
@@ -191,6 +198,7 @@ export class GameScreen implements BaseScreen {
       el.classList.remove('gs-streak-val--pulse', 'gs-streak-val--reset')
       this.streakPulseTimeout = null
     }, 320)
+    this.renderFace()
   }
 
   // ── Main loop tick ────────────────────────────────────────────────────
@@ -297,6 +305,32 @@ export class GameScreen implements BaseScreen {
     setText('#gsCorrect',   this.state.correctText)
     setText('#gsIncorrect', this.state.incorrectText)
     setText('#gsStreakVal', this.state.progressText)
+    this.renderFace()
+  }
+
+  private renderFace(): void {
+    if (!this.container) return
+    const canvas = this.container.querySelector<HTMLCanvasElement>('#gsFace')
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    const img = getAnimalFaceImage(this.settings.animal as Animal)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (!img.complete || img.naturalWidth === 0) return
+
+    const moodFrame = this.faceMood === 'success' ? 1 : this.faceMood === 'hurt' ? 2 : 0
+    const fw = img.naturalWidth / 3
+    const pad = 2
+    const scale = Math.max(1, Math.min(
+      Math.floor((canvas.width - pad * 2) / fw),
+      Math.floor((canvas.height - pad * 2) / img.naturalHeight),
+    ))
+    const dw = fw * scale
+    const dh = img.naturalHeight * scale
+    const ox = Math.floor((canvas.width - dw) / 2)
+    const oy = Math.floor((canvas.height - dh) / 2)
+
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(img, moodFrame * fw, 0, fw, img.naturalHeight, ox, oy, dw, dh)
   }
 
   private updateTimerDOM(): void {
@@ -389,12 +423,15 @@ export class GameScreen implements BaseScreen {
 
         <canvas id="gsCanvas" class="gs-canvas"></canvas>
 
-        <div class="gs-question">
-          <div class="gs-question-stack">
-            <div class="gs-streak-goal">RACHA</div>
-            <div class="gs-streak-val" id="gsStreakVal">0 / 50</div>
-            <div class="gs-q-text" id="gsQText">…</div>
+        <div class="gs-streak-hud">
+          <div class="gs-streak-coin">
+            <span class="gs-streak-val" id="gsStreakVal">0 / 50</span>
+            <canvas class="gs-face" id="gsFace" width="42" height="42"></canvas>
           </div>
+        </div>
+
+        <div class="gs-question">
+          <div class="gs-q-text" id="gsQText">…</div>
         </div>
 
         <div class="gs-answers" id="gsAnswers">
@@ -439,6 +476,7 @@ export class GameScreen implements BaseScreen {
         width:100%; height:100%;
         display:flex; flex-direction:column;
         background:var(--color-bg); overflow:hidden;
+        position:relative;
       }
 
       /* HUD */
@@ -497,6 +535,31 @@ export class GameScreen implements BaseScreen {
         image-rendering:pixelated; display:block;
       }
 
+      .gs-streak-hud {
+        position:absolute;
+        top:40px;
+        left:8px;
+        z-index:3;
+        pointer-events:none;
+      }
+      .gs-streak-coin {
+        display:flex;
+        align-items:center;
+        gap:6px;
+        padding:5px 8px 5px 10px;
+        background:rgba(10,10,26,0.78);
+        border:2px solid #2a2a5a;
+        border-radius:999px;
+        box-shadow:0 3px 0 rgba(0,0,0,0.35);
+      }
+      .gs-face {
+        width:42px;
+        height:42px;
+        image-rendering:pixelated;
+        display:block;
+        filter:drop-shadow(1px 2px 0 rgba(0,0,0,0.35));
+      }
+
       /* Question */
       .gs-question {
         display:flex; align-items:center; justify-content:center;
@@ -504,27 +567,15 @@ export class GameScreen implements BaseScreen {
         border-bottom:2px solid #1e1e40;
         padding:6px 12px; flex-shrink:0;
       }
-      .gs-question-stack {
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        gap:2px;
-      }
-      .gs-streak-goal {
-        font-family:'Courier New',monospace;
-        font-size:clamp(10px, 2vw, 14px);
-        font-weight:700;
-        color:#8888cc;
-        letter-spacing:2px;
-      }
       .gs-streak-val {
         font-family:'Courier New',monospace;
-        font-size:clamp(26px, 6vw, 46px);
+        font-size:clamp(20px, 4vw, 30px);
         font-weight:900;
         color:#f0c040;
         line-height:1;
         text-shadow:2px 2px 0 #5a4200;
         transition:transform 120ms ease, color 120ms ease;
+        white-space:nowrap;
       }
       .gs-streak-val--pulse {
         color:#40d060;
@@ -540,6 +591,7 @@ export class GameScreen implements BaseScreen {
         font-weight:900; color:#f0c040;
         letter-spacing:3px;
         text-shadow:2px 2px 0 #8a6000, 4px 4px 0 #3a2000;
+        text-align:center;
       }
 
       /* Answer buttons */

@@ -75,6 +75,9 @@ export const CAPI_GAME_SHEET: GameSheet = makeCharSheet('sprites/capybara.png')
 export const DINO_VICTORY_GAME_SHEET: GameSheet = makeCharSheet('sprites/dino_victory.png')
 export const OPOS_VICTORY_GAME_SHEET: GameSheet = makeCharSheet('sprites/opossum_victory.png')
 export const CAPI_VICTORY_GAME_SHEET: GameSheet = makeCharSheet('sprites/capybara_victory.png')
+export const DINO_FACE_IMG = loadSprite('sprites/dino_face.png')
+export const OPOS_FACE_IMG = loadSprite('sprites/opossum_face.png')
+export const CAPI_FACE_IMG = loadSprite('sprites/capybara_face.png')
 
 export function getAnimalGameSheet(animal: Animal): GameSheet {
   switch (animal) {
@@ -89,6 +92,14 @@ export function getAnimalVictoryGameSheet(animal: Animal): GameSheet {
     case Animal.Dinosaur: return DINO_VICTORY_GAME_SHEET
     case Animal.Opossum:  return OPOS_VICTORY_GAME_SHEET
     case Animal.Capybara: return CAPI_VICTORY_GAME_SHEET
+  }
+}
+
+export function getAnimalFaceImage(animal: Animal): HTMLImageElement {
+  switch (animal) {
+    case Animal.Dinosaur: return DINO_FACE_IMG
+    case Animal.Opossum:  return OPOS_FACE_IMG
+    case Animal.Capybara: return CAPI_FACE_IMG
   }
 }
 
