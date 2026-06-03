@@ -1,155 +1,268 @@
-// Chrome-Dino-style background: dark sky + earthy scrolling ground.
-// Ground texture is synchronized with the run-cycle scroll passed in.
+// Colorful, child-friendly background inspired by the reference images.
+// Bright blue sky, white clouds, green rolling hills, flowers and pebbles.
 
 export interface StarField {
   stars: Array<{ x: number; y: number; size: number; bright: number }>
 }
 
-export function buildStarField(W: number, H: number, count = 70): StarField {
-  return {
-    stars: Array.from({ length: count }, () => ({
-      x:      Math.random() * W,
-      y:      Math.random() * H * 0.55,
-      size:   Math.random() < 0.12 ? 2 : 1,
-      bright: 0.3 + Math.random() * 0.7,
-    })),
-  }
+export function buildStarField(_W: number, _H: number, _count = 30): StarField {
+  // Kept for API compatibility — sky is now bright so fewer/no stars
+  return { stars: [] }
 }
 
-// ── Main background draw ──────────────────────────────────────────────────
+// Ground surface fraction — where the green ground starts
+export const GROUND_FRAC = 0.66
+
+// ── Main draw ─────────────────────────────────────────────────────────────
 
 export function drawBackground(
   ctx: CanvasRenderingContext2D,
   W: number,
   H: number,
-  scrollX: number,       // synchronized with run cycle
-  sf: StarField,
+  scrollX: number,
+  _sf: StarField,
 ): void {
-  const groundY = H * 0.68    // ground surface line (Chrome-dino style, high in frame)
+  const groundY = H * GROUND_FRAC
 
-  // ── Sky (dark, starry) ──
+  // ── Sky — bright blue gradient ──
   const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY)
-  skyGrad.addColorStop(0,   '#030316')
-  skyGrad.addColorStop(0.6, '#0a0a28')
-  skyGrad.addColorStop(1,   '#141428')
+  skyGrad.addColorStop(0,   '#2288dd')
+  skyGrad.addColorStop(0.5, '#44aaee')
+  skyGrad.addColorStop(1,   '#88ccff')
   ctx.fillStyle = skyGrad
-  ctx.fillRect(0, 0, W, groundY)
+  ctx.fillRect(0, 0, W, groundY + 2)
 
-  drawStars(ctx, sf, scrollX * 0.018)
+  // ── Sun (top-right area) ──
+  drawSun(ctx, W * 0.85, H * 0.08, H * 0.07)
 
-  // Distant mesas/silhouettes (very subtle, slow parallax)
-  drawSilhouettes(ctx, W, groundY, scrollX * 0.08)
+  // ── Clouds ──
+  drawClouds(ctx, W, H, scrollX * 0.04)
 
-  // ── Ground (earthy, textured, scrolling) ──
-  // Main ground fill
+  // ── Distant hills (bright green) ──
+  drawHills(ctx, W, H, groundY, scrollX * 0.12)
+
+  // ── Ground base (bright green grass) ──
   const groundGrad = ctx.createLinearGradient(0, groundY, 0, H)
-  groundGrad.addColorStop(0,   '#c47820')  // warm top
-  groundGrad.addColorStop(0.1, '#9a5810')  // main earth
-  groundGrad.addColorStop(0.7, '#7a4008')  // deeper
-  groundGrad.addColorStop(1,   '#4a2004')  // very bottom
+  groundGrad.addColorStop(0,   '#48cc48')   // bright grass top
+  groundGrad.addColorStop(0.15,'#38b038')   // main grass
+  groundGrad.addColorStop(0.6, '#289028')   // deeper green
+  groundGrad.addColorStop(1,   '#1a6018')   // very bottom
   ctx.fillStyle = groundGrad
   ctx.fillRect(0, groundY, W, H - groundY)
 
-  // Ground surface line — the critical Chrome-dino element
-  ctx.fillStyle = '#e8a030'  // warm bright strip
-  ctx.fillRect(0, groundY,     W, 2)
-  ctx.fillStyle = '#fff0c0'  // highlight line at very top
-  ctx.fillRect(0, groundY,     W, 1)
-  ctx.fillStyle = '#8a4808'  // shadow line just below surface
-  ctx.fillRect(0, groundY + 2, W, 2)
+  // ── Ground edge (bright line) ──
+  ctx.fillStyle = '#70e870'
+  ctx.fillRect(0, groundY, W, 3)
+  ctx.fillStyle = '#58d458'
+  ctx.fillRect(0, groundY + 3, W, 2)
 
-  // Ground texture: rocks/pebbles scrolling
-  drawGroundTexture(ctx, W, H, groundY, scrollX)
+  // ── Ground details: flowers + pebbles ──
+  drawGroundDetails(ctx, W, H, groundY, scrollX)
 }
 
-// ── Silhouettes (distant mesas) ───────────────────────────────────────────
+// ── Sun ───────────────────────────────────────────────────────────────────
 
-function drawSilhouettes(ctx: CanvasRenderingContext2D, W: number, groundY: number, offset: number) {
-  ctx.fillStyle = '#0c0c26'   // barely darker than sky
-  const PERIOD = 680
-  const shapes = [
-    { rx: 30,  w: 90,  h: 28 },
-    { rx: 170, w: 60,  h: 18 },
-    { rx: 270, w: 110, h: 38 },
-    { rx: 420, w: 75,  h: 24 },
-    { rx: 560, w: 95,  h: 32 },
-  ]
-  for (const sh of shapes) {
-    for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
-      const sx = ((sh.rx - offset % PERIOD + rep * PERIOD) % PERIOD + PERIOD) % PERIOD
-      if (sx > W + sh.w || sx < -sh.w) continue
-      // Mesa: flat top with slight taper
-      ctx.fillRect(sx, groundY - sh.h, sh.w, sh.h)
-      ctx.fillRect(sx + 6, groundY - sh.h - 8, sh.w - 12, 8)  // mesa cap
-    }
+function drawSun(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  // Glow
+  const glow = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 2.5)
+  glow.addColorStop(0,   'rgba(255,240,100,0.6)')
+  glow.addColorStop(0.5, 'rgba(255,220,50,0.15)')
+  glow.addColorStop(1,   'rgba(255,200,0,0)')
+  ctx.fillStyle = glow
+  ctx.beginPath(); ctx.arc(cx, cy, r * 2.5, 0, Math.PI * 2); ctx.fill()
+
+  // Sun disk
+  ctx.fillStyle = '#ffee44'
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#ffffa0'
+  ctx.beginPath(); ctx.arc(cx - r * 0.2, cy - r * 0.2, r * 0.5, 0, Math.PI * 2); ctx.fill()
+
+  // Pixel-art rays
+  ctx.fillStyle = '#ffee44'
+  const rays = 8
+  for (let i = 0; i < rays; i++) {
+    const angle = (i / rays) * Math.PI * 2
+    const x1 = cx + Math.cos(angle) * r * 1.3
+    const y1 = cy + Math.sin(angle) * r * 1.3
+    const rw  = Math.max(2, r * 0.15)
+    ctx.fillRect(x1 - rw / 2, y1 - rw / 2, rw, rw * 2.5)
   }
 }
 
-// ── Ground texture (rocks + dirt) ────────────────────────────────────────
+// ── Clouds ────────────────────────────────────────────────────────────────
 
-const STONE_PERIOD = 320   // pixels before pattern repeats
-
-// Static stone layout — deterministic, no Math.random at draw time
-const STONES: Array<{ rx: number; ry: number; w: number; h: number; c: string; hi: string }> = [
-  { rx: 18,  ry: 6,  w: 8,  h: 4, c: '#6a3808', hi: '#9a5820' },
-  { rx: 55,  ry: 14, w: 5,  h: 3, c: '#7a4810', hi: '#aa6828' },
-  { rx: 90,  ry: 4,  w: 10, h: 5, c: '#5a2804', hi: '#8a4810' },
-  { rx: 140, ry: 18, w: 4,  h: 3, c: '#6a3808', hi: '#9a5820' },
-  { rx: 175, ry: 8,  w: 6,  h: 3, c: '#8a5828', hi: '#ba8840' },
-  { rx: 210, ry: 5,  w: 9,  h: 4, c: '#5a2804', hi: '#7a4010' },
-  { rx: 255, ry: 20, w: 5,  h: 3, c: '#6a3808', hi: '#9a5820' },
-  { rx: 290, ry: 10, w: 7,  h: 4, c: '#7a4810', hi: '#aa6828' },
-  // Tiny pebbles
-  { rx: 38,  ry: 22, w: 3,  h: 2, c: '#8a5828', hi: '#aa6830' },
-  { rx: 72,  ry: 28, w: 2,  h: 2, c: '#6a3808', hi: '#8a5010' },
-  { rx: 112, ry: 25, w: 3,  h: 2, c: '#7a4810', hi: '#9a6020' },
-  { rx: 160, ry: 32, w: 2,  h: 2, c: '#5a2804', hi: '#7a3808' },
-  { rx: 198, ry: 24, w: 3,  h: 2, c: '#8a5828', hi: '#aa6830' },
-  { rx: 238, ry: 30, w: 2,  h: 2, c: '#6a3808', hi: '#8a5010' },
-  { rx: 275, ry: 22, w: 3,  h: 2, c: '#7a4810', hi: '#9a6020' },
-  { rx: 310, ry: 28, w: 2,  h: 2, c: '#5a2804', hi: '#7a3808' },
+const CLOUD_DEFS = [
+  { rx: 50,  ry: 0.08, w: 120, h: 40 },
+  { rx: 240, ry: 0.05, w: 90,  h: 32 },
+  { rx: 420, ry: 0.12, w: 150, h: 48 },
+  { rx: 620, ry: 0.06, w: 100, h: 36 },
+  { rx: 800, ry: 0.10, w: 130, h: 42 },
 ]
 
-function drawGroundTexture(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  groundY: number,
-  scrollX: number,
-) {
-  const maxY = H - groundY - 4   // don't draw stones below very bottom
+function drawCloud(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
+  // Shadow
+  ctx.fillStyle = '#c8e8ff'
+  ctx.beginPath(); ctx.ellipse(cx + w * 0.1, cy + h * 0.3, w * 0.45, h * 0.38, 0, 0, Math.PI * 2); ctx.fill()
 
-  for (const st of STONES) {
-    if (st.ry > maxY) continue
+  // Main cloud body (3 overlapping circles for fluffy look)
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath(); ctx.ellipse(cx, cy, w * 0.5, h * 0.5, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(cx - w * 0.28, cy + h * 0.1, w * 0.35, h * 0.38, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.ellipse(cx + w * 0.3, cy + h * 0.08, w * 0.38, h * 0.42, 0, 0, Math.PI * 2); ctx.fill()
+  // Top puff
+  ctx.beginPath(); ctx.ellipse(cx - w * 0.08, cy - h * 0.18, w * 0.28, h * 0.32, 0, 0, Math.PI * 2); ctx.fill()
+}
 
-    // Draw stone in every visible tile of the period
-    for (let rep = -1; rep <= Math.ceil(W / STONE_PERIOD) + 1; rep++) {
-      const sx = ((st.rx - scrollX % STONE_PERIOD + rep * STONE_PERIOD) % STONE_PERIOD + STONE_PERIOD) % STONE_PERIOD
-      if (sx > W + st.w || sx < -st.w) continue
-      const sy = groundY + st.ry + 3
-
-      ctx.fillStyle = st.c
-      ctx.fillRect(sx, sy, st.w, st.h)
-      ctx.fillStyle = st.hi   // top highlight
-      ctx.fillRect(sx, sy, st.w, 1)
-      ctx.fillStyle = '#3a1800'   // bottom shadow
-      ctx.fillRect(sx, sy + st.h - 1, st.w, 1)
+function drawClouds(ctx: CanvasRenderingContext2D, W: number, H: number, drift: number) {
+  const PERIOD = 900
+  for (const cl of CLOUD_DEFS) {
+    for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
+      const cx = ((cl.rx - drift % PERIOD + rep * PERIOD) % PERIOD + PERIOD) % PERIOD
+      if (cx > W + cl.w || cx < -cl.w) continue
+      drawCloud(ctx, cx, H * cl.ry + cl.h / 2, cl.w, cl.h)
     }
   }
 }
 
-// ── Stars ─────────────────────────────────────────────────────────────────
+// ── Distant hills ─────────────────────────────────────────────────────────
 
-function drawStars(ctx: CanvasRenderingContext2D, sf: StarField, drift: number) {
-  const W = ctx.canvas.width / (window.devicePixelRatio || 1)
-  for (const s of sf.stars) {
-    const x = ((s.x - drift % W + W * 4) % W)
-    ctx.fillStyle = `rgba(255,255,255,${s.bright})`
-    ctx.fillRect(Math.round(x), Math.round(s.y), s.size, s.size)
+function drawHills(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, groundY: number, offset: number,
+) {
+  const hillY = groundY * 0.78
+  // Far hills (lighter)
+  ctx.fillStyle = '#60c860'
+  const PERIOD_F = 600
+  for (let rep = -1; rep <= Math.ceil(W / PERIOD_F) + 1; rep++) {
+    const shapes = [
+      { rx: 80,  amp: 0.12 },
+      { rx: 240, amp: 0.09 },
+      { rx: 400, amp: 0.14 },
+    ]
+    for (const sh of shapes) {
+      const cx = ((sh.rx - offset % PERIOD_F + rep * PERIOD_F) % PERIOD_F + PERIOD_F) % PERIOD_F
+      const ht = H * sh.amp
+      ctx.beginPath()
+      ctx.ellipse(cx, hillY + ht * 0.3, H * sh.amp * 1.8, ht, 0, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+
+  // Near hills (darker, with tree silhouettes)
+  ctx.fillStyle = '#48b848'
+  const PERIOD_N = 500
+  const shapes2 = [{ rx: 120, amp: 0.10 }, { rx: 300, amp: 0.13 }, { rx: 460, amp: 0.08 }]
+  for (let rep = -1; rep <= Math.ceil(W / PERIOD_N) + 1; rep++) {
+    for (const sh of shapes2) {
+      const cx = ((sh.rx - offset * 1.4 % PERIOD_N + rep * PERIOD_N) % PERIOD_N + PERIOD_N) % PERIOD_N
+      if (cx < -200 || cx > W + 200) continue
+      const ht = H * sh.amp
+      ctx.beginPath()
+      ctx.ellipse(cx, groundY + 4, H * sh.amp * 2.2, ht, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Simple pixel tree silhouettes on top of hills
+      drawTree(ctx, cx - 50, groundY - ht * 0.6, ht * 1.2)
+      drawTree(ctx, cx + 60, groundY - ht * 0.5, ht * 1.0)
+    }
   }
 }
 
-// ── HUD utilities (used by GameScreen) ───────────────────────────────────
+function drawTree(ctx: CanvasRenderingContext2D, cx: number, baseY: number, h: number) {
+  const trunkH = h * 0.3
+  const crownR = h * 0.45
+  // Trunk
+  ctx.fillStyle = '#8a5020'
+  ctx.fillRect(cx - h * 0.06, baseY - trunkH, h * 0.12, trunkH)
+  // Crown (2 layers for palm/tropical look)
+  ctx.fillStyle = '#1a8020'
+  ctx.beginPath(); ctx.arc(cx, baseY - trunkH - crownR * 0.6, crownR, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#28a830'
+  ctx.beginPath(); ctx.arc(cx - crownR * 0.2, baseY - trunkH - crownR * 0.9, crownR * 0.7, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(cx + crownR * 0.3, baseY - trunkH - crownR * 0.7, crownR * 0.65, 0, Math.PI * 2); ctx.fill()
+}
+
+// ── Ground details: flowers + pebbles ────────────────────────────────────
+
+const DETAIL_PERIOD = 400
+
+// Pre-defined deterministic layout
+const FLOWERS: Array<{ rx: number; ry: number; color: string; size: number }> = [
+  { rx: 18,  ry: 4,  color: '#ff88aa', size: 3 },
+  { rx: 35,  ry: 12, color: '#ffffff', size: 2 },
+  { rx: 62,  ry: 6,  color: '#ffee44', size: 3 },
+  { rx: 88,  ry: 14, color: '#ff88aa', size: 2 },
+  { rx: 105, ry: 8,  color: '#ff66cc', size: 3 },
+  { rx: 130, ry: 18, color: '#ffffff', size: 2 },
+  { rx: 152, ry: 5,  color: '#ffee44', size: 3 },
+  { rx: 175, ry: 10, color: '#ff88aa', size: 3 },
+  { rx: 198, ry: 16, color: '#ff66cc', size: 2 },
+  { rx: 220, ry: 6,  color: '#ffffff', size: 3 },
+  { rx: 245, ry: 12, color: '#ffee44', size: 2 },
+  { rx: 268, ry: 4,  color: '#ff88aa', size: 3 },
+  { rx: 290, ry: 18, color: '#ff66cc', size: 2 },
+  { rx: 315, ry: 8,  color: '#ffffff', size: 3 },
+  { rx: 338, ry: 14, color: '#ffee44', size: 3 },
+  { rx: 362, ry: 5,  color: '#ff88aa', size: 2 },
+  { rx: 385, ry: 10, color: '#ff66cc', size: 3 },
+]
+
+const PEBBLES: Array<{ rx: number; ry: number; w: number; h: number }> = [
+  { rx: 48,  ry: 20, w: 6, h: 4 },
+  { rx: 120, ry: 24, w: 8, h: 5 },
+  { rx: 210, ry: 22, w: 5, h: 4 },
+  { rx: 300, ry: 26, w: 7, h: 5 },
+  { rx: 350, ry: 20, w: 5, h: 3 },
+]
+
+function drawGroundDetails(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, groundY: number,
+  scrollX: number,
+) {
+  const maxY = H - groundY - 2
+
+  // Flowers
+  for (const fl of FLOWERS) {
+    if (fl.ry > maxY) continue
+    for (let rep = -1; rep <= Math.ceil(W / DETAIL_PERIOD) + 1; rep++) {
+      const fx = ((fl.rx - scrollX % DETAIL_PERIOD + rep * DETAIL_PERIOD) % DETAIL_PERIOD + DETAIL_PERIOD) % DETAIL_PERIOD
+      if (fx < -10 || fx > W + 10) continue
+      const fy = groundY + fl.ry
+
+      // Flower: petals around center
+      ctx.fillStyle = fl.color
+      ctx.fillRect(fx - fl.size, fy - fl.size, fl.size * 2 + 1, 1)       // horizontal petal
+      ctx.fillRect(fx, fy - fl.size, 1, fl.size * 2 + 1)                 // vertical petal
+      // Center
+      ctx.fillStyle = '#ffee44'
+      ctx.fillRect(fx - 1, fy - 1, 3, 3)
+      // Stem
+      ctx.fillStyle = '#38b038'
+      ctx.fillRect(fx, fy + fl.size, 1, 3)
+    }
+  }
+
+  // Pebbles / small rocks
+  for (const pb of PEBBLES) {
+    if (pb.ry > maxY) continue
+    for (let rep = -1; rep <= Math.ceil(W / DETAIL_PERIOD) + 1; rep++) {
+      const px = ((pb.rx - scrollX % DETAIL_PERIOD + rep * DETAIL_PERIOD) % DETAIL_PERIOD + DETAIL_PERIOD) % DETAIL_PERIOD
+      if (px < -pb.w || px > W + pb.w) continue
+      const py = groundY + pb.ry
+
+      ctx.fillStyle = '#b0b090'
+      ctx.fillRect(px, py, pb.w, pb.h)
+      ctx.fillStyle = '#d0d0b0'   // highlight
+      ctx.fillRect(px, py, pb.w, 1)
+      ctx.fillStyle = '#808070'   // shadow
+      ctx.fillRect(px, py + pb.h - 1, pb.w, 1)
+    }
+  }
+}
+
+// ── HUD utilities ─────────────────────────────────────────────────────────
 
 export function drawPixelText(
   ctx: CanvasRenderingContext2D,
@@ -158,17 +271,17 @@ export function drawPixelText(
 ): void {
   ctx.font = `bold ${size}px 'Courier New', monospace`
   ctx.textAlign = align; ctx.textBaseline = 'top'
-  ctx.fillStyle = '#000'; ctx.fillText(text, x + 1, y + 1)  // shadow
-  ctx.fillStyle = color;  ctx.fillText(text, x, y)
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillText(text, x + 1, y + 1)
+  ctx.fillStyle = color; ctx.fillText(text, x, y)
 }
 
 export function drawGroundShadow(
   ctx: CanvasRenderingContext2D,
   cx: number, groundY: number, w: number,
 ): void {
-  ctx.fillStyle = 'rgba(0,0,0,0.30)'
+  ctx.fillStyle = 'rgba(0,0,0,0.18)'
   ctx.beginPath()
-  ctx.ellipse(cx, groundY + 2, w * 0.45, 3, 0, 0, Math.PI * 2)
+  ctx.ellipse(cx, groundY + 2, w * 0.42, 3, 0, 0, Math.PI * 2)
   ctx.fill()
 }
 
@@ -181,9 +294,10 @@ export function drawTimerBar(
   ctx.fillStyle = '#1a1a3a'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2)
   const fw = Math.max(0, Math.round((w - 2) * fraction))
   if (fw > 0) {
-    const color = grace ? '#f0c040' : fraction > 0.5 ? '#40d060' : fraction > 0.25 ? '#f0c040' : '#d04040'
-    ctx.fillStyle = color; ctx.fillRect(x + 1, y + 1, fw, h - 2)
-    ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.fillRect(x + 1, y + 1, fw, Math.max(1, Math.floor(h * 0.3)))
+    const col = grace ? '#f0c040' : fraction > 0.5 ? '#40d060' : fraction > 0.25 ? '#f0c040' : '#d04040'
+    ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, fw, h - 2)
+    ctx.fillStyle = 'rgba(255,255,255,0.22)'
+    ctx.fillRect(x + 1, y + 1, fw, Math.max(1, Math.floor(h * 0.3)))
   }
   ctx.fillStyle = '#3a3a6a'
   ctx.fillRect(x, y, w, 1); ctx.fillRect(x, y + h - 1, w, 1)
