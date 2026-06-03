@@ -83,9 +83,6 @@ export function getAnimalGameSheet(animal: Animal): GameSheet {
 
 // ── Obstacle sprites (individual PNG files) ───────────────────────────────────
 
-export const OBS_GRID_W = 14   // logical grid units (same for all obstacles)
-export const OBS_GRID_H = 14
-
 // Each obstacle kind maps to its own pre-cropped, transparency-trimmed PNG
 const OBS_IMGS: Record<string, HTMLImageElement> = {
   rock:   loadSprite('sprites/rock.png'),
@@ -97,6 +94,12 @@ const OBS_IMGS: Record<string, HTMLImageElement> = {
   cube:   loadSprite('sprites/cube.png'),
 }
 
+export function getObstacleSize(kind: string): { width: number; height: number } {
+  const img = OBS_IMGS[kind]
+  if (!img || img.naturalWidth === 0) return { width: 1, height: 1 }
+  return { width: img.naturalWidth, height: img.naturalHeight }
+}
+
 export function drawObstacle(
   ctx: CanvasRenderingContext2D,
   kind: string,
@@ -106,9 +109,10 @@ export function drawObstacle(
 ): void {
   const img = OBS_IMGS[kind]
   if (!img || !img.complete || img.naturalWidth === 0) return
+  const { width, height } = getObstacleSize(kind)
 
   ctx.save()
   ctx.imageSmoothingEnabled = false
-  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, ox, oy, OBS_GRID_W * s, OBS_GRID_H * s)
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, ox, oy, width * s, height * s)
   ctx.restore()
 }

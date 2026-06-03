@@ -2,7 +2,7 @@ import { Animal } from '../core/Types'
 import { AnimalAnimation, AnimSnapshot } from './AnimalAnimation'
 import { DamageEffect } from './DamageEffect'
 import { Confetti } from '../graphics/Confetti'
-import { getAnimalGameSheet, GameSheet, drawObstacle, OBS_GRID_W, OBS_GRID_H } from '../graphics/GameSprites'
+import { getAnimalGameSheet, GameSheet, drawObstacle, getObstacleSize } from '../graphics/GameSprites'
 import { drawGroundShadow } from '../graphics/PixelArtRenderer'
 import { ObstacleKind } from '../graphics/ObstacleSprites'
 
@@ -28,10 +28,6 @@ interface ObstacleAnim {
   speed:    number      // px per ms (computed on first tick)
   phase:    ObstaclePhase
   phaseTime:number
-}
-
-function obstacleGridW(_kind: ObstacleKind): number {
-  return OBS_GRID_W
 }
 
 // ── Controller ────────────────────────────────────────────────────────────
@@ -137,15 +133,16 @@ export class AnimationController {
     const obs = this.obstacle!
     obs.phaseTime += dt
 
-    const s     = this.spr
-    const gw    = obstacleGridW(obs.kind)
+    const s       = this.spr
+    const obsSize = getObstacleSize(obs.kind)
+    const obsW    = obsSize.width * s
+    const obsH    = obsSize.height * s
     const animalW = this.sheet.frames[0]?.gridW ? this.sheet.frames[0].gridW * s : 0
-    const obsY  = this.groundY - OBS_GRID_H * s
+    const obsY    = this.groundY - obsH
 
     // Compute speed on first tick (needs animalX which is only known after first update)
     if (obs.speed === 0 && this.animalX > 0) {
-      // Trigger impact near the sprite's far edge so the obstacle reaches deep
-      // enough into the visible body before the screen-hit effect starts.
+      // The obstacle collides with its left edge, so x itself is the hit point.
       obs.targetX = this.animalX + animalW * ANIMAL_HIT_X_FRAC
       const dist  = Math.max(1, obs.startX - obs.targetX)
       obs.speed   = dist / Math.max(1, obs.timerMs)
@@ -155,7 +152,7 @@ export class AnimationController {
       ctx.save(); ctx.globalAlpha = Math.max(0, alpha)
       drawObstacle(ctx, obs.kind, x, obsY, s, cracked)
       ctx.restore()
-      if (alpha > 0.1) drawGroundShadow(ctx, x + (gw * s) / 2, this.groundY, gw * s)
+      if (alpha > 0.1) drawGroundShadow(ctx, x + obsW / 2, this.groundY, obsW)
     }
 
     switch (obs.phase) {
@@ -202,7 +199,7 @@ export class AnimationController {
         for (let i = 0; i < 5; i++) {
           const dx = (i - 2) * s * 3
           const dy = -(obs.phaseTime * 0.14) + i * s * 0.5
-          ctx.fillRect(obs.x + gw * s / 2 + dx, obsY + dy, s * 2, s * 2)
+          ctx.fillRect(obs.x + obsW / 2 + dx, obsY + dy, s * 2, s * 2)
         }
         ctx.restore()
         if (obs.phaseTime > 300) { obs.phase = 'gone'; obs.phaseTime = 0 }
