@@ -174,12 +174,12 @@ Acceptance criteria:
 ---
 
 ## Step 12 — Polish and mobile UX
-- [ ] Large touch-friendly buttons (min 48px tap targets)
-- [ ] Responsive layout: portrait warning, horizontal game canvas
-- [ ] Web Audio API sound effects (correct, wrong, tick, victory)
-- [ ] Mute toggle persisted in settings
-- [ ] Performance: no dropped frames on mid-range mobile
-- [ ] Pixel art visual polish pass
+- [x] Large touch-friendly buttons (min 48px tap targets)
+- [x] Responsive layout: portrait warning, horizontal game canvas
+- [x] Web Audio API sound effects (correct, wrong, tick, victory, grace)
+- [x] Mute toggle persisted in settings
+- [x] Performance: RAF with dt clamping, no dropped frames
+- [x] Pixel art visual polish pass
 
 Acceptance criteria:
 - Game playable on 375×667 landscape without scroll

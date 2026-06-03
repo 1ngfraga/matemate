@@ -10,6 +10,7 @@ import { AnimationController } from '../animation/AnimationController'
 import { buildStarField, StarField, drawBackground, drawPixelText } from '../graphics/PixelArtRenderer'
 import { randomObstacleKind } from '../graphics/ObstacleSprites'
 import { storage } from '../storage/StorageService'
+import { SoundService } from '../audio/SoundService'
 
 const FEEDBACK_MS  = 700
 const GRACE_MS     = 1000
@@ -32,11 +33,14 @@ export class GameScreen implements BaseScreen {
   private anim!:   AnimationController
   private starField!: StarField
 
+  private sound!:     SoundService
   private answers:    AnswerChoice[][] = []
   private phase:      Phase = 'question'
   private phaseTimer  = 0       // ms elapsed in feedback phase
   private scrollX     = 0
-  private pickedIdx: number | null = null  // index into current answers[]
+  private pickedIdx:  number | null = null  // index into current answers[]
+  private lastTickSec = -1
+  private graceTriggered = false
 
   constructor(
     private navigate: NavigateFn,
@@ -74,6 +78,7 @@ export class GameScreen implements BaseScreen {
     this.state      = new GameState(this.operation, questions)
     this.anim       = new AnimationController(this.settings.animal)
     this.starField  = buildStarField(800, 300)
+    this.sound      = new SoundService(this.settings.muted)
 
     this.resizeCanvas()
     this.startQuestion()
@@ -91,9 +96,11 @@ export class GameScreen implements BaseScreen {
   private startQuestion(): void {
     if (this.state.isComplete) { this.endGame(); return }
 
-    this.phase      = 'question'
-    this.phaseTimer = 0
-    this.pickedIdx  = null
+    this.phase          = 'question'
+    this.phaseTimer     = 0
+    this.pickedIdx      = null
+    this.lastTickSec    = -1
+    this.graceTriggered = false
 
     // Timer
     this.timer.start(this.settings.timerDuration * 1000, GRACE_MS)
@@ -119,10 +126,12 @@ export class GameScreen implements BaseScreen {
 
     if (correct) {
       this.state.recordCorrect()
+      this.sound.playCorrect()
       const rect  = this.canvas.getBoundingClientRect()
       this.anim.onCorrectAnswer(rect.width * 0.65, rect.height * 0.5)
     } else {
       this.state.recordIncorrect()
+      this.sound.playWrong()
       this.anim.onWrongAnswer()
     }
 
@@ -132,6 +141,7 @@ export class GameScreen implements BaseScreen {
   private onTimerExpired(): void {
     if (this.phase !== 'grace') return
     this.state.recordIncorrect()
+    this.sound.playWrong()
     this.anim.onTimeout()
     this.showFeedback(false)
   }
@@ -150,8 +160,8 @@ export class GameScreen implements BaseScreen {
     this.loop.stop()
     const result = this.state.buildResult()
     storage.saveResult(result)
-    // Brief pause then navigate
-    setTimeout(() => this.navigate(Screen.Result, result), 300)
+    if (result.percentCorrect >= 70) this.sound.playVictory()
+    setTimeout(() => this.navigate(Screen.Result, result), result.percentCorrect >= 70 ? 700 : 300)
   }
 
   // ── Main loop tick ────────────────────────────────────────────────────
@@ -161,13 +171,23 @@ export class GameScreen implements BaseScreen {
 
     // Phase logic
     switch (this.phase) {
-      case 'question':
+      case 'question': {
         this.timer.update(dt)
+        // Tick sound for last 3 seconds
+        const secs = this.timer.displaySeconds
+        if (secs <= 3 && secs > 0 && secs !== this.lastTickSec) {
+          this.lastTickSec = secs
+          this.sound.playTick()
+        }
         if (this.timer.isInGrace) { this.phase = 'grace' }
         break
-
+      }
       case 'grace':
         this.timer.update(dt)
+        if (!this.graceTriggered) {
+          this.graceTriggered = true
+          this.sound.playGrace()
+        }
         if (this.timer.isExpired) { this.onTimerExpired() }
         break
 
@@ -334,6 +354,9 @@ export class GameScreen implements BaseScreen {
           </div>
           <span class="gs-stat gs-correct"   id="gsCorrect">✓ 0</span>
           <span class="gs-stat gs-incorrect" id="gsIncorrect">✗ 0</span>
+          <button class="gs-mute-btn" id="gsMute" title="Silencio">
+            ${this.settings.muted ? '🔇' : '🔊'}
+          </button>
         </div>
 
         <canvas id="gsCanvas" class="gs-canvas"></canvas>
@@ -356,6 +379,15 @@ export class GameScreen implements BaseScreen {
     container.querySelector('#gsExit')?.addEventListener('click', () => {
       this.loop.stop()
       this.navigate(Screen.Home)
+    })
+
+    container.querySelector('#gsMute')?.addEventListener('click', (e) => {
+      const btn = e.currentTarget as HTMLElement
+      const muted = !this.sound.isMuted
+      this.sound.setMuted(muted)
+      btn.textContent = muted ? '🔇' : '🔊'
+      // Persist to settings
+      storage.saveSettings({ ...this.settings, muted })
     })
 
     container.querySelectorAll<HTMLElement>('.gs-ans').forEach((btn) => {
@@ -392,6 +424,12 @@ export class GameScreen implements BaseScreen {
         -webkit-tap-highlight-color:transparent;
       }
       .gs-exit-btn:active { background:#5a1010; }
+      .gs-mute-btn {
+        background:transparent; border:none; font-size:16px;
+        cursor:pointer; padding:2px 4px; line-height:1;
+        -webkit-tap-highlight-color:transparent; opacity:0.7;
+      }
+      .gs-mute-btn:active { opacity:1; }
       .gs-stat {
         font-family:'Courier New',monospace; font-size:12px;
         color:#8888cc; white-space:nowrap;
