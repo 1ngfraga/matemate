@@ -5,6 +5,9 @@ import { loadSprite } from './SpriteLoader'
 
 // Individual plant sprites (all same size: 507×246, transparent-padded)
 const plantImgs: HTMLImageElement[] = [0,1,2,3,4,5,6,7].map(i => loadSprite(`sprites/plant_${i}.png`))
+// Trees (6 varieties, 332×304) and mountains (4 varieties, 1016×256)
+const treeImgs:     HTMLImageElement[] = [0,1,2,3,4,5].map(i => loadSprite(`sprites/tree_${i}.png`))
+const mountainImgs: HTMLImageElement[] = [0,1,2,3].map(i => loadSprite(`sprites/mountain_${i}.png`))
 // 3 ground tile variants (all same size: 551×542) — randomly connected
 const groundTiles: HTMLImageElement[] = [0,1,2].map(i => loadSprite(`sprites/ground_${i}.png`))
 const sunImg     = loadSprite('sprites/sun.png')
@@ -51,8 +54,14 @@ export function drawBackground(
   // ── Clouds ──
   drawPngClouds(ctx, W, H, scrollX * 0.04)
 
-  // ── Distant hills (bright green) ──
-  drawHills(ctx, W, H, groundY, scrollX * 0.12)
+  // ── Distant mountains (PNG) ──
+  drawMountains(ctx, W, H, groundY, scrollX * 0.05)
+
+  // ── Near hills base (green mounds for depth) ──
+  drawNearHills(ctx, W, H, groundY, scrollX * 0.14)
+
+  // ── Trees (PNG) ──
+  drawTrees(ctx, W, H, groundY, scrollX * 0.14)
 
   // ── Ground base: tiled PNG or fallback gradient ──
   drawGroundSurface(ctx, W, H, groundY, scrollX)
@@ -113,66 +122,112 @@ function drawPngClouds(ctx: CanvasRenderingContext2D, W: number, H: number, drif
   ctx.restore()
 }
 
-// ── Distant hills ─────────────────────────────────────────────────────────
+// ── Mountains (PNG, distant layer) ──────────────────────────────────────────
+// Mountains are 1016×256 — wide landscape sprites, bottom aligned to horizon.
 
-function drawHills(
+function mountainVariant(worldIdx: number): number {
+  return (Math.imul(worldIdx, 2246822519) >>> 0) % 4
+}
+
+function drawMountains(
   ctx: CanvasRenderingContext2D,
-  W: number, H: number, groundY: number, offset: number,
+  W: number, H: number, groundY: number,
+  scroll: number,
 ) {
-  const hillY = groundY * 0.78
-  // Far hills (lighter)
-  ctx.fillStyle = '#60c860'
-  const PERIOD_F = 600
-  const farShapes = [
-    { rx: 80,  amp: 0.12 },
-    { rx: 240, amp: 0.09 },
-    { rx: 400, amp: 0.14 },
-  ]
-  for (const sh of farShapes) {
-    const base = ((sh.rx - offset) % PERIOD_F + PERIOD_F) % PERIOD_F
-    for (let rep = -1; rep <= Math.ceil(W / PERIOD_F) + 1; rep++) {
-      const cx = base + rep * PERIOD_F
-      const ht = H * sh.amp
-      ctx.beginPath()
-      ctx.ellipse(cx, hillY + ht * 0.3, H * sh.amp * 1.8, ht, 0, 0, Math.PI * 2)
-      ctx.fill()
+  const PERIOD  = 1100
+  const dh      = H * 0.24                         // mountain display height
+  const dw      = Math.round(dh * (1016 / 256))    // ~950px wide at typical scale
+  const bottomY = groundY * 0.90                   // sit just above ground horizon
+
+  // 2 staggered positions per period
+  const positions = [80, 580]
+
+  ctx.save()
+  ctx.imageSmoothingEnabled = false
+
+  for (let pi = 0; pi < positions.length; pi++) {
+    const base      = ((positions[pi] - scroll) % PERIOD + PERIOD) % PERIOD
+    const scrollIdx = Math.floor(scroll / PERIOD)
+    for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
+      const mx = base + rep * PERIOD
+      if (mx > W + dw || mx < -dw) continue
+      const worldIdx = (scrollIdx + rep) * positions.length + pi
+      const img = mountainImgs[mountainVariant(worldIdx)]
+      if (!img.complete || img.naturalWidth === 0) continue
+      ctx.drawImage(img, mx - dw / 2, bottomY - dh, dw, dh)
     }
   }
 
-  // Near hills (darker, with tree silhouettes)
+  ctx.restore()
+}
+
+// ── Near hills base (solid mounds, provides depth behind trees) ───────────────
+
+function drawNearHills(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, groundY: number,
+  scroll: number,
+) {
+  const PERIOD = 500
+  const shapes = [{ rx: 100, amp: 0.09 }, { rx: 280, amp: 0.12 }, { rx: 420, amp: 0.07 }]
   ctx.fillStyle = '#48b848'
-  const PERIOD_N = 500
-  const shapes2 = [{ rx: 120, amp: 0.10 }, { rx: 300, amp: 0.13 }, { rx: 460, amp: 0.08 }]
-  for (const sh of shapes2) {
-    const nearOffset = offset * 1.4
-    const base = ((sh.rx - nearOffset) % PERIOD_N + PERIOD_N) % PERIOD_N
-    for (let rep = -1; rep <= Math.ceil(W / PERIOD_N) + 1; rep++) {
-      const cx = base + rep * PERIOD_N
-      if (cx < -200 || cx > W + 200) continue
+  for (const sh of shapes) {
+    const base = ((sh.rx - scroll) % PERIOD + PERIOD) % PERIOD
+    for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
+      const cx = base + rep * PERIOD
+      if (cx < -300 || cx > W + 300) continue
       const ht = H * sh.amp
       ctx.beginPath()
-      ctx.ellipse(cx, groundY + 4, H * sh.amp * 2.2, ht, 0, 0, Math.PI * 2)
+      ctx.ellipse(cx, groundY + 4, H * sh.amp * 2.4, ht, 0, 0, Math.PI * 2)
       ctx.fill()
-
-      // Simple pixel tree silhouettes on top of hills
-      drawTree(ctx, cx - 50, groundY - ht * 0.6, ht * 1.2)
-      drawTree(ctx, cx + 60, groundY - ht * 0.5, ht * 1.0)
     }
   }
 }
 
-function drawTree(ctx: CanvasRenderingContext2D, cx: number, baseY: number, h: number) {
-  const trunkH = h * 0.3
-  const crownR = h * 0.45
-  // Trunk
-  ctx.fillStyle = '#8a5020'
-  ctx.fillRect(cx - h * 0.06, baseY - trunkH, h * 0.12, trunkH)
-  // Crown (2 layers for palm/tropical look)
-  ctx.fillStyle = '#1a8020'
-  ctx.beginPath(); ctx.arc(cx, baseY - trunkH - crownR * 0.6, crownR, 0, Math.PI * 2); ctx.fill()
-  ctx.fillStyle = '#28a830'
-  ctx.beginPath(); ctx.arc(cx - crownR * 0.2, baseY - trunkH - crownR * 0.9, crownR * 0.7, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.arc(cx + crownR * 0.3, baseY - trunkH - crownR * 0.7, crownR * 0.65, 0, Math.PI * 2); ctx.fill()
+// ── Trees (PNG, near layer) ────────────────────────────────────────────────────
+// Trees are 332×304 — roughly square, bottom aligned to groundY.
+
+function treeVariant(worldIdx: number): number {
+  return (Math.imul(worldIdx, 1234567891) >>> 0) % 6
+}
+
+function drawTrees(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, groundY: number,
+  scroll: number,
+) {
+  const PERIOD = 320
+  const dh     = H * 0.30
+  const dw     = Math.round(dh * (332 / 304))
+
+  // 3 staggered positions per period, varying heights for depth
+  const positions = [
+    { rx: 40,  scale: 1.00 },
+    { rx: 140, scale: 0.82 },
+    { rx: 235, scale: 0.92 },
+  ]
+
+  ctx.save()
+  ctx.imageSmoothingEnabled = false
+
+  const scrollIdx = Math.floor(scroll / PERIOD)
+
+  for (let pi = 0; pi < positions.length; pi++) {
+    const { rx, scale } = positions[pi]
+    const tdw  = Math.round(dw * scale)
+    const tdh  = Math.round(dh * scale)
+    const base = ((rx - scroll) % PERIOD + PERIOD) % PERIOD
+    for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
+      const tx = base + rep * PERIOD
+      if (tx > W + tdw || tx < -tdw) continue
+      const worldIdx = (scrollIdx + rep) * positions.length + pi
+      const img = treeImgs[treeVariant(worldIdx)]
+      if (!img.complete || img.naturalWidth === 0) continue
+      ctx.drawImage(img, tx - tdw / 2, groundY - tdh, tdw, tdh)
+    }
+  }
+
+  ctx.restore()
 }
 
 // ── Ground surface (PNG tiles or gradient fallback) ───────────────────────────

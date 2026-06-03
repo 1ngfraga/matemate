@@ -84,6 +84,18 @@ await cropGridUniform('reference/patron_piso.png', 1, 3, [
   'ground_0.png', 'ground_1.png', 'ground_2.png',
 ])
 
+console.log('\n── Trees (6 varieties, 3×2 grid, uniform size) ──')
+await cropGridUniform('reference/arboles.png', 2, 3, [
+  'tree_0.png', 'tree_1.png', 'tree_2.png',
+  'tree_3.png', 'tree_4.png', 'tree_5.png',
+])
+
+console.log('\n── Mountains (4 varieties, 2×2 grid, uniform size) ──')
+await cropGridUniform('reference/montanas.png', 2, 2, [
+  'mountain_0.png', 'mountain_1.png',
+  'mountain_2.png', 'mountain_3.png',
+])
+
 console.log('\n── Plants (8 varieties, uniform size) ──')
 await cropGridUniform('reference/plantas.png', 2, 4, [
   'plant_0.png', 'plant_1.png', 'plant_2.png', 'plant_3.png',

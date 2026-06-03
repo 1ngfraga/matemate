@@ -33,6 +33,12 @@ export function preloadSprites(): void {
     'sprites/plant_2.png', 'sprites/plant_3.png',
     'sprites/plant_4.png', 'sprites/plant_5.png',
     'sprites/plant_6.png', 'sprites/plant_7.png',
+    // Trees (6 varieties)
+    'sprites/tree_0.png', 'sprites/tree_1.png', 'sprites/tree_2.png',
+    'sprites/tree_3.png', 'sprites/tree_4.png', 'sprites/tree_5.png',
+    // Mountains (4 varieties)
+    'sprites/mountain_0.png', 'sprites/mountain_1.png',
+    'sprites/mountain_2.png', 'sprites/mountain_3.png',
     // Ground tiles (3 variants)
     'sprites/ground_0.png', 'sprites/ground_1.png', 'sprites/ground_2.png',
   ]
