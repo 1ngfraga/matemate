@@ -1,22 +1,22 @@
-import { Screen } from '../core/Types'
-import { NavigateFn } from '../app/Router'
-import { BaseScreen } from '../app/ScreenManager'
-import { requestFullscreen } from '../core/Fullscreen'
+import { Screen } from "../core/Types";
+import { NavigateFn } from "../app/Router";
+import { BaseScreen } from "../app/ScreenManager";
+import { requestFullscreen } from "../core/Fullscreen";
 
 export class WelcomeScreen implements BaseScreen {
-  private container: HTMLElement | null = null
+  private container: HTMLElement | null = null;
 
   constructor(private navigate: NavigateFn) {}
 
   mount(container: HTMLElement): void {
-    this.container = container
-    container.innerHTML = this.html()
-    this.attachEvents(container)
+    this.container = container;
+    container.innerHTML = this.html();
+    this.attachEvents(container);
   }
 
   unmount(): void {
-    if (this.container) this.container.innerHTML = ''
-    this.container = null
+    if (this.container) this.container.innerHTML = "";
+    this.container = null;
   }
 
   // ── HTML ─────────────────────────────────────────────────────────────────
@@ -96,19 +96,20 @@ export class WelcomeScreen implements BaseScreen {
           font-size:12px; color:rgba(255,255,255,0.7);
           font-family:'Courier New',monospace; min-height:16px;
         }
-      </style>`
+      </style>`;
   }
 
   // ── Events ────────────────────────────────────────────────────────────────
 
   private attachEvents(container: HTMLElement): void {
-    const btn  = container.querySelector<HTMLButtonElement>('#wlPlay')!
-    const hint = container.querySelector<HTMLElement>('#wlHint')!
+    const btn = container.querySelector<HTMLButtonElement>("#wlPlay")!;
+    const hint = container.querySelector<HTMLElement>("#wlHint")!;
 
-    btn.addEventListener('click', async () => {
-      btn.disabled = true; btn.textContent = '...'
-      try { await requestFullscreen(document.documentElement) } catch { hint.textContent = '' }
-      this.navigate(Screen.Home)
-    })
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.textContent = "...";
+      // try { await requestFullscreen(document.documentElement) } catch { hint.textContent = '' }
+      this.navigate(Screen.Home);
+    });
   }
 }

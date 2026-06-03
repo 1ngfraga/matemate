@@ -93,25 +93,31 @@ function drawPngSun(ctx: CanvasRenderingContext2D, cx: number, cy: number, size:
 
 // ── Clouds (PNG) ──────────────────────────────────────────────────────────
 
-// 5 cloud positions, cycling through the 3 cloud variants, drifting slowly
+// 5 cloud positions — hFrac is height as fraction of groundY (sky zone)
 const CLOUD_DEFS = [
-  { rx: 60,   ry: 0.07, wFrac: 0.18, ci: 0 },
-  { rx: 260,  ry: 0.04, wFrac: 0.14, ci: 1 },
-  { rx: 460,  ry: 0.10, wFrac: 0.22, ci: 2 },
-  { rx: 650,  ry: 0.05, wFrac: 0.16, ci: 0 },
-  { rx: 840,  ry: 0.09, wFrac: 0.20, ci: 1 },
+  { rx: 60,  ry: 0.12, hFrac: 0.22, ci: 0 },
+  { rx: 280, ry: 0.06, hFrac: 0.18, ci: 1 },
+  { rx: 490, ry: 0.16, hFrac: 0.20, ci: 2 },
+  { rx: 660, ry: 0.08, hFrac: 0.16, ci: 0 },
+  { rx: 850, ry: 0.13, hFrac: 0.19, ci: 1 },
 ]
 
 function drawPngClouds(ctx: CanvasRenderingContext2D, W: number, H: number, drift: number) {
-  const PERIOD = 900
+  const PERIOD  = 900
+  const groundY = H * GROUND_FRAC
+
   ctx.save()
-  ctx.imageSmoothingEnabled = false
+  // Smoothing ON — clouds are high-res images scaled down, not pixel art scaled up
+  ctx.imageSmoothingEnabled = true
+  ;(ctx as any).imageSmoothingQuality = 'high'
+
   for (const cl of CLOUD_DEFS) {
     const img = cloudImgs[cl.ci]
     if (!img.complete || img.naturalWidth === 0) continue
-    const dw   = W * cl.wFrac
-    const dh   = dw * (img.naturalHeight / img.naturalWidth)
-    const cy   = H * cl.ry
+    // Size by height so clouds stay proportional on any screen width
+    const dh   = groundY * cl.hFrac
+    const dw   = Math.round(dh * (img.naturalWidth / img.naturalHeight))
+    const cy   = groundY * cl.ry
     const base = ((cl.rx - drift) % PERIOD + PERIOD) % PERIOD
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
       const cx = base + rep * PERIOD
