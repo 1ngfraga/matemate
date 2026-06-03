@@ -304,7 +304,7 @@ export class GameScreen implements BaseScreen {
     setText('#gsProgress',  `META ${this.state.targetStreak}`)
     setText('#gsCorrect',   this.state.correctText)
     setText('#gsIncorrect', this.state.incorrectText)
-    setText('#gsStreakVal', this.state.progressText)
+    setText('#gsStreakVal', String(this.state.currentStreak))
     this.renderFace()
   }
 
@@ -425,7 +425,7 @@ export class GameScreen implements BaseScreen {
 
         <div class="gs-streak-hud">
           <div class="gs-streak-coin">
-            <span class="gs-streak-val" id="gsStreakVal">0 / 50</span>
+            <span class="gs-streak-val" id="gsStreakVal">0</span>
             <canvas class="gs-face" id="gsFace" width="42" height="42"></canvas>
           </div>
         </div>
@@ -538,7 +538,7 @@ export class GameScreen implements BaseScreen {
       .gs-streak-hud {
         position:absolute;
         top:40px;
-        left:8px;
+        right:8px;
         z-index:3;
         pointer-events:none;
       }

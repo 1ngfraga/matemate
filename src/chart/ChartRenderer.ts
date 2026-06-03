@@ -60,44 +60,49 @@ export class ChartRenderer {
       const day = days[i]
       const x = PAD_L + i * slotW + dayOff
       const isToday = i === count - 1
-
-      for (let row = 0; row < OP_ORDER.length; row++) {
-        const op = OP_ORDER[row]
+      const visibleOps = OP_ORDER.filter((op) => {
         const data = day.byOperation[op]
-        const y = PAD_T + row * (boxH + rowGap)
+        return Boolean(data && data.attempts > 0)
+      })
+      const stackH = visibleOps.length > 0
+        ? visibleOps.length * boxH + (visibleOps.length - 1) * rowGap
+        : 0
+      const stackTop = PAD_T + chartH - stackH
+
+      for (let row = 0; row < visibleOps.length; row++) {
+        const op = visibleOps[row]
+        const data = day.byOperation[op]
+        const y = stackTop + row * (boxH + rowGap)
         const theme = OP_COLORS[op]
 
-        if (data && data.attempts > 0) {
-          ctx.fillStyle = theme.base
-          ctx.fillRect(x, y, dayW, boxH)
-          ctx.fillStyle = theme.hi
-          ctx.fillRect(x + 2, y + 2, dayW - 4, Math.max(3, Math.floor(boxH * 0.22)))
-          ctx.fillStyle = theme.dark
-          ctx.fillRect(x, y + boxH - 4, dayW, 4)
-          ctx.fillRect(x + dayW - 4, y, 4, boxH)
-          ctx.strokeStyle = isToday ? '#f0c040' : theme.hi
-          ctx.lineWidth = data.starred ? 2 : 1
-          ctx.strokeRect(x + 0.5, y + 0.5, dayW - 1, boxH - 1)
-        }
+        if (!data || data.attempts <= 0) continue
+
+        ctx.fillStyle = theme.base
+        ctx.fillRect(x, y, dayW, boxH)
+        ctx.fillStyle = theme.hi
+        ctx.fillRect(x + 2, y + 2, dayW - 4, Math.max(3, Math.floor(boxH * 0.18)))
+        ctx.fillStyle = theme.dark
+        ctx.fillRect(x, y + boxH - 4, dayW, 4)
+        ctx.fillRect(x + dayW - 4, y + 1, 4, boxH - 1)
+        ctx.strokeStyle = isToday ? '#f0c040' : theme.hi
+        ctx.lineWidth = data.starred ? 2 : 1
+        ctx.strokeRect(x + 0.5, y + 0.5, dayW - 1, boxH - 1)
 
         ctx.fillStyle = '#ffffff'
-        ctx.font = `bold ${Math.max(8, Math.floor(boxH * 0.32))}px 'Courier New', monospace`
-        ctx.textAlign = 'left'
-        ctx.textBaseline = 'top'
-        if (data && data.attempts > 0) ctx.fillText(theme.label, x + 4, y + 3)
-
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.font = `bold ${Math.max(9, Math.floor(boxH * 0.42))}px 'Courier New', monospace`
-        if (data && data.attempts > 0) ctx.fillText(String(data.attempts), x + dayW / 2, y + boxH / 2 + 1)
+        ctx.font = `bold ${Math.max(8, Math.floor(boxH * 0.28))}px 'Courier New', monospace`
+        ctx.fillText(theme.label, x + dayW / 2, y + boxH * 0.22)
 
-        if (data?.starred && data.attempts > 0) {
-          ctx.fillStyle = '#f0c040'
-          ctx.textAlign = 'right'
-          ctx.textBaseline = 'top'
-          ctx.font = `bold ${Math.max(8, Math.floor(boxH * 0.34))}px 'Courier New', monospace`
-          ctx.fillText('★', x + dayW - 4, y + 2)
-        }
+        ctx.fillStyle = '#f0c040'
+        ctx.globalAlpha = data.starred ? 1 : 0.18
+        ctx.font = `bold ${Math.max(7, Math.floor(boxH * 0.2))}px 'Courier New', monospace`
+        ctx.fillText('★', x + dayW / 2, y + boxH * 0.48)
+        ctx.globalAlpha = 1
+
+        ctx.fillStyle = '#ffffff'
+        ctx.font = `bold ${Math.max(9, Math.floor(boxH * 0.42))}px 'Courier New', monospace`
+        ctx.fillText(String(data.attempts), x + dayW / 2, y + boxH * 0.74)
       }
 
       ctx.fillStyle = isToday ? '#f0c040' : '#5050a0'
