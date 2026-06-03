@@ -23,6 +23,7 @@ export class HomeScreen implements BaseScreen {
   private container: HTMLElement | null = null
   private chart: ChartRenderer | null = null
   private settings: Settings
+  private previewRaf: number | null = null
 
   constructor(
     private navigate: NavigateFn,
@@ -42,6 +43,8 @@ export class HomeScreen implements BaseScreen {
   }
 
   unmount(): void {
+    if (this.previewRaf !== null) cancelAnimationFrame(this.previewRaf)
+    this.previewRaf = null
     this.chart = null
     if (this.container) this.container.innerHTML = ''
     this.container = null
@@ -55,7 +58,7 @@ export class HomeScreen implements BaseScreen {
       const sel  = a === this.settings.animal
       return `
         <button class="animal-btn${sel ? ' animal-btn--selected' : ''}" data-animal="${a}">
-          <canvas class="animal-mini" width="88" height="72" data-animal="${a}"></canvas>
+          <canvas class="animal-mini" width="104" height="84" data-animal="${a}"></canvas>
           <span class="animal-label">${meta.label}</span>
         </button>`
     }).join('')
@@ -172,10 +175,10 @@ export class HomeScreen implements BaseScreen {
       .animal-btn {
         display:flex; flex-direction:column; align-items:center; gap:2px;
         background:#0d0d22; border:3px solid #3a3a6a;
-        padding:5px 8px; cursor:pointer;
+        padding:6px 8px 5px; cursor:pointer;
         font-family:'Courier New',monospace;
         transition:transform 80ms, border-color 80ms;
-        min-width:62px;
+        min-width:108px;
         -webkit-tap-highlight-color:transparent;
       }
       .animal-btn:active { transform:translate(1px,1px); }
@@ -184,7 +187,12 @@ export class HomeScreen implements BaseScreen {
         background:#1a1500;
         box-shadow:0 0 8px #f0c04044;
       }
-      .animal-mini { image-rendering:pixelated; }
+      .animal-mini {
+        width:104px;
+        height:84px;
+        image-rendering:pixelated;
+        display:block;
+      }
       .animal-label {
         font-size:clamp(7px,1.2vw,10px);
         color:#a0a0d0; letter-spacing:1px;
@@ -224,26 +232,43 @@ export class HomeScreen implements BaseScreen {
 
   // ── Animal pixel-art previews ─────────────────────────────────────────────
 
-  // Use GameSprites frame 0 for the animal selector — same sprite as the game
+  // Use the same game sprites in the selector, with a simple walk loop.
   private renderAnimalPreviews(container: HTMLElement): void {
-    container.querySelectorAll<HTMLCanvasElement>('canvas.animal-mini').forEach((canvas) => {
-      const animal = canvas.dataset.animal as Animal
-      const ctx    = canvas.getContext('2d')!
-      const W      = canvas.width, H = canvas.height
-      ctx.clearRect(0, 0, W, H)
+    const canvases = [...container.querySelectorAll<HTMLCanvasElement>('canvas.animal-mini')]
+    const loop = (ts: number) => {
+      const walkFrames = [0, 1, 2, 1]
+      const selectedAnimal = this.settings.animal
 
-      const sheet  = getAnimalGameSheet(animal)
-      const frame  = sheet.frames[0]
-      if (!frame) return
+      canvases.forEach((canvas) => {
+        const animal = canvas.dataset.animal as Animal
+        const ctx    = canvas.getContext('2d')!
+        const W      = canvas.width
+        const H      = canvas.height
+        ctx.clearRect(0, 0, W, H)
 
-      // Fit sprite inside canvas with a small margin
-      const scaleX = Math.floor((W - 4) / frame.gridW)
-      const scaleY = Math.floor((H - 4) / frame.gridH)
-      const s      = Math.max(1, Math.min(scaleX, scaleY))
-      const ox     = Math.floor((W - frame.gridW * s) / 2)
-      const oy     = Math.floor((H - frame.gridH * s) / 2)
-      frame.draw(ctx, ox, oy, s)
-    })
+        const sheet  = getAnimalGameSheet(animal)
+        const animFrame = animal === selectedAnimal
+          ? walkFrames[Math.floor(ts / 180) % walkFrames.length]
+          : 0
+        const frame  = sheet.frames[animFrame] ?? sheet.frames[0]
+        if (!frame) return
+
+        const scaleX = Math.floor((W - 10) / frame.gridW)
+        const scaleY = Math.floor((H - 12) / frame.gridH)
+        const s      = Math.max(1, Math.min(scaleX, scaleY))
+        const bobY   = animal === selectedAnimal
+          ? (animFrame === 1 ? -1 : animFrame === 2 ? -2 : 0)
+          : 0
+        const ox     = Math.floor((W - frame.gridW * s) / 2)
+        const oy     = Math.floor(H - frame.gridH * s - 4 + bobY)
+        frame.draw(ctx, ox, oy, s)
+      })
+
+      this.previewRaf = requestAnimationFrame(loop)
+    }
+
+    if (this.previewRaf !== null) cancelAnimationFrame(this.previewRaf)
+    this.previewRaf = requestAnimationFrame(loop)
   }
 
   // ── Chart ─────────────────────────────────────────────────────────────────

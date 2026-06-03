@@ -486,6 +486,8 @@ export class GameScreen implements BaseScreen {
       }
       .gs-ans {
         flex:1;
+        position:relative;
+        overflow:hidden;
         font-family:'Courier New',monospace;
         font-size:clamp(20px, 4.5vw, 40px);
         font-weight:900; color:#e8e8f0;
@@ -493,18 +495,42 @@ export class GameScreen implements BaseScreen {
         cursor:pointer; display:flex;
         align-items:center; justify-content:center;
         gap:6px;
-        box-shadow:3px 3px 0 rgba(0,0,0,0.4);
-        transition:background 200ms, border-color 200ms, transform 80ms;
+        min-height:clamp(64px, 14vh, 108px);
+        padding:10px 14px 12px;
+        border-radius:18px;
+        box-shadow:
+          inset 0 2px 0 rgba(255,255,255,0.14),
+          inset 0 -3px 0 rgba(0,0,0,0.16),
+          0 4px 0 rgba(28,18,90,0.9),
+          0 8px 14px rgba(0,0,0,0.18);
+        transition:background 200ms, border-color 200ms, transform 80ms, filter 120ms, box-shadow 80ms;
         -webkit-tap-highlight-color:transparent;
         letter-spacing:1px;
       }
-      .gs-ans:active:not(:disabled) {
-        transform:translate(2px,2px);
-        box-shadow:1px 1px 0 rgba(0,0,0,0.4);
+      .gs-ans::before {
+        content:'';
+        position:absolute;
+        left:8px;
+        right:8px;
+        top:7px;
+        height:32%;
+        border-radius:12px;
+        background:rgba(255,255,255,0.08);
+        pointer-events:none;
       }
-      .gs-ans:hover:not(:disabled) { filter:brightness(1.2); }
-      .gs-ans:disabled { opacity:0.85; cursor:default; }
+      .gs-ans:active:not(:disabled) {
+        transform:translateY(3px);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.12),
+          inset 0 -2px 0 rgba(0,0,0,0.16),
+          0 1px 0 rgba(28,18,90,0.9),
+          0 4px 8px rgba(0,0,0,0.16);
+      }
+      .gs-ans:hover:not(:disabled) { filter:brightness(1.05); }
+      .gs-ans:disabled { opacity:0.92; cursor:default; }
       .ans-icon {
+        position:relative;
+        z-index:1;
         font-size:0.7em;
       }
     `
