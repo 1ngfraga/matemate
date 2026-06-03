@@ -17,6 +17,9 @@ export const enum TimerDuration {
   Short  = 5,
   Medium = 10,
   Long   = 15,
+  XLong  = 20,
+  XXLong = 25,
+  Mega   = 30,
 }
 
 export const enum Screen {
@@ -41,7 +44,7 @@ export type SubtractionDigits     = 1 | 2
 
 export interface Settings {
   animal:        Animal
-  timerDuration: TimerDuration
+  timerByOperation: Record<Operation, TimerDuration>
   /** Multiplication tables 1–9; at least one must be true */
   multiplicationTables: Record<number, boolean>
   muted: boolean
@@ -57,10 +60,15 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   animal:        Animal.Dinosaur,
-  timerDuration: TimerDuration.Medium,
+  timerByOperation: {
+    [Operation.Addition]: TimerDuration.Medium,
+    [Operation.Subtraction]: TimerDuration.Medium,
+    [Operation.Multiplication]: TimerDuration.Medium,
+    [Operation.Division]: TimerDuration.Medium,
+  },
   multiplicationTables: {
     1: true, 2: true, 3: true, 4: true,
-    5: true, 6: true, 7: true, 8: true, 9: true,
+    5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
   },
   muted: false,
   gameTargetByOperation: {
@@ -124,4 +132,4 @@ export interface GameResult {
 export interface StoredSettings { version: number; data: Settings }
 export interface StoredResults  { version: number; data: GameResult[] }
 
-export const STORAGE_VERSION = 5
+export const STORAGE_VERSION = 6

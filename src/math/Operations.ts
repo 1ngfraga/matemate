@@ -13,7 +13,7 @@ function makeQ(
 
 function selectedTables(settings: Settings): number[] {
   return Object.entries(settings.multiplicationTables)
-    .filter(([k, v]) => v && Number(k) >= 1 && Number(k) <= 9)
+    .filter(([k, v]) => v && Number(k) >= 1 && Number(k) <= 10)
     .map(([k]) => Number(k))
 }
 
@@ -70,7 +70,7 @@ export function subtractionPool(settings: Settings): Question[] {
 }
 
 // ── MULTIPLICATION ────────────────────────────────────────────────────────
-// Selected tables (1-9) × multiplier (1-9).
+// Selected tables (1-10) × multiplier (1-10).
 // Display: TABLE × multiplier  (table is always first number).
 
 export function multiplicationPool(settings: Settings): Question[] {
@@ -79,13 +79,13 @@ export function multiplicationPool(settings: Settings): Question[] {
 
   const pool: Question[] = []
   for (const t of use)
-    for (let m = 1; m <= 9; m++)
+    for (let m = 1; m <= 10; m++)
       pool.push(makeQ(Operation.Multiplication, t, m, t * m, `${t} × ${m}`))
   return pool
 }
 
 // ── DIVISION ──────────────────────────────────────────────────────────────
-// Exact division. Divisor from selected tables (1-9), quotient 2-9.
+// Exact division. Divisor from selected tables (1-10), quotient 2-10.
 
 export function divisionPool(settings: Settings): Question[] {
   const tables = selectedTables(settings)
@@ -93,7 +93,7 @@ export function divisionPool(settings: Settings): Question[] {
 
   const pool: Question[] = []
   for (const t of use)
-    for (let m = 2; m <= 9; m++) {
+    for (let m = 2; m <= 10; m++) {
       const dividend = t * m
       pool.push(makeQ(Operation.Division, dividend, t, m, `${dividend} ÷ ${t}`))
     }

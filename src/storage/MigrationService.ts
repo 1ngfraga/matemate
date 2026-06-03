@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, Operation, STORAGE_VERSION, StoredResults, StoredSettings } from '../core/Types'
+import { DEFAULT_SETTINGS, Operation, STORAGE_VERSION, StoredResults, StoredSettings, TimerDuration } from '../core/Types'
 
 export class MigrationService {
   static migrateSettings(stored: StoredSettings): StoredSettings {
@@ -34,7 +34,7 @@ export class MigrationService {
         version: 3,
         data: {
           animal:               (raw.animal as typeof DEFAULT_SETTINGS.animal)               ?? DEFAULT_SETTINGS.animal,
-          timerDuration:        (raw.timerDuration as typeof DEFAULT_SETTINGS.timerDuration) ?? DEFAULT_SETTINGS.timerDuration,
+          timerByOperation: structuredClone(DEFAULT_SETTINGS.timerByOperation),
           muted:                Boolean(raw.muted),
           multiplicationTables: tables,
           gameTargetByOperation: structuredClone(DEFAULT_SETTINGS.gameTargetByOperation),
@@ -48,14 +48,27 @@ export class MigrationService {
     if (version < 4) {
       const prev = stored.data as typeof DEFAULT_SETTINGS
       const rawTargets = (raw.gameTargetByOperation as Record<string, number> | undefined) ?? {}
+      const rawTimers = (raw.timerByOperation as Record<string, number> | undefined) ?? {}
       const clampTarget = (value: unknown, fallback: number) => {
         const n = Math.round(Number(value))
         return Number.isFinite(n) ? Math.max(1, Math.min(200, n)) : fallback
       }
+      const clampTimer = (value: unknown, fallback: TimerDuration) => {
+        const n = Math.round(Number(value))
+        const allowed = [5, 10, 15, 20, 25, 30]
+        return (allowed.includes(n) ? n : fallback) as TimerDuration
+      }
+      const legacyTimer = clampTimer(raw.timerDuration, DEFAULT_SETTINGS.timerByOperation[Operation.Addition])
       return {
         version: 4,
         data: {
           ...prev,
+          timerByOperation: {
+            [Operation.Addition]: clampTimer(rawTimers[Operation.Addition], legacyTimer),
+            [Operation.Subtraction]: clampTimer(rawTimers[Operation.Subtraction], legacyTimer),
+            [Operation.Multiplication]: clampTimer(rawTimers[Operation.Multiplication], legacyTimer),
+            [Operation.Division]: clampTimer(rawTimers[Operation.Division], legacyTimer),
+          },
           gameTargetByOperation: {
             [Operation.Addition]: clampTarget(rawTargets[Operation.Addition], DEFAULT_SETTINGS.gameTargetByOperation[Operation.Addition]),
             [Operation.Subtraction]: clampTarget(rawTargets[Operation.Subtraction], DEFAULT_SETTINGS.gameTargetByOperation[Operation.Subtraction]),
@@ -69,7 +82,23 @@ export class MigrationService {
     if (version < 5) {
       return {
         version: 5,
-        data: stored.data,
+        data: {
+          ...(stored.data as typeof DEFAULT_SETTINGS),
+          timerByOperation: (stored.data as typeof DEFAULT_SETTINGS).timerByOperation ?? structuredClone(DEFAULT_SETTINGS.timerByOperation),
+        },
+      }
+    }
+
+    if (version < 6) {
+      const prev = stored.data as typeof DEFAULT_SETTINGS
+      const nextTables = { ...DEFAULT_SETTINGS.multiplicationTables, ...prev.multiplicationTables }
+      return {
+        version: 6,
+        data: {
+          ...prev,
+          multiplicationTables: nextTables,
+          timerByOperation: prev.timerByOperation ?? structuredClone(DEFAULT_SETTINGS.timerByOperation),
+        },
       }
     }
 
@@ -116,6 +145,10 @@ export class MigrationService {
           (r.correct >= (r.currentTarget ?? r.totalQuestions ?? 50)) &&
           (r.answersPlayed >= (r.currentTarget ?? r.totalQuestions ?? 50)),
       }))
+      version = 5
+    }
+
+    if (version < 6) {
       version = STORAGE_VERSION
     }
 

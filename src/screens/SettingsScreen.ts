@@ -15,11 +15,17 @@ const TIMERS: TimerDuration[] = [
   TimerDuration.Short,
   TimerDuration.Medium,
   TimerDuration.Long,
+  TimerDuration.XLong,
+  TimerDuration.XXLong,
+  TimerDuration.Mega,
 ];
 const TIMER_LABELS: Record<TimerDuration, string> = {
   [TimerDuration.Short]: "5s",
   [TimerDuration.Medium]: "10s",
   [TimerDuration.Long]: "15s",
+  [TimerDuration.XLong]: "20s",
+  [TimerDuration.XXLong]: "25s",
+  [TimerDuration.Mega]: "30s",
 };
 
 export class SettingsScreen implements BaseScreen {
@@ -115,38 +121,34 @@ export class SettingsScreen implements BaseScreen {
     );
   }
 
+  private timerBtns(op: Operation): string {
+    const current = this.working.timerByOperation[op]
+    return `<div class="timer-row" data-timer-group="${op}">` +
+      TIMERS.map((t) =>
+        `<button class="timer-btn${t === current ? " timer-btn--sel" : ""}" data-timer="${t}" data-timer-op="${op}">${TIMER_LABELS[t]}</button>`
+      ).join("") +
+      `</div>`
+  }
+
+  private goalInput(op: Operation): string {
+    return `
+      <label class="goal-row">
+        <span class="goal-label">Meta de racha</span>
+        <input class="goal-input" data-goal-op="${op}" type="number" min="1" max="200" step="1"
+          value="${this.working.gameTargetByOperation[op]}">
+      </label>`
+  }
+
   private settingsHtml(): string {
     const w = this.working;
 
-    const timerBtns = TIMERS.map((t) => {
-      const sel = t === w.timerDuration;
-      return `<button class="timer-btn${sel ? " timer-btn--sel" : ""}" data-timer="${t}">${TIMER_LABELS[t]}</button>`;
-    }).join("");
-
-    // Tables 1-9 only
-    const tableBtns = Array.from({ length: 9 }, (_, i) => {
+    const tableBtns = Array.from({ length: 10 }, (_, i) => {
       const n = i + 1;
       const sel = w.multiplicationTables[n];
       return `<button class="table-btn${sel ? " table-btn--sel" : ""}" data-table="${n}">${n}</button>`;
     }).join("");
 
     const muteSel = w.muted;
-    const targetRows = [
-      { op: Operation.Addition, label: "+ SUMA" },
-      { op: Operation.Subtraction, label: "− RESTA" },
-      { op: Operation.Multiplication, label: "× MULTIPLICACIÓN" },
-      { op: Operation.Division, label: "÷ DIVISIÓN" },
-    ]
-      .map(
-        ({ op, label }) => `
-      <label class="goal-row">
-        <span class="goal-label">${label}</span>
-        <input class="goal-input" data-goal-op="${op}" type="number" min="1" max="200" step="1"
-          value="${w.gameTargetByOperation[op]}">
-      </label>
-    `,
-      )
-      .join("");
 
     // Addition: operand size (1-9 or 10-99)
     const addOperandOpts = [
@@ -174,20 +176,11 @@ export class SettingsScreen implements BaseScreen {
 
         <div class="sset-body">
 
-          <!-- Timer -->
-          <section class="sset-section">
-            <div class="sset-label">⏱ TIEMPO POR PREGUNTA</div>
-            <div class="timer-row" id="timerRow">${timerBtns}</div>
-          </section>
-
-          <section class="sset-section">
-            <div class="sset-label">🏁 META DE RACHA POR JUEGO</div>
-            <div class="sset-sub">El juego termina solo cuando logra esta cantidad correcta seguida</div>
-            <div class="goal-grid">${targetRows}</div>
-          </section>
-
           <!-- Suma: dos configuraciones independientes -->
           <section class="sset-section">
+            <div class="sset-label">⏱ SUMA — tiempo por pregunta</div>
+            ${this.timerBtns(Operation.Addition)}
+            ${this.goalInput(Operation.Addition)}
             <div class="sset-label">+ SUMA — tamaño de cada número</div>
             ${this.levelBtns("addOperandLevel", addOperandOpts, w.additionOperandDigits)}
             <div class="sset-label" style="margin-top:8px;">Cantidad de números a sumar</div>
@@ -196,13 +189,19 @@ export class SettingsScreen implements BaseScreen {
 
           <!-- Resta -->
           <section class="sset-section">
+            <div class="sset-label">⏱ RESTA — tiempo por pregunta</div>
+            ${this.timerBtns(Operation.Subtraction)}
+            ${this.goalInput(Operation.Subtraction)}
             <div class="sset-label">− RESTA — tamaño de los números</div>
             ${this.levelBtns("subLevel", twoOpts, w.subtractionDigits)}
           </section>
 
-          <!-- Multiplicación + tablas 1-9 -->
+          <!-- Multiplicación + tablas 1-10 -->
           <section class="sset-section">
-            <div class="sset-label">× MULTIPLICACIÓN — elige las tablas (1-9)</div>
+            <div class="sset-label">⏱ MULTIPLICACIÓN — tiempo por pregunta</div>
+            ${this.timerBtns(Operation.Multiplication)}
+            ${this.goalInput(Operation.Multiplication)}
+            <div class="sset-label">× MULTIPLICACIÓN — elige las tablas (1-10)</div>
             <div class="sset-sub">La tabla es el primer número: <b>5</b> × 1, 2, 3...</div>
             <div class="sset-hint" id="tableHint">Selecciona al menos una</div>
             <div class="table-grid" id="tableGrid">${tableBtns}</div>
@@ -210,6 +209,9 @@ export class SettingsScreen implements BaseScreen {
 
           <!-- División (usa las mismas tablas de multiplicación) -->
           <section class="sset-section">
+            <div class="sset-label">⏱ DIVISIÓN — tiempo por pregunta</div>
+            ${this.timerBtns(Operation.Division)}
+            ${this.goalInput(Operation.Division)}
             <div class="sset-label">÷ DIVISIÓN</div>
             <div class="sset-sub">Usa las mismas tablas seleccionadas en multiplicación</div>
           </section>
@@ -354,7 +356,6 @@ export class SettingsScreen implements BaseScreen {
         color:#d04040; min-height:14px; opacity:0; transition:opacity 200ms;
       }
       .sset-hint--show { opacity:1; }
-      .goal-grid { display:flex; flex-direction:column; gap:8px; }
       .goal-row {
         display:grid;
         grid-template-columns:minmax(0,1fr) 84px;
@@ -379,7 +380,7 @@ export class SettingsScreen implements BaseScreen {
       }
 
       /* Timer */
-      .timer-row { display:flex; gap:8px; }
+      .timer-row { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:6px; }
       .timer-btn {
         flex:1; font-family:'Courier New',monospace; font-size:clamp(14px,2.5vw,20px);
         font-weight:bold; padding:10px 0; cursor:pointer;
@@ -544,21 +545,16 @@ export class SettingsScreen implements BaseScreen {
       .querySelector("#ssetBack")
       ?.addEventListener("click", () => this.navigate(Screen.Home));
 
-    // Timer
-    container.querySelector("#timerRow")?.addEventListener("click", (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLElement>(".timer-btn");
-      if (!btn) return;
-      const t = Number(btn.dataset.timer) as TimerDuration;
-      this.working.timerDuration = t;
-      container
-        .querySelectorAll(".timer-btn")
-        .forEach((b) =>
-          b.classList.toggle(
-            "timer-btn--sel",
-            (b as HTMLElement).dataset.timer === String(t),
-          ),
-        );
-    });
+    container.querySelectorAll<HTMLElement>(".timer-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const op = btn.dataset.timerOp as Operation
+        const t = Number(btn.dataset.timer) as TimerDuration
+        this.working.timerByOperation[op] = t
+        container
+          .querySelectorAll<HTMLElement>(`.timer-btn[data-timer-op="${op}"]`)
+          .forEach((b) => b.classList.toggle("timer-btn--sel", b === btn))
+      })
+    })
 
     // Tables
     container.querySelector("#tableGrid")?.addEventListener("click", (e) => {

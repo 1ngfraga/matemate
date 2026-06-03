@@ -110,12 +110,13 @@ export class GameScreen implements BaseScreen {
     this.faceMood       = 'neutral'
 
     // Timer
-    this.timer.start(this.settings.timerDuration * 1000, GRACE_MS)
+    const timerSeconds = this.settings.timerByOperation[this.operation]
+    this.timer.start(timerSeconds * 1000, GRACE_MS)
 
     // Obstacle — timed to arrive exactly when question timer hits 0
     const obsKind   = randomObstacleKind()
     const rect      = this.canvas.getBoundingClientRect()
-    const timerMs   = this.settings.timerDuration * 1000
+    const timerMs   = timerSeconds * 1000
     this.anim.spawnObstacle(obsKind, rect.width * 1.06, timerMs)
 
     // DOM: render question + answers
@@ -412,7 +413,7 @@ export class GameScreen implements BaseScreen {
             <div class="gs-timer-track">
               <div class="gs-timer-fill" id="gsTimerFill" style="width:100%"></div>
             </div>
-            <span class="gs-timer-num" id="gsTimerNum">${this.settings.timerDuration}</span>
+            <span class="gs-timer-num" id="gsTimerNum">${this.settings.timerByOperation[this.operation]}</span>
           </div>
           <span class="gs-stat gs-correct"   id="gsCorrect">✓ 0</span>
           <span class="gs-stat gs-incorrect" id="gsIncorrect">✗ 0</span>
