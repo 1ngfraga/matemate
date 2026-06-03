@@ -1,4 +1,4 @@
-import { Screen, Settings, TimerDuration } from '../core/Types'
+import { Screen, Settings, TimerDuration, AdditionDigits, SubtractionDigits, MultiplyDigits, DivisionDigits } from '../core/Types'
 import { NavigateFn } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 
@@ -81,19 +81,50 @@ export class SettingsScreen implements BaseScreen {
       </div>`
   }
 
+  // ── Digit-level button helpers ─────────────────────────────────────────
+
+  private levelBtns(
+    id: string,
+    options: Array<{ value: number; label: string }>,
+    current: number,
+  ): string {
+    return `<div class="level-row" id="${id}">` +
+      options.map(({ value, label }) =>
+        `<button class="level-btn${value === current ? ' level-btn--sel' : ''}"
+          data-level="${value}" data-group="${id}">${label}</button>`
+      ).join('') +
+    `</div>`
+  }
+
   private settingsHtml(): string {
+    const w = this.working
+
     const timerBtns = TIMERS.map((t) => {
-      const sel = t === this.working.timerDuration
+      const sel = t === w.timerDuration
       return `<button class="timer-btn${sel ? ' timer-btn--sel' : ''}" data-timer="${t}">${TIMER_LABELS[t]}</button>`
     }).join('')
 
     const tableBtns = Array.from({ length: 12 }, (_, i) => {
       const n   = i + 1
-      const sel = this.working.multiplicationTables[n]
+      const sel = w.multiplicationTables[n]
       return `<button class="table-btn${sel ? ' table-btn--sel' : ''}" data-table="${n}">${n}</button>`
     }).join('')
 
-    const muteSel = this.working.muted
+    const muteSel = w.muted
+
+    // Addition: 4 levels
+    const addOpts = [
+      { value: 1, label: '1 dígito\n(1-9)' },
+      { value: 2, label: '2 dígitos\n(10-99)' },
+      { value: 3, label: '3 cifras\n(100-999)' },
+      { value: 4, label: '4 cifras\n(1000+)' },
+    ]
+    // Others: 2 levels
+    const twoOpts = [
+      { value: 1, label: '1 dígito\n(1-9)' },
+      { value: 2, label: '2 dígitos\n(10-99)' },
+    ]
+
     return `
       <div class="sset-root">
         <header class="sset-header">
@@ -103,17 +134,40 @@ export class SettingsScreen implements BaseScreen {
 
         <div class="sset-body">
 
+          <!-- Timer -->
           <section class="sset-section">
             <div class="sset-label">⏱ TIEMPO POR PREGUNTA</div>
             <div class="timer-row" id="timerRow">${timerBtns}</div>
           </section>
 
+          <!-- Suma -->
           <section class="sset-section">
-            <div class="sset-label">✕ TABLAS DE MULTIPLICACIÓN</div>
+            <div class="sset-label">+ SUMA — tamaño de los números</div>
+            ${this.levelBtns('addLevel', addOpts, w.additionDigits)}
+          </section>
+
+          <!-- Resta -->
+          <section class="sset-section">
+            <div class="sset-label">− RESTA — tamaño de los números</div>
+            ${this.levelBtns('subLevel', twoOpts, w.subtractionDigits)}
+          </section>
+
+          <!-- Multiplicación + tablas -->
+          <section class="sset-section">
+            <div class="sset-label">× MULTIPLICACIÓN — tamaño de los factores</div>
+            ${this.levelBtns('mulLevel', twoOpts, w.multiplicationDigits)}
+            <div class="sset-label" style="margin-top:8px;">Tablas activas</div>
             <div class="sset-hint" id="tableHint">Selecciona al menos una</div>
             <div class="table-grid" id="tableGrid">${tableBtns}</div>
           </section>
 
+          <!-- División -->
+          <section class="sset-section">
+            <div class="sset-label">÷ DIVISIÓN — tamaño del divisor</div>
+            ${this.levelBtns('divLevel', twoOpts, w.divisionDigits)}
+          </section>
+
+          <!-- Sonido -->
           <section class="sset-section">
             <div class="sset-label">🔊 SONIDO</div>
             <div class="mute-row">
@@ -259,6 +313,22 @@ export class SettingsScreen implements BaseScreen {
       .timer-btn--sel {
         background:#1a1500; border-color:#f0c040; color:#f0c040;
         box-shadow:0 0 8px #f0c04044;
+      }
+
+      /* Level buttons (digit difficulty) */
+      .level-row { display:flex; gap:6px; flex-wrap:wrap; }
+      .level-btn {
+        flex:1; min-width:60px;
+        font-family:'Courier New',monospace; font-size:clamp(9px,1.6vw,12px);
+        font-weight:bold; padding:7px 4px; cursor:pointer; text-align:center;
+        background:#0d0d22; border:2px solid #3a3a6a; color:#6060a0;
+        transition:background 80ms, border-color 80ms, color 80ms;
+        min-height:44px; white-space:pre-line; line-height:1.3;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .level-btn--sel {
+        background:#0e1e3a; border-color:#4080ff; color:#80b0ff;
+        box-shadow:0 0 6px #4080ff44;
       }
 
       /* Tables grid */
@@ -424,6 +494,31 @@ export class SettingsScreen implements BaseScreen {
       this.working.multiplicationTables[n] = !isSelected
       btn.classList.toggle('table-btn--sel', !isSelected)
       hint.classList.remove('sset-hint--show')
+    })
+
+    // Digit-level buttons (addition, subtraction, multiplication, division)
+    const levelGroupMap: Record<string, keyof Pick<
+      typeof this.working,
+      'additionDigits' | 'subtractionDigits' | 'multiplicationDigits' | 'divisionDigits'
+    >> = {
+      addLevel: 'additionDigits',
+      subLevel: 'subtractionDigits',
+      mulLevel: 'multiplicationDigits',
+      divLevel: 'divisionDigits',
+    }
+
+    container.querySelectorAll<HTMLElement>('.level-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const group = btn.dataset.group ?? ''
+        const key   = levelGroupMap[group]
+        if (!key) return
+        const value = Number(btn.dataset.level) as AdditionDigits & SubtractionDigits & MultiplyDigits & DivisionDigits
+        ;(this.working as unknown as Record<string, number>)[key] = value
+        // Update visual selection within same group
+        container.querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`).forEach((b) =>
+          b.classList.toggle('level-btn--sel', b === btn),
+        )
+      })
     })
 
     // Mute

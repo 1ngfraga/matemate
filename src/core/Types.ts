@@ -28,6 +28,21 @@ export const enum Screen {
   Result         = 'result',
 }
 
+// ── Difficulty levels ──────────────────────────────────────────────────────
+
+/**
+ * Number of digits in the operands for each operation.
+ * Addition supports 1-4; the rest support 1-2.
+ *   1 → single digit  (1–9)
+ *   2 → double digit  (10–99)
+ *   3 → triple digit  (100–999)   [addition only]
+ *   4 → quad digit    (1000–9999) [addition only]
+ */
+export type AdditionDigits    = 1 | 2 | 3 | 4
+export type SubtractionDigits = 1 | 2
+export type MultiplyDigits    = 1 | 2
+export type DivisionDigits    = 1 | 2
+
 // ── Settings ───────────────────────────────────────────────────────────────
 
 export interface Settings {
@@ -36,6 +51,11 @@ export interface Settings {
   /** Tables 1–12; at least one must be true */
   multiplicationTables: Record<number, boolean>
   muted: boolean
+  // Per-operation difficulty
+  additionDigits:       AdditionDigits
+  subtractionDigits:    SubtractionDigits
+  multiplicationDigits: MultiplyDigits
+  divisionDigits:       DivisionDigits
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +67,10 @@ export const DEFAULT_SETTINGS: Settings = {
     9: true, 10: true, 11: true, 12: true,
   },
   muted: false,
+  additionDigits:       1,
+  subtractionDigits:    1,
+  multiplicationDigits: 1,
+  divisionDigits:       1,
 }
 
 // ── Question / Answer ──────────────────────────────────────────────────────
@@ -101,4 +125,4 @@ export interface StoredResults {
   data: GameResult[]
 }
 
-export const STORAGE_VERSION = 1
+export const STORAGE_VERSION = 2

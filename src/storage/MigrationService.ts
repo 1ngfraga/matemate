@@ -26,7 +26,17 @@ export class MigrationService {
       version = 1
     }
 
-    // Future migrations: if (version < 2) { ... version = 2 }
+    // v1 → v2: backfill per-operation difficulty fields
+    if (version < 2) {
+      data = {
+        ...data,
+        additionDigits:       data.additionDigits       ?? 1,
+        subtractionDigits:    data.subtractionDigits    ?? 1,
+        multiplicationDigits: data.multiplicationDigits ?? 1,
+        divisionDigits:       data.divisionDigits       ?? 1,
+      }
+      version = 2
+    }
 
     return { version, data }
   }
