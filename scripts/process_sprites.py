@@ -92,10 +92,11 @@ def process(path: Path):
     # No color quantization — LANCZOS averaging already gives clean per-block
     # colors; quantizing to a small palette destroys vibrant multi-color sprites.
 
-    out = Image.fromarray(sa, 'RGBA').resize((sw * BLOCK, sh * BLOCK), Image.NEAREST)
+    # Scale back to EXACT original dimensions — pixel art look, same canvas size
+    out = Image.fromarray(sa, 'RGBA').resize((W, H), Image.NEAREST)
     out.save(str(path))
 
-    print(f'  {path.name:35s} {W}x{H} -> {sw*BLOCK}x{sh*BLOCK}  [{tag}]')
+    print(f'  {path.name:35s} {W}x{H} (unchanged)  [{tag}]')
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────

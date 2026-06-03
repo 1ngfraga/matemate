@@ -82,10 +82,10 @@ function drawPngSun(ctx: CanvasRenderingContext2D, cx: number, cy: number, size:
   if (sunImg.complete && sunImg.naturalWidth > 0) {
     ctx.save()
     ctx.imageSmoothingEnabled = false
-    ctx.drawImage(sunImg, cx - size / 2, cy - size / 2, size, size)
+    const sw = sunImg.naturalWidth, sh = sunImg.naturalHeight
+    ctx.drawImage(sunImg, cx - sw / 2, cy - sh / 2)
     ctx.restore()
   } else {
-    // Fallback while loading
     ctx.fillStyle = '#ffee44'
     ctx.beginPath(); ctx.arc(cx, cy, size / 2, 0, Math.PI * 2); ctx.fill()
   }
@@ -114,15 +114,13 @@ function drawPngClouds(ctx: CanvasRenderingContext2D, W: number, H: number, drif
   for (const cl of CLOUD_DEFS) {
     const img = cloudImgs[cl.ci]
     if (!img.complete || img.naturalWidth === 0) continue
-    // Size by height so clouds stay proportional on any screen width
-    const dh   = groundY * cl.hFrac
-    const dw   = Math.round(dh * (img.naturalWidth / img.naturalHeight))
-    const cy   = groundY * cl.ry
+    const dw = img.naturalWidth
+    const cy = groundY * cl.ry
     const base = ((cl.rx - drift) % PERIOD + PERIOD) % PERIOD
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
       const cx = base + rep * PERIOD
       if (cx > W + dw || cx < -dw) continue
-      ctx.drawImage(img, cx - dw / 2, cy, dw, dh)
+      ctx.drawImage(img, cx - dw / 2, cy)
     }
   }
   ctx.restore()
@@ -137,15 +135,11 @@ function mountainVariant(worldIdx: number): number {
 
 function drawMountains(
   ctx: CanvasRenderingContext2D,
-  W: number, H: number, groundY: number,
+  W: number, _H: number, groundY: number,
   scroll: number,
 ) {
   const PERIOD  = 1100
-  const dh      = H * 0.24                         // mountain display height
-  const dw      = Math.round(dh * (1016 / 256))    // ~950px wide at typical scale
-  const bottomY = groundY * 0.90                   // sit just above ground horizon
-
-  // 2 staggered positions per period
+  const bottomY = groundY * 0.90
   const positions = [80, 580]
 
   ctx.save()
@@ -156,11 +150,11 @@ function drawMountains(
     const scrollIdx = Math.floor(scroll / PERIOD)
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
       const mx = base + rep * PERIOD
-      if (mx > W + dw || mx < -dw) continue
-      const worldIdx = (scrollIdx + rep) * positions.length + pi
-      const img = mountainImgs[mountainVariant(worldIdx)]
+      const img = mountainImgs[mountainVariant((scrollIdx + rep) * positions.length + pi)]
       if (!img.complete || img.naturalWidth === 0) continue
-      ctx.drawImage(img, mx - dw / 2, bottomY - dh, dw, dh)
+      const dw = img.naturalWidth, dh = img.naturalHeight
+      if (mx > W + dw || mx < -dw) continue
+      ctx.drawImage(img, mx - dw / 2, bottomY - dh)
     }
   }
 
@@ -199,14 +193,12 @@ function treeVariant(worldIdx: number): number {
 
 function drawTrees(
   ctx: CanvasRenderingContext2D,
-  W: number, H: number, groundY: number,
+  W: number, _H: number, groundY: number,
   scroll: number,
 ) {
   const PERIOD = 320
-  const dh     = H * 0.30
-  const dw     = Math.round(dh * (332 / 304))
 
-  // 3 staggered positions per period, varying heights for depth
+  // scale factors only for depth illusion — base size comes from the PNG itself
   const positions = [
     { rx: 40,  scale: 1.00 },
     { rx: 140, scale: 0.82 },
@@ -220,15 +212,14 @@ function drawTrees(
 
   for (let pi = 0; pi < positions.length; pi++) {
     const { rx, scale } = positions[pi]
-    const tdw  = Math.round(dw * scale)
-    const tdh  = Math.round(dh * scale)
     const base = ((rx - scroll) % PERIOD + PERIOD) % PERIOD
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
       const tx = base + rep * PERIOD
-      if (tx > W + tdw || tx < -tdw) continue
-      const worldIdx = (scrollIdx + rep) * positions.length + pi
-      const img = treeImgs[treeVariant(worldIdx)]
+      const img = treeImgs[treeVariant((scrollIdx + rep) * positions.length + pi)]
       if (!img.complete || img.naturalWidth === 0) continue
+      const tdw = Math.round(img.naturalWidth  * scale)
+      const tdh = Math.round(img.naturalHeight * scale)
+      if (tx > W + tdw || tx < -tdw) continue
       ctx.drawImage(img, tx - tdw / 2, groundY - tdh, tdw, tdh)
     }
   }
@@ -264,9 +255,7 @@ function drawGroundSurface(
     return
   }
 
-  // Square tiles — scale to fill the ground strip height
-  const dh = H - groundY
-  const dw = Math.round(dh * ref.naturalWidth / ref.naturalHeight)
+  const dw = ref.naturalWidth
 
   const startTile = Math.floor(scrollX / dw)
   const offset    = scrollX % dw
@@ -278,10 +267,7 @@ function drawGroundSurface(
     const v   = groundVariant(startTile + i)
     const img = groundTiles[v]
     if (!img.complete || img.naturalWidth === 0) continue
-    ctx.drawImage(
-      img, 0, 0, img.naturalWidth, img.naturalHeight,
-      Math.round(i * dw - offset), groundY, dw, dh,
-    )
+    ctx.drawImage(img, Math.round(i * dw - offset), groundY)
   }
 
   ctx.restore()
@@ -307,21 +293,15 @@ const PLANT_LAYOUT: Array<{ rx: number; ry: number; plant: number }> = [
 
 function drawGroundPlants(
   ctx: CanvasRenderingContext2D,
-  W: number, H: number, groundY: number,
+  W: number, _H: number, groundY: number,
   scrollX: number,
 ) {
-  // All plant images share the same canvas size (507×246), so aspect ratio is identical
   const ref = plantImgs[0]
   if (!ref.complete || ref.naturalWidth === 0) {
-    // Fallback dots while images load
     ctx.fillStyle = '#ffee44'
     for (let x = 20; x < W; x += 45) ctx.fillRect(x, groundY + 2, 3, 3)
     return
   }
-
-  const aspect = ref.naturalWidth / ref.naturalHeight   // same for all plants
-  const dh = Math.max(16, Math.round(H * 0.18))
-  const dw = Math.round(dh * aspect)
 
   ctx.save()
   ctx.imageSmoothingEnabled = false
@@ -329,11 +309,13 @@ function drawGroundPlants(
   for (const pl of PLANT_LAYOUT) {
     const img = plantImgs[pl.plant]
     if (!img.complete || img.naturalWidth === 0) continue
+    const dw = img.naturalWidth
+    const dh = img.naturalHeight
     const base = ((pl.rx - scrollX) % TILE_PERIOD + TILE_PERIOD) % TILE_PERIOD
     for (let rep = -1; rep <= Math.ceil(W / TILE_PERIOD) + 1; rep++) {
       const px = base + rep * TILE_PERIOD
       if (px < -dw || px > W + dw) continue
-      ctx.drawImage(img, Math.round(px - dw / 2), groundY + pl.ry - dh, dw, dh)
+      ctx.drawImage(img, Math.round(px - dw / 2), groundY + pl.ry - dh)
     }
   }
 

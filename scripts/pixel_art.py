@@ -100,8 +100,8 @@ def to_pixel_art(src: str, block: int = 10, n_colors: int = 16, tol: int = 30) -
     # Snap alpha: fully transparent or fully opaque — no in-between
     sa[:, :, 3] = np.where(sa[:, :, 3] >= 128, 255, 0)
 
-    # No quantization — preserves original colors faithfully
-    out = Image.fromarray(sa, 'RGBA').resize((sw * block, sh * block), Image.NEAREST)
+    # Scale back to EXACT original dimensions — same canvas size, pixel art look
+    out = Image.fromarray(sa, 'RGBA').resize((W, H), Image.NEAREST)
 
     px_dst = str(p.with_name(f"{p.stem}_px{block}.png"))
     out.save(px_dst)
