@@ -66,6 +66,13 @@ export class MigrationService {
       }
     }
 
+    if (version < 5) {
+      return {
+        version: 5,
+        data: stored.data,
+      }
+    }
+
     return { version, data: stored.data }
   }
 
@@ -97,7 +104,17 @@ export class MigrationService {
         ...r,
         currentTarget:  r.currentTarget ?? (r.totalQuestions ?? 50),
         answersPlayed:  r.answersPlayed ?? (r.correct + r.incorrect),
-        completed:      r.completed ?? true,
+        completed:      false,
+      }))
+      version = 4
+    }
+
+    if (version < 5) {
+      data = data.map(r => ({
+        ...r,
+        completed: Boolean(r.completed) &&
+          (r.correct >= (r.currentTarget ?? r.totalQuestions ?? 50)) &&
+          (r.answersPlayed >= (r.currentTarget ?? r.totalQuestions ?? 50)),
       }))
       version = STORAGE_VERSION
     }

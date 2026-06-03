@@ -15,6 +15,9 @@ export function preloadSprites(): void {
     'sprites/capybara.png',
     'sprites/dino.png',
     'sprites/opossum.png',
+    'sprites/capybara_victory.png',
+    'sprites/dino_victory.png',
+    'sprites/opossum_victory.png',
     // Obstacles (individual)
     'sprites/rock.png',
     'sprites/lava.png',

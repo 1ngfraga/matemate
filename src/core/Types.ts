@@ -124,4 +124,4 @@ export interface GameResult {
 export interface StoredSettings { version: number; data: Settings }
 export interface StoredResults  { version: number; data: GameResult[] }
 
-export const STORAGE_VERSION = 4
+export const STORAGE_VERSION = 5

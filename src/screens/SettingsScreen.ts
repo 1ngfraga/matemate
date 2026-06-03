@@ -213,10 +213,12 @@ export class SettingsScreen implements BaseScreen {
   private attachStyles(container: HTMLElement): void {
     const s = document.createElement('style')
     s.textContent = `
-      .ss-root { width:100%; height:100%; position:relative; overflow:hidden; }
+      .ss-root { width:100%; height:100%; position:relative; overflow:auto; }
       .ss-phase {
         position:absolute; inset:0;
         display:flex; align-items:center; justify-content:center;
+        overflow:auto;
+        padding:16px;
         transition:opacity 200ms ease;
       }
       .ss-phase--hidden { opacity:0; pointer-events:none; }
@@ -228,6 +230,7 @@ export class SettingsScreen implements BaseScreen {
         background:#0d0d22; border:3px solid #4a4a8a;
         box-shadow:6px 6px 0 #000;
         max-width:320px; width:90%;
+        margin:auto;
       }
       .pin-icon  { font-size:32px; }
       .pin-title {

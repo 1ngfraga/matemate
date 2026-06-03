@@ -72,12 +72,23 @@ function makeCharSheet(path: string): GameSheet {
 export const DINO_GAME_SHEET: GameSheet = makeCharSheet('sprites/dino.png')
 export const OPOS_GAME_SHEET: GameSheet = makeCharSheet('sprites/opossum.png')
 export const CAPI_GAME_SHEET: GameSheet = makeCharSheet('sprites/capybara.png')
+export const DINO_VICTORY_GAME_SHEET: GameSheet = makeCharSheet('sprites/dino_victory.png')
+export const OPOS_VICTORY_GAME_SHEET: GameSheet = makeCharSheet('sprites/opossum_victory.png')
+export const CAPI_VICTORY_GAME_SHEET: GameSheet = makeCharSheet('sprites/capybara_victory.png')
 
 export function getAnimalGameSheet(animal: Animal): GameSheet {
   switch (animal) {
     case Animal.Dinosaur: return DINO_GAME_SHEET
     case Animal.Opossum:  return OPOS_GAME_SHEET
     case Animal.Capybara: return CAPI_GAME_SHEET
+  }
+}
+
+export function getAnimalVictoryGameSheet(animal: Animal): GameSheet {
+  switch (animal) {
+    case Animal.Dinosaur: return DINO_VICTORY_GAME_SHEET
+    case Animal.Opossum:  return OPOS_VICTORY_GAME_SHEET
+    case Animal.Capybara: return CAPI_VICTORY_GAME_SHEET
   }
 }
 

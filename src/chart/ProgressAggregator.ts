@@ -43,9 +43,12 @@ export class ProgressAggregator {
           (sum, r) => sum + (r.answersPlayed / Math.max(1, r.currentTarget)),
           0,
         )
+        const attempts = Math.ceil(unitSum)
+        const starred = opResults.some((r) => r.completed === true)
+        if (attempts <= 0 && !starred) return
         byOperation[op] = {
-          attempts: Math.ceil(unitSum),
-          starred: opResults.some((r) => r.completed),
+          attempts,
+          starred,
         }
       })
 

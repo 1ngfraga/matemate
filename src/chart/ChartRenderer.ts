@@ -6,11 +6,11 @@ interface DayRect {
   day: DayData
 }
 
-const OP_COLORS: Record<Operation, { base: string; dark: string; label: string }> = {
-  [Operation.Addition]:       { base: '#4060d0', dark: '#203078', label: '+' },
-  [Operation.Subtraction]:    { base: '#8030a0', dark: '#4a165e', label: '−' },
-  [Operation.Multiplication]: { base: '#207050', dark: '#12402e', label: '×' },
-  [Operation.Division]:       { base: '#904020', dark: '#5c2810', label: '÷' },
+const OP_COLORS: Record<Operation, { base: string; dark: string; hi: string; label: string }> = {
+  [Operation.Addition]:       { base: '#5050c0', dark: '#2020a0', hi: '#8080ff', label: '+' },
+  [Operation.Subtraction]:    { base: '#8030a0', dark: '#4a165e', hi: '#c060f0', label: '−' },
+  [Operation.Multiplication]: { base: '#40a060', dark: '#207050', hi: '#80d890', label: '×' },
+  [Operation.Division]:       { base: '#b86a30', dark: '#904020', hi: '#f0b070', label: '÷' },
 }
 
 const OP_ORDER: Operation[] = [
@@ -67,27 +67,31 @@ export class ChartRenderer {
         const y = PAD_T + row * (boxH + rowGap)
         const theme = OP_COLORS[op]
 
-        ctx.fillStyle = data ? theme.base : '#151530'
-        ctx.fillRect(x, y, dayW, boxH)
-        ctx.fillStyle = data ? theme.dark : '#0d0d22'
-        ctx.fillRect(x, y + boxH - 3, dayW, 3)
-
-        ctx.strokeStyle = isToday ? '#f0c040' : '#2a2a5a'
-        ctx.lineWidth = data?.starred ? 2 : 1
-        ctx.strokeRect(x + 0.5, y + 0.5, dayW - 1, boxH - 1)
+        if (data && data.attempts > 0) {
+          ctx.fillStyle = theme.base
+          ctx.fillRect(x, y, dayW, boxH)
+          ctx.fillStyle = theme.hi
+          ctx.fillRect(x + 2, y + 2, dayW - 4, Math.max(3, Math.floor(boxH * 0.22)))
+          ctx.fillStyle = theme.dark
+          ctx.fillRect(x, y + boxH - 4, dayW, 4)
+          ctx.fillRect(x + dayW - 4, y, 4, boxH)
+          ctx.strokeStyle = isToday ? '#f0c040' : theme.hi
+          ctx.lineWidth = data.starred ? 2 : 1
+          ctx.strokeRect(x + 0.5, y + 0.5, dayW - 1, boxH - 1)
+        }
 
         ctx.fillStyle = '#ffffff'
         ctx.font = `bold ${Math.max(8, Math.floor(boxH * 0.32))}px 'Courier New', monospace`
         ctx.textAlign = 'left'
         ctx.textBaseline = 'top'
-        ctx.fillText(theme.label, x + 4, y + 3)
+        if (data && data.attempts > 0) ctx.fillText(theme.label, x + 4, y + 3)
 
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.font = `bold ${Math.max(9, Math.floor(boxH * 0.42))}px 'Courier New', monospace`
-        ctx.fillText(String(data?.attempts ?? 0), x + dayW / 2, y + boxH / 2 + 1)
+        if (data && data.attempts > 0) ctx.fillText(String(data.attempts), x + dayW / 2, y + boxH / 2 + 1)
 
-        if (data?.starred) {
+        if (data?.starred && data.attempts > 0) {
           ctx.fillStyle = '#f0c040'
           ctx.textAlign = 'right'
           ctx.textBaseline = 'top'
@@ -146,8 +150,14 @@ export class ChartRenderer {
     const rows = OP_ORDER.map((op) => {
       const data = day.byOperation[op]
       const theme = OP_COLORS[op]
-      return `<div class="tt-row"><span style="color:${theme.base}">${theme.label}</span> ${data?.attempts ?? 0}${data?.starred ? ' ★' : ''}</div>`
-    }).join('')
+      if (!data || data.attempts <= 0) return ''
+      return `<div class="tt-row"><span style="color:${theme.base}">${theme.label}</span> ${data.attempts}${data.starred ? ' ★' : ''}</div>`
+    }).filter(Boolean).join('')
+
+    if (!rows) {
+      if (this.tooltip) this.tooltip.style.display = 'none'
+      return
+    }
 
     this.tooltip.innerHTML =
       `<div class="tt-date">${day.dateISO.slice(5).replace('-', '/')}</div>` +
