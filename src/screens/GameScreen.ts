@@ -127,9 +127,7 @@ export class GameScreen implements BaseScreen {
     if (correct) {
       this.state.recordCorrect()
       this.sound.playCorrect()
-      const rect = this.canvas.getBoundingClientRect()
-      // Burst at obstacle position (center of canvas width for safety)
-      this.anim.onCorrectAnswer(rect.width * 0.62, rect.height * 0.45)
+      this.anim.onCorrectAnswer()
     } else {
       this.state.recordIncorrect()
       this.sound.playWrong()

@@ -28,6 +28,7 @@ interface ObstacleAnim {
   speed:    number      // px per ms (computed on first tick)
   phase:    ObstaclePhase
   phaseTime:number
+  impactTriggered: boolean
 }
 
 // ── Controller ────────────────────────────────────────────────────────────
@@ -51,24 +52,33 @@ export class AnimationController {
   // ── Events ────────────────────────────────────────────────────────────
 
   /** Correct answer: break obstacle with confetti */
-  onCorrectAnswer(burstX: number, burstY: number): void {
-    this.confetti.burst(burstX, burstY, 55)
+  onCorrectAnswer(): void {
+    if (this.obstacle) {
+      const { x, y } = this.getObstacleCenter(this.obstacle)
+      this.confetti.burst(x, y, 55)
+    }
     if (this.obstacle && this.obstacle.phase !== 'cracking' && this.obstacle.phase !== 'breaking') {
       this.obstacle.phase     = 'cracking'
       this.obstacle.phaseTime = 0
     }
   }
 
-  /** Wrong answer: immediate damage + obstacle collision wherever it is */
+  /** Wrong answer: obstacle rushes the animal before triggering the hit effect */
   onWrongAnswer(): void {
-    this.damageEffect.trigger()
-    if (this.obstacle) { this.obstacle.phase = 'colliding'; this.obstacle.phaseTime = 0 }
+    if (this.obstacle) {
+      this.obstacle.phase = 'colliding'
+      this.obstacle.phaseTime = 0
+      this.obstacle.impactTriggered = false
+    }
   }
 
-  /** Grace period ended without answer → damage (obstacle was already 'waiting') */
+  /** Grace period ended without answer → obstacle completes the hit */
   onTimeout(): void {
-    this.damageEffect.trigger()
-    if (this.obstacle) { this.obstacle.phase = 'colliding'; this.obstacle.phaseTime = 0 }
+    if (this.obstacle) {
+      this.obstacle.phase = 'colliding'
+      this.obstacle.phaseTime = 0
+      this.obstacle.impactTriggered = false
+    }
   }
 
   /**
@@ -78,7 +88,7 @@ export class AnimationController {
   spawnObstacle(kind: ObstacleKind, startX: number, timerMs: number): void {
     this.obstacle = {
       kind, x: startX, startX, targetX: 0, timerMs,
-      speed: 0, phase: 'approach', phaseTime: 0,
+      speed: 0, phase: 'approach', phaseTime: 0, impactTriggered: false,
     }
   }
 
@@ -128,6 +138,14 @@ export class AnimationController {
   }
 
   // ── Obstacle update ────────────────────────────────────────────────────
+
+  private getObstacleCenter(obs: ObstacleAnim): { x: number; y: number } {
+    const { width, height } = getObstacleSize(obs.kind)
+    return {
+      x: obs.x + (width * this.spr) / 2,
+      y: this.groundY - (height * this.spr) / 2,
+    }
+  }
 
   private updateObstacle(ctx: CanvasRenderingContext2D, dt: number, W: number): void {
     const obs = this.obstacle!
@@ -207,10 +225,32 @@ export class AnimationController {
       }
 
       case 'colliding': {
-        const bounce = Math.sin(obs.phaseTime * 0.022) * 14 * Math.max(0, 1 - obs.phaseTime / 500)
-        const alpha  = Math.max(0, 1 - obs.phaseTime / 560)
+        if (!obs.impactTriggered && obs.x > obs.targetX) {
+          const rushSpeed = Math.max(obs.speed * 4.5, 1.6)
+          obs.x = Math.max(obs.targetX, obs.x - rushSpeed * dt)
+          paint(obs.x, 1)
+          if (obs.x <= obs.targetX) {
+            obs.impactTriggered = true
+            obs.phaseTime = 0
+            const { x, y } = this.getObstacleCenter(obs)
+            this.confetti.burstBad(x, y, 34)
+            this.damageEffect.trigger()
+          }
+          break
+        }
+
+        if (!obs.impactTriggered) {
+          obs.impactTriggered = true
+          obs.phaseTime = 0
+          const { x, y } = this.getObstacleCenter(obs)
+          this.confetti.burstBad(x, y, 34)
+          this.damageEffect.trigger()
+        }
+
+        const bounce = Math.sin(obs.phaseTime * 0.03) * 16 * Math.max(0, 1 - obs.phaseTime / 420)
+        const alpha  = Math.max(0, 1 - obs.phaseTime / 520)
         paint(obs.x + bounce, alpha)
-        if (obs.phaseTime > 560) { obs.phase = 'gone'; obs.phaseTime = 0 }
+        if (obs.phaseTime > 520) { obs.phase = 'gone'; obs.phaseTime = 0 }
         break
       }
 
