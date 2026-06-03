@@ -2,7 +2,7 @@ import { Animal } from '../core/Types'
 import { AnimalAnimation, AnimSnapshot } from './AnimalAnimation'
 import { DamageEffect } from './DamageEffect'
 import { Confetti } from '../graphics/Confetti'
-import { getAnimalGameSheet, GameSheet, drawObstacle } from '../graphics/GameSprites'
+import { getAnimalGameSheet, GameSheet, drawObstacle, OBS_GRID_W, OBS_GRID_H } from '../graphics/GameSprites'
 import { drawGroundShadow } from '../graphics/PixelArtRenderer'
 import { ObstacleKind } from '../graphics/ObstacleSprites'
 
@@ -29,8 +29,8 @@ interface ObstacleAnim {
   phaseTime:number
 }
 
-function obstacleGridW(kind: ObstacleKind): number {
-  return kind === 'rock' ? 14 : 12  // cactus and wall both ~12
+function obstacleGridW(_kind: ObstacleKind): number {
+  return OBS_GRID_W
 }
 
 // ── Controller ────────────────────────────────────────────────────────────
@@ -141,8 +141,7 @@ export class AnimationController {
 
     const s     = this.spr
     const gw    = obstacleGridW(obs.kind)
-    const obsGH = obs.kind === 'cactus' ? 20 : obs.kind === 'wall' ? 16 : 9
-    const obsY  = this.groundY - obsGH * s
+    const obsY  = this.groundY - OBS_GRID_H * s
 
     // Compute speed on first tick (needs animalX which is only known after first update)
     if (obs.speed === 0 && this.animalX > 0) {
@@ -195,8 +194,11 @@ export class AnimationController {
         paint(obs.x, alpha, true)
         // Debris
         ctx.save(); ctx.globalAlpha = alpha
-        const col = obs.kind === 'rock' ? '#a0a090' : obs.kind === 'wall' ? '#c04030' : '#28aa28'
-        ctx.fillStyle = col
+        const DEBRIS: Record<string, string> = {
+          rock: '#a0a090', cactus: '#cc4010', wall: '#c08040',
+          bomb: '#1a1a1a', pot: '#5080c0', ball: '#e04020', cube: '#c03080',
+        }
+        ctx.fillStyle = DEBRIS[obs.kind] ?? '#a0a090'
         for (let i = 0; i < 5; i++) {
           const dx = (i - 2) * s * 3
           const dy = -(obs.phaseTime * 0.14) + i * s * 0.5
@@ -208,7 +210,6 @@ export class AnimationController {
       }
 
       case 'colliding': {
-        // Bounce back from animal, fade out
         const bounce = Math.sin(obs.phaseTime * 0.022) * 14 * Math.max(0, 1 - obs.phaseTime / 500)
         const alpha  = Math.max(0, 1 - obs.phaseTime / 560)
         paint(obs.x + bounce, alpha)

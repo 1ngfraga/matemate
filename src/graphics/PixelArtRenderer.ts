@@ -1,5 +1,18 @@
-// Colorful, child-friendly background inspired by the reference images.
-// Bright blue sky, white clouds, green rolling hills, flowers and pebbles.
+// Colorful, child-friendly background.
+// Plants and ground surface use PNG sprite sheets from public/sprites/.
+
+import { loadSprite } from './SpriteLoader'
+
+// Individual plant sprites (all same size: 507×246, transparent-padded)
+const plantImgs: HTMLImageElement[] = [0,1,2,3,4,5,6,7].map(i => loadSprite(`sprites/plant_${i}.png`))
+// 3 ground tile variants (all same size: 551×542) — randomly connected
+const groundTiles: HTMLImageElement[] = [0,1,2].map(i => loadSprite(`sprites/ground_${i}.png`))
+const sunImg     = loadSprite('sprites/sun.png')
+const cloudImgs  = [
+  loadSprite('sprites/cloud_a.png'),
+  loadSprite('sprites/cloud_b.png'),
+  loadSprite('sprites/cloud_c.png'),
+]
 
 export interface StarField {
   stars: Array<{ x: number; y: number; size: number; bright: number }>
@@ -33,22 +46,16 @@ export function drawBackground(
   ctx.fillRect(0, 0, W, groundY + 2)
 
   // ── Sun (top-right area) ──
-  drawSun(ctx, W * 0.85, H * 0.08, H * 0.07)
+  drawPngSun(ctx, W * 0.85, H * 0.1, H * 0.14)
 
   // ── Clouds ──
-  drawClouds(ctx, W, H, scrollX * 0.04)
+  drawPngClouds(ctx, W, H, scrollX * 0.04)
 
   // ── Distant hills (bright green) ──
   drawHills(ctx, W, H, groundY, scrollX * 0.12)
 
-  // ── Ground base (bright green grass) ──
-  const groundGrad = ctx.createLinearGradient(0, groundY, 0, H)
-  groundGrad.addColorStop(0,   '#48cc48')   // bright grass top
-  groundGrad.addColorStop(0.15,'#38b038')   // main grass
-  groundGrad.addColorStop(0.6, '#289028')   // deeper green
-  groundGrad.addColorStop(1,   '#1a6018')   // very bottom
-  ctx.fillStyle = groundGrad
-  ctx.fillRect(0, groundY, W, H - groundY)
+  // ── Ground base: tiled PNG or fallback gradient ──
+  drawGroundSurface(ctx, W, H, groundY, scrollX)
 
   // ── Ground edge (bright line) ──
   ctx.fillStyle = '#70e870'
@@ -56,72 +63,54 @@ export function drawBackground(
   ctx.fillStyle = '#58d458'
   ctx.fillRect(0, groundY + 3, W, 2)
 
-  // ── Ground details: flowers + pebbles ──
-  drawGroundDetails(ctx, W, H, groundY, scrollX)
+  // ── Ground plants (PNG) or fallback flowers ──
+  drawGroundPlants(ctx, W, H, groundY, scrollX)
 }
 
-// ── Sun ───────────────────────────────────────────────────────────────────
+// ── Sun (PNG) ─────────────────────────────────────────────────────────────
 
-function drawSun(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
-  // Glow
-  const glow = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 2.5)
-  glow.addColorStop(0,   'rgba(255,240,100,0.6)')
-  glow.addColorStop(0.5, 'rgba(255,220,50,0.15)')
-  glow.addColorStop(1,   'rgba(255,200,0,0)')
-  ctx.fillStyle = glow
-  ctx.beginPath(); ctx.arc(cx, cy, r * 2.5, 0, Math.PI * 2); ctx.fill()
-
-  // Sun disk
-  ctx.fillStyle = '#ffee44'
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill()
-  ctx.fillStyle = '#ffffa0'
-  ctx.beginPath(); ctx.arc(cx - r * 0.2, cy - r * 0.2, r * 0.5, 0, Math.PI * 2); ctx.fill()
-
-  // Pixel-art rays
-  ctx.fillStyle = '#ffee44'
-  const rays = 8
-  for (let i = 0; i < rays; i++) {
-    const angle = (i / rays) * Math.PI * 2
-    const x1 = cx + Math.cos(angle) * r * 1.3
-    const y1 = cy + Math.sin(angle) * r * 1.3
-    const rw  = Math.max(2, r * 0.15)
-    ctx.fillRect(x1 - rw / 2, y1 - rw / 2, rw, rw * 2.5)
+function drawPngSun(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  if (sunImg.complete && sunImg.naturalWidth > 0) {
+    ctx.save()
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(sunImg, cx - size / 2, cy - size / 2, size, size)
+    ctx.restore()
+  } else {
+    // Fallback while loading
+    ctx.fillStyle = '#ffee44'
+    ctx.beginPath(); ctx.arc(cx, cy, size / 2, 0, Math.PI * 2); ctx.fill()
   }
 }
 
-// ── Clouds ────────────────────────────────────────────────────────────────
+// ── Clouds (PNG) ──────────────────────────────────────────────────────────
 
+// 5 cloud positions, cycling through the 3 cloud variants, drifting slowly
 const CLOUD_DEFS = [
-  { rx: 50,  ry: 0.08, w: 120, h: 40 },
-  { rx: 240, ry: 0.05, w: 90,  h: 32 },
-  { rx: 420, ry: 0.12, w: 150, h: 48 },
-  { rx: 620, ry: 0.06, w: 100, h: 36 },
-  { rx: 800, ry: 0.10, w: 130, h: 42 },
+  { rx: 60,   ry: 0.07, wFrac: 0.18, ci: 0 },
+  { rx: 260,  ry: 0.04, wFrac: 0.14, ci: 1 },
+  { rx: 460,  ry: 0.10, wFrac: 0.22, ci: 2 },
+  { rx: 650,  ry: 0.05, wFrac: 0.16, ci: 0 },
+  { rx: 840,  ry: 0.09, wFrac: 0.20, ci: 1 },
 ]
 
-function drawCloud(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
-  // Shadow
-  ctx.fillStyle = '#c8e8ff'
-  ctx.beginPath(); ctx.ellipse(cx + w * 0.1, cy + h * 0.3, w * 0.45, h * 0.38, 0, 0, Math.PI * 2); ctx.fill()
-
-  // Main cloud body (3 overlapping circles for fluffy look)
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath(); ctx.ellipse(cx, cy, w * 0.5, h * 0.5, 0, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.ellipse(cx - w * 0.28, cy + h * 0.1, w * 0.35, h * 0.38, 0, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.ellipse(cx + w * 0.3, cy + h * 0.08, w * 0.38, h * 0.42, 0, 0, Math.PI * 2); ctx.fill()
-  // Top puff
-  ctx.beginPath(); ctx.ellipse(cx - w * 0.08, cy - h * 0.18, w * 0.28, h * 0.32, 0, 0, Math.PI * 2); ctx.fill()
-}
-
-function drawClouds(ctx: CanvasRenderingContext2D, W: number, H: number, drift: number) {
+function drawPngClouds(ctx: CanvasRenderingContext2D, W: number, H: number, drift: number) {
   const PERIOD = 900
+  ctx.save()
+  ctx.imageSmoothingEnabled = false
   for (const cl of CLOUD_DEFS) {
+    const img = cloudImgs[cl.ci]
+    if (!img.complete || img.naturalWidth === 0) continue
+    const dw   = W * cl.wFrac
+    const dh   = dw * (img.naturalHeight / img.naturalWidth)
+    const cy   = H * cl.ry
+    const base = ((cl.rx - drift) % PERIOD + PERIOD) % PERIOD
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
-      const cx = ((cl.rx - drift % PERIOD + rep * PERIOD) % PERIOD + PERIOD) % PERIOD
-      if (cx > W + cl.w || cx < -cl.w) continue
-      drawCloud(ctx, cx, H * cl.ry + cl.h / 2, cl.w, cl.h)
+      const cx = base + rep * PERIOD
+      if (cx > W + dw || cx < -dw) continue
+      ctx.drawImage(img, cx - dw / 2, cy, dw, dh)
     }
   }
+  ctx.restore()
 }
 
 // ── Distant hills ─────────────────────────────────────────────────────────
@@ -134,14 +123,15 @@ function drawHills(
   // Far hills (lighter)
   ctx.fillStyle = '#60c860'
   const PERIOD_F = 600
-  for (let rep = -1; rep <= Math.ceil(W / PERIOD_F) + 1; rep++) {
-    const shapes = [
-      { rx: 80,  amp: 0.12 },
-      { rx: 240, amp: 0.09 },
-      { rx: 400, amp: 0.14 },
-    ]
-    for (const sh of shapes) {
-      const cx = ((sh.rx - offset % PERIOD_F + rep * PERIOD_F) % PERIOD_F + PERIOD_F) % PERIOD_F
+  const farShapes = [
+    { rx: 80,  amp: 0.12 },
+    { rx: 240, amp: 0.09 },
+    { rx: 400, amp: 0.14 },
+  ]
+  for (const sh of farShapes) {
+    const base = ((sh.rx - offset) % PERIOD_F + PERIOD_F) % PERIOD_F
+    for (let rep = -1; rep <= Math.ceil(W / PERIOD_F) + 1; rep++) {
+      const cx = base + rep * PERIOD_F
       const ht = H * sh.amp
       ctx.beginPath()
       ctx.ellipse(cx, hillY + ht * 0.3, H * sh.amp * 1.8, ht, 0, 0, Math.PI * 2)
@@ -153,9 +143,11 @@ function drawHills(
   ctx.fillStyle = '#48b848'
   const PERIOD_N = 500
   const shapes2 = [{ rx: 120, amp: 0.10 }, { rx: 300, amp: 0.13 }, { rx: 460, amp: 0.08 }]
-  for (let rep = -1; rep <= Math.ceil(W / PERIOD_N) + 1; rep++) {
-    for (const sh of shapes2) {
-      const cx = ((sh.rx - offset * 1.4 % PERIOD_N + rep * PERIOD_N) % PERIOD_N + PERIOD_N) % PERIOD_N
+  for (const sh of shapes2) {
+    const nearOffset = offset * 1.4
+    const base = ((sh.rx - nearOffset) % PERIOD_N + PERIOD_N) % PERIOD_N
+    for (let rep = -1; rep <= Math.ceil(W / PERIOD_N) + 1; rep++) {
+      const cx = base + rep * PERIOD_N
       if (cx < -200 || cx > W + 200) continue
       const ht = H * sh.amp
       ctx.beginPath()
@@ -183,83 +175,108 @@ function drawTree(ctx: CanvasRenderingContext2D, cx: number, baseY: number, h: n
   ctx.beginPath(); ctx.arc(cx + crownR * 0.3, baseY - trunkH - crownR * 0.7, crownR * 0.65, 0, Math.PI * 2); ctx.fill()
 }
 
-// ── Ground details: flowers + pebbles ────────────────────────────────────
+// ── Ground surface (PNG tiles or gradient fallback) ───────────────────────────
 
-const DETAIL_PERIOD = 400
+const TILE_PERIOD = 400   // px before tiles repeat
 
-// Pre-defined deterministic layout
-const FLOWERS: Array<{ rx: number; ry: number; color: string; size: number }> = [
-  { rx: 18,  ry: 4,  color: '#ff88aa', size: 3 },
-  { rx: 35,  ry: 12, color: '#ffffff', size: 2 },
-  { rx: 62,  ry: 6,  color: '#ffee44', size: 3 },
-  { rx: 88,  ry: 14, color: '#ff88aa', size: 2 },
-  { rx: 105, ry: 8,  color: '#ff66cc', size: 3 },
-  { rx: 130, ry: 18, color: '#ffffff', size: 2 },
-  { rx: 152, ry: 5,  color: '#ffee44', size: 3 },
-  { rx: 175, ry: 10, color: '#ff88aa', size: 3 },
-  { rx: 198, ry: 16, color: '#ff66cc', size: 2 },
-  { rx: 220, ry: 6,  color: '#ffffff', size: 3 },
-  { rx: 245, ry: 12, color: '#ffee44', size: 2 },
-  { rx: 268, ry: 4,  color: '#ff88aa', size: 3 },
-  { rx: 290, ry: 18, color: '#ff66cc', size: 2 },
-  { rx: 315, ry: 8,  color: '#ffffff', size: 3 },
-  { rx: 338, ry: 14, color: '#ffee44', size: 3 },
-  { rx: 362, ry: 5,  color: '#ff88aa', size: 2 },
-  { rx: 385, ry: 10, color: '#ff66cc', size: 3 },
-]
+// Deterministic tile-variant picker: same tile position always gets same variant,
+// but adjacent tiles look different. No flickering during scroll.
+function groundVariant(tileIdx: number): number {
+  return (Math.imul(tileIdx, 2654435761) >>> 0) % 3
+}
 
-const PEBBLES: Array<{ rx: number; ry: number; w: number; h: number }> = [
-  { rx: 48,  ry: 20, w: 6, h: 4 },
-  { rx: 120, ry: 24, w: 8, h: 5 },
-  { rx: 210, ry: 22, w: 5, h: 4 },
-  { rx: 300, ry: 26, w: 7, h: 5 },
-  { rx: 350, ry: 20, w: 5, h: 3 },
-]
-
-function drawGroundDetails(
+function drawGroundSurface(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, groundY: number,
   scrollX: number,
 ) {
-  const maxY = H - groundY - 2
+  const ref = groundTiles[0]
+  if (!ref.complete || ref.naturalWidth === 0) {
+    // Fallback gradient while tiles load
+    const g = ctx.createLinearGradient(0, groundY, 0, H)
+    g.addColorStop(0,    '#48cc48')
+    g.addColorStop(0.15, '#38b038')
+    g.addColorStop(0.6,  '#289028')
+    g.addColorStop(1,    '#1a6018')
+    ctx.fillStyle = g
+    ctx.fillRect(0, groundY, W, H - groundY)
+    return
+  }
 
-  // Flowers
-  for (const fl of FLOWERS) {
-    if (fl.ry > maxY) continue
-    for (let rep = -1; rep <= Math.ceil(W / DETAIL_PERIOD) + 1; rep++) {
-      const fx = ((fl.rx - scrollX % DETAIL_PERIOD + rep * DETAIL_PERIOD) % DETAIL_PERIOD + DETAIL_PERIOD) % DETAIL_PERIOD
-      if (fx < -10 || fx > W + 10) continue
-      const fy = groundY + fl.ry
+  // Square tiles — scale to fill the ground strip height
+  const dh = H - groundY
+  const dw = Math.round(dh * ref.naturalWidth / ref.naturalHeight)
 
-      // Flower: petals around center
-      ctx.fillStyle = fl.color
-      ctx.fillRect(fx - fl.size, fy - fl.size, fl.size * 2 + 1, 1)       // horizontal petal
-      ctx.fillRect(fx, fy - fl.size, 1, fl.size * 2 + 1)                 // vertical petal
-      // Center
-      ctx.fillStyle = '#ffee44'
-      ctx.fillRect(fx - 1, fy - 1, 3, 3)
-      // Stem
-      ctx.fillStyle = '#38b038'
-      ctx.fillRect(fx, fy + fl.size, 1, 3)
+  const startTile = Math.floor(scrollX / dw)
+  const offset    = scrollX % dw
+
+  ctx.save()
+  ctx.imageSmoothingEnabled = false
+
+  for (let i = -1; i <= Math.ceil(W / dw) + 1; i++) {
+    const v   = groundVariant(startTile + i)
+    const img = groundTiles[v]
+    if (!img.complete || img.naturalWidth === 0) continue
+    ctx.drawImage(
+      img, 0, 0, img.naturalWidth, img.naturalHeight,
+      Math.round(i * dw - offset), groundY, dw, dh,
+    )
+  }
+
+  ctx.restore()
+}
+
+// ── Ground plants (PNG sprite sheet) ─────────────────────────────────────────
+//
+// plants.png has 8 varieties in a 4×2 grid.
+// Scatter them along the ground using a deterministic layout.
+
+// rx: position within TILE_PERIOD, ry: pixels below groundY, plant: which of 8 plants
+const PLANT_LAYOUT: Array<{ rx: number; ry: number; plant: number }> = [
+  { rx: 15,  ry: 0, plant: 0 },
+  { rx: 60,  ry: 2, plant: 3 },
+  { rx: 100, ry: 0, plant: 6 },
+  { rx: 145, ry: 1, plant: 1 },
+  { rx: 190, ry: 0, plant: 4 },
+  { rx: 230, ry: 2, plant: 7 },
+  { rx: 270, ry: 0, plant: 2 },
+  { rx: 315, ry: 1, plant: 5 },
+  { rx: 355, ry: 0, plant: 0 },
+]
+
+function drawGroundPlants(
+  ctx: CanvasRenderingContext2D,
+  W: number, H: number, groundY: number,
+  scrollX: number,
+) {
+  // All plant images share the same canvas size (507×246), so aspect ratio is identical
+  const ref = plantImgs[0]
+  if (!ref.complete || ref.naturalWidth === 0) {
+    // Fallback dots while images load
+    ctx.fillStyle = '#ffee44'
+    for (let x = 20; x < W; x += 45) ctx.fillRect(x, groundY + 2, 3, 3)
+    return
+  }
+
+  const aspect = ref.naturalWidth / ref.naturalHeight   // same for all plants
+  const dh = Math.max(16, Math.round(H * 0.18))
+  const dw = Math.round(dh * aspect)
+
+  ctx.save()
+  ctx.imageSmoothingEnabled = false
+
+  for (const pl of PLANT_LAYOUT) {
+    const img = plantImgs[pl.plant]
+    if (!img.complete || img.naturalWidth === 0) continue
+    const base = ((pl.rx - scrollX) % TILE_PERIOD + TILE_PERIOD) % TILE_PERIOD
+    for (let rep = -1; rep <= Math.ceil(W / TILE_PERIOD) + 1; rep++) {
+      const px = base + rep * TILE_PERIOD
+      if (px < -dw || px > W + dw) continue
+      ctx.drawImage(img, Math.round(px - dw / 2), groundY + pl.ry - dh, dw, dh)
     }
   }
 
-  // Pebbles / small rocks
-  for (const pb of PEBBLES) {
-    if (pb.ry > maxY) continue
-    for (let rep = -1; rep <= Math.ceil(W / DETAIL_PERIOD) + 1; rep++) {
-      const px = ((pb.rx - scrollX % DETAIL_PERIOD + rep * DETAIL_PERIOD) % DETAIL_PERIOD + DETAIL_PERIOD) % DETAIL_PERIOD
-      if (px < -pb.w || px > W + pb.w) continue
-      const py = groundY + pb.ry
-
-      ctx.fillStyle = '#b0b090'
-      ctx.fillRect(px, py, pb.w, pb.h)
-      ctx.fillStyle = '#d0d0b0'   // highlight
-      ctx.fillRect(px, py, pb.w, 1)
-      ctx.fillStyle = '#808070'   // shadow
-      ctx.fillRect(px, py + pb.h - 1, pb.w, 1)
-    }
-  }
+  ctx.restore()
 }
 
 // ── HUD utilities ─────────────────────────────────────────────────────────

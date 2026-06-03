@@ -1,4 +1,7 @@
 import './styles.css'
+import { preloadSprites } from './graphics/SpriteLoader'
+
+preloadSprites()
 
 // Rotate notice for portrait mobile
 const rotateNotice = document.createElement('div')
