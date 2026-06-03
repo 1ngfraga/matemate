@@ -148,6 +148,17 @@ function drawDino(p: Px, frame: number, hit: boolean) {
   p(K,  0, 6, 1, 4);  p(S, 1, 6, 1, 1); p(D, 1, 7, 2, 2); p(M, 1, 9, 2, 1)
   p(K,  1, 10, 3, 1); p(K, 2, 5, 2, 1)
 
+  // Long dinosaur tail — thick and tapering
+  p(K, 0, 4, 1, 1)                       // tail-body join
+  p(K, 0, 5, 1, 8)                       // tail left edge (long!)
+  p(S, 1, 5, 1, 2); p(D, 1, 7, 1, 1)    // tail upper dark
+  p(D, 1, 8, 2, 2)                       // tail main
+  p(M, 2, 10, 1, 1)                      // tail lighter lower
+  p(D, 1, 11, 1, 1)                      // taper
+  p(K, 1, 12, 2, 1)                      // bottom edge
+  p(D, 2, 12, 1, 2)                      // pointed tip going down
+  p(K, 2, 14, 1, 1)                      // tip point
+
   if (hit) {
     p('#ff4444', 15, 3, 2, 1); p('#ff4444', 15, 5, 2, 1) // X eyes
     p(Y, 21, -1); p(Y, 22, 1)                             // stars
@@ -183,10 +194,16 @@ function drawOpossum(p: Px, frame: number, hit: boolean) {
   p(K,  20, 6, 3, 1)                          // snout bottom line
   p(D,  20, 5, 2, 1)                          // undersnout shadow
 
-  // Thin curly tail
-  p(K,  0, 7); p(D, 1, 7); p(D, 1, 8)
-  p(K,  1, 9); p(D, 2, 9); p(K, 3, 9)
-  p(K,  0, 10); p(D, 0, 10)
+  // Long curling opossum tail (prehensile) — signature feature
+  p(K, 0, 5, 1, 8)                         // upper vertical segment
+  p(D, 0, 6, 1, 6)                         // tail fill upper
+  p(K, -1, 12, 2, 1)                       // horizontal left turn
+  p(D, -1, 12, 1, 1)
+  p(K, -1, 13, 1, 5)                       // lower vertical
+  p(D, -1, 13, 1, 4)
+  p(K, -1, 17, 3, 1)                       // curl to the right
+  p(D,  0, 17, 2, 1)
+  p(K,  1, 16, 1, 1)                       // tip
 
   if (hit) {
     p('#ff4444', 15, 3, 2, 1); p('#ff4444', 15, 5, 2, 1)

@@ -6,11 +6,34 @@ import { getAnimalGameSheet, GameSheet, drawObstacle } from '../graphics/GameSpr
 import { drawGroundShadow } from '../graphics/PixelArtRenderer'
 import { ObstacleKind } from '../graphics/ObstacleSprites'
 
-// Ground surface fraction — must match PixelArtRenderer's groundY = H * GROUND_FRAC
 export const GROUND_FRAC = 0.68
 
-type ObstaclePhase = 'approach' | 'cracking' | 'breaking' | 'gone' | 'colliding'
-interface ObstacleAnim { kind: ObstacleKind; x: number; phase: ObstaclePhase; phaseTime: number }
+// ── Obstacle state ────────────────────────────────────────────────────────
+
+type ObstaclePhase =
+  | 'approach'    // moving toward animal, timed to arrive at question end
+  | 'waiting'     // arrived at animal, grace period (player still can answer)
+  | 'cracking'    // correct answer → break sequence
+  | 'breaking'
+  | 'colliding'   // wrong/timeout → hit sequence
+  | 'gone'
+
+interface ObstacleAnim {
+  kind:     ObstacleKind
+  x:        number      // current x (CSS px at scale 1)
+  startX:   number      // initial x
+  targetX:  number      // x where it stands next to animal (computed on first tick)
+  timerMs:  number      // total question time in ms
+  speed:    number      // px per ms (computed on first tick)
+  phase:    ObstaclePhase
+  phaseTime:number
+}
+
+function obstacleGridW(kind: ObstacleKind): number {
+  return kind === 'rock' ? 14 : 12  // cactus and wall both ~12
+}
+
+// ── Controller ────────────────────────────────────────────────────────────
 
 export class AnimationController {
   private animalAnim   = new AnimalAnimation()
@@ -19,11 +42,10 @@ export class AnimationController {
   private obstacle: ObstacleAnim | null = null
   private sheet: GameSheet
 
-  // Cached layout values
   private animalX = 0
   private animalY = 0
   private groundY = 0
-  private spr     = 3   // pixel scale
+  private spr     = 3
 
   constructor(private animal: Animal) {
     this.sheet = getAnimalGameSheet(animal)
@@ -31,33 +53,51 @@ export class AnimationController {
 
   // ── Events ────────────────────────────────────────────────────────────
 
+  /** Correct answer: break obstacle with confetti */
   onCorrectAnswer(burstX: number, burstY: number): void {
-    this.animalAnim.triggerVictory()
     this.confetti.burst(burstX, burstY, 55)
-    if (this.obstacle) this.obstacle.phase = 'cracking'
+    if (this.obstacle && this.obstacle.phase !== 'cracking' && this.obstacle.phase !== 'breaking') {
+      this.obstacle.phase     = 'cracking'
+      this.obstacle.phaseTime = 0
+    }
   }
+
+  /** Wrong answer: immediate damage + obstacle collision wherever it is */
   onWrongAnswer(): void {
     this.animalAnim.triggerHit()
     this.damageEffect.trigger()
-    if (this.obstacle) this.obstacle.phase = 'colliding'
+    if (this.obstacle) { this.obstacle.phase = 'colliding'; this.obstacle.phaseTime = 0 }
   }
+
+  /** Grace period ended without answer → damage (obstacle was already 'waiting') */
   onTimeout(): void {
+    this.animalAnim.triggerHit()
     this.damageEffect.trigger()
-    if (this.obstacle) this.obstacle.phase = 'colliding'
+    if (this.obstacle) { this.obstacle.phase = 'colliding'; this.obstacle.phaseTime = 0 }
   }
-  spawnObstacle(kind: ObstacleKind, startX: number): void {
-    this.obstacle = { kind, x: startX, phase: 'approach', phaseTime: 0 }
+
+  /**
+   * Spawn a new obstacle.
+   * @param timerMs  Total question duration in ms — obstacle arrives exactly at end.
+   */
+  spawnObstacle(kind: ObstacleKind, startX: number, timerMs: number): void {
+    this.obstacle = {
+      kind, x: startX, startX, targetX: 0, timerMs,
+      speed: 0, phase: 'approach', phaseTime: 0,
+    }
   }
+
   clearObstacle(): void { this.obstacle = null }
-  setAnimal(animal: Animal): void { this.animal = animal; this.sheet = getAnimalGameSheet(animal) }
+
+  setAnimal(animal: Animal): void {
+    this.animal = animal
+    this.sheet  = getAnimalGameSheet(animal)
+  }
 
   // ── Main tick ─────────────────────────────────────────────────────────
 
   update(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number): void {
-    // Ground surface position must match PixelArtRenderer's value
     this.groundY = H * GROUND_FRAC
-
-    // Scale: target sprite ~26% of canvas height; sprite is 20 grid rows tall
     const SPRITE_H = 20
     this.spr     = Math.max(2, Math.min(5, Math.floor(H * 0.26 / SPRITE_H)))
     this.animalX = W * 0.14
@@ -78,7 +118,7 @@ export class AnimationController {
     this.damageEffect.draw(ctx, W, H)
   }
 
-  // ── Animal ────────────────────────────────────────────────────────────
+  // ── Animal draw ───────────────────────────────────────────────────────
 
   private drawAnimal(ctx: CanvasRenderingContext2D, snap: AnimSnapshot): void {
     const frame = this.sheet.frames[snap.frameIndex]
@@ -91,59 +131,89 @@ export class AnimationController {
     frame.draw(ctx, x, y, s)
   }
 
-  // ── Obstacle ──────────────────────────────────────────────────────────
+  // ── Obstacle update ────────────────────────────────────────────────────
 
   private updateObstacle(ctx: CanvasRenderingContext2D, dt: number, W: number): void {
-    const obs  = this.obstacle!
+    const obs = this.obstacle!
     obs.phaseTime += dt
-    const s    = this.spr
-    // Obstacle heights per kind (in grid px)
+
+    const s     = this.spr
+    const gw    = obstacleGridW(obs.kind)
     const obsGH = obs.kind === 'cactus' ? 20 : obs.kind === 'wall' ? 16 : 9
-    const obsGW = obs.kind === 'cactus' ? 12 : obs.kind === 'wall' ? 12 : 14
     const obsY  = this.groundY - obsGH * s
 
+    // Compute speed on first tick (needs animalX which is only known after first update)
+    if (obs.speed === 0 && this.animalX > 0) {
+      // targetX: obstacle right edge touches animal left edge
+      obs.targetX = this.animalX + gw * s * 0.2   // slight overlap for dramatic effect
+      const dist  = Math.max(1, obs.startX - obs.targetX)
+      obs.speed   = dist / Math.max(1, obs.timerMs)
+    }
+
     const paint = (x: number, alpha: number, cracked = false) => {
-      ctx.save(); ctx.globalAlpha = alpha
+      ctx.save(); ctx.globalAlpha = Math.max(0, alpha)
       drawObstacle(ctx, obs.kind, x, obsY, s, cracked)
       ctx.restore()
-      drawGroundShadow(ctx, x + (obsGW * s) / 2, this.groundY, obsGW * s)
+      if (alpha > 0.1) drawGroundShadow(ctx, x + (gw * s) / 2, this.groundY, gw * s)
     }
 
     switch (obs.phase) {
+
       case 'approach': {
-        const speed = W * 0.35 / 1000
-        const minX  = this.animalX + obsGW * s * 1.4
-        obs.x = Math.max(minX, obs.x - speed * dt)
+        if (obs.speed > 0) {
+          obs.x -= obs.speed * dt
+          if (obs.x <= obs.targetX) {
+            obs.x         = obs.targetX
+            obs.phase     = 'waiting'
+            obs.phaseTime = 0
+          }
+        }
         paint(obs.x, 1)
         break
       }
+
+      case 'waiting': {
+        // Arrived at animal: tense vibration, waiting for player or grace to expire
+        const t       = obs.phaseTime / 1000   // 0→1 over 1 second
+        const vibrate = Math.sin(obs.phaseTime * 0.06) * 3 * (1 - t * 0.5)
+        paint(obs.x + vibrate, 1)
+        // Grace is handled externally by GameScreen (Timer.grace → onTimeout())
+        break
+      }
+
       case 'cracking': {
-        paint(obs.x + Math.sin(obs.phaseTime * 0.28) * 4, 1, true)
+        const shake = Math.sin(obs.phaseTime * 0.28) * 4
+        paint(obs.x + shake, 1, true)
         if (obs.phaseTime > 180) { obs.phase = 'breaking'; obs.phaseTime = 0 }
         break
       }
+
       case 'breaking': {
-        const alpha = Math.max(0, 1 - obs.phaseTime / 260)
+        const alpha = Math.max(0, 1 - obs.phaseTime / 280)
         paint(obs.x, alpha, true)
-        // Debris chunks
+        // Debris
         ctx.save(); ctx.globalAlpha = alpha
-        const dColor = obs.kind === 'rock' ? '#a0a090' : obs.kind === 'wall' ? '#c04030' : '#28aa28'
-        ctx.fillStyle = dColor
+        const col = obs.kind === 'rock' ? '#a0a090' : obs.kind === 'wall' ? '#c04030' : '#28aa28'
+        ctx.fillStyle = col
         for (let i = 0; i < 5; i++) {
           const dx = (i - 2) * s * 3
-          const dy = -(obs.phaseTime * 0.12) + i * s * 0.8
-          ctx.fillRect(obs.x + obsGW * s / 2 + dx, obsY + dy, s * 2, s * 2)
+          const dy = -(obs.phaseTime * 0.14) + i * s * 0.5
+          ctx.fillRect(obs.x + gw * s / 2 + dx, obsY + dy, s * 2, s * 2)
         }
         ctx.restore()
-        if (obs.phaseTime > 280) { obs.phase = 'gone'; obs.phaseTime = 0 }
+        if (obs.phaseTime > 300) { obs.phase = 'gone'; obs.phaseTime = 0 }
         break
       }
+
       case 'colliding': {
-        const bounce = Math.sin(obs.phaseTime * 0.022) * 12 * Math.max(0, 1 - obs.phaseTime / 480)
-        paint(obs.x + bounce, Math.max(0, 1 - obs.phaseTime / 540))
-        if (obs.phaseTime > 540) { obs.phase = 'gone'; obs.phaseTime = 0 }
+        // Bounce back from animal, fade out
+        const bounce = Math.sin(obs.phaseTime * 0.022) * 14 * Math.max(0, 1 - obs.phaseTime / 500)
+        const alpha  = Math.max(0, 1 - obs.phaseTime / 560)
+        paint(obs.x + bounce, alpha)
+        if (obs.phaseTime > 560) { obs.phase = 'gone'; obs.phaseTime = 0 }
         break
       }
+
       case 'gone': break
     }
   }

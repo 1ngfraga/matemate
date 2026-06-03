@@ -45,14 +45,9 @@ export class AnimalAnimation {
   }
 
   private updateVictory(): AnimSnapshot {
-    const dur = 900
-    const t   = Math.min(this.stateTime / dur, 1)
-    // Full sine arc jump
-    const jumpY  = -Math.sin(t * Math.PI) * 30
-    // Quick squash on landing
-    const squish = t > 0.85 ? 1 + Math.sin((t - 0.85) / 0.15 * Math.PI) * 0.12 : 1
-    if (this.stateTime >= dur + 80) this.setState('run')
-    return { frameIndex: F_VICTORY, offsetX: 0, offsetY: jumpY * squish, alpha: 1 }
+    // No jump — just a brief happy pose (the obstacle breaking + confetti is the visual reward)
+    if (this.stateTime >= 400) this.setState('run')
+    return { frameIndex: F_VICTORY, offsetX: 0, offsetY: 0, alpha: 1 }
   }
 
   private updateHit(): AnimSnapshot {

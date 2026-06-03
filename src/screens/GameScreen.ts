@@ -104,10 +104,11 @@ export class GameScreen implements BaseScreen {
     // Timer
     this.timer.start(this.settings.timerDuration * 1000, GRACE_MS)
 
-    // Obstacle
-    const obsKind = randomObstacleKind()
-    const rect    = this.canvas.getBoundingClientRect()
-    this.anim.spawnObstacle(obsKind, rect.width * 1.05)
+    // Obstacle — timed to arrive exactly when question timer hits 0
+    const obsKind   = randomObstacleKind()
+    const rect      = this.canvas.getBoundingClientRect()
+    const timerMs   = this.settings.timerDuration * 1000
+    this.anim.spawnObstacle(obsKind, rect.width * 1.06, timerMs)
 
     // DOM: render question + answers
     this.renderQuestion()
@@ -126,8 +127,9 @@ export class GameScreen implements BaseScreen {
     if (correct) {
       this.state.recordCorrect()
       this.sound.playCorrect()
-      const rect  = this.canvas.getBoundingClientRect()
-      this.anim.onCorrectAnswer(rect.width * 0.65, rect.height * 0.5)
+      const rect = this.canvas.getBoundingClientRect()
+      // Burst at obstacle position (center of canvas width for safety)
+      this.anim.onCorrectAnswer(rect.width * 0.62, rect.height * 0.45)
     } else {
       this.state.recordIncorrect()
       this.sound.playWrong()

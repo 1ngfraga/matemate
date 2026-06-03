@@ -55,21 +55,22 @@ export class AnswerGenerator {
   // ── Per-operation candidate generation ────────────────────────────────
 
   private static candidates(question: Question): number[] {
-    const { operation: op, operandA: a, operandB: b, answer: c } = question
+    const { operation: op, operandA: a, operandB: b, answer: c, addends } = question
     const list: number[] = []
 
     switch (op) {
       case Operation.Addition:
-        // Most plausible: off by 1 in one operand, or tens-digit confusion
-        list.push(
-          a + (b + 1),                   // b one too high
-          a + (b - 1),                   // b one too low
-          (a + 1) + b,                   // a one too high
-          (a - 1) + b,                   // a one too low
-          c + 10, c - 10,                // carried/borrowed tens wrong
-          c + 1,  c - 1,                 // simple off-by-one
-          c + 2,  c - 2,
-        )
+        if (addends && addends.length > 2) {
+          // Multi-addend: forgot one addend, or off-by-one on one of them
+          list.push(c + 1, c - 1, c + 2, c - 2, c + 5, c - 5, c + 10, c - 10)
+          list.push(c - addends[0], c - addends[addends.length - 1])
+        } else {
+          list.push(
+            a + (b + 1), a + (b - 1),
+            (a + 1) + b, (a - 1) + b,
+            c + 10, c - 10, c + 1, c - 1, c + 2, c - 2,
+          )
+        }
         break
 
       case Operation.Subtraction:

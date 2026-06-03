@@ -1,4 +1,4 @@
-import { Screen, Settings, TimerDuration, AdditionDigits, SubtractionDigits, MultiplyDigits, DivisionDigits } from '../core/Types'
+import { Screen, Settings, TimerDuration, AdditionOperandDigits, AdditionNumAddends, SubtractionDigits } from '../core/Types'
 import { NavigateFn } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 
@@ -104,7 +104,8 @@ export class SettingsScreen implements BaseScreen {
       return `<button class="timer-btn${sel ? ' timer-btn--sel' : ''}" data-timer="${t}">${TIMER_LABELS[t]}</button>`
     }).join('')
 
-    const tableBtns = Array.from({ length: 12 }, (_, i) => {
+    // Tables 1-9 only
+    const tableBtns = Array.from({ length: 9 }, (_, i) => {
       const n   = i + 1
       const sel = w.multiplicationTables[n]
       return `<button class="table-btn${sel ? ' table-btn--sel' : ''}" data-table="${n}">${n}</button>`
@@ -112,14 +113,18 @@ export class SettingsScreen implements BaseScreen {
 
     const muteSel = w.muted
 
-    // Addition: 4 levels
-    const addOpts = [
+    // Addition: operand size (1-9 or 10-99)
+    const addOperandOpts = [
       { value: 1, label: '1 dígito\n(1-9)' },
       { value: 2, label: '2 dígitos\n(10-99)' },
-      { value: 3, label: '3 cifras\n(100-999)' },
-      { value: 4, label: '4 cifras\n(1000+)' },
     ]
-    // Others: 2 levels
+    // Addition: number of addends
+    const addCountOpts = [
+      { value: 2, label: '2 números\n1+2' },
+      { value: 3, label: '3 números\n1+2+3' },
+      { value: 4, label: '4 números\n1+2+3+4' },
+      { value: 5, label: '5 números\n1+2+3+4+5' },
+    ]
     const twoOpts = [
       { value: 1, label: '1 dígito\n(1-9)' },
       { value: 2, label: '2 dígitos\n(10-99)' },
@@ -140,10 +145,12 @@ export class SettingsScreen implements BaseScreen {
             <div class="timer-row" id="timerRow">${timerBtns}</div>
           </section>
 
-          <!-- Suma -->
+          <!-- Suma: dos configuraciones independientes -->
           <section class="sset-section">
-            <div class="sset-label">+ SUMA — tamaño de los números</div>
-            ${this.levelBtns('addLevel', addOpts, w.additionDigits)}
+            <div class="sset-label">+ SUMA — tamaño de cada número</div>
+            ${this.levelBtns('addOperandLevel', addOperandOpts, w.additionOperandDigits)}
+            <div class="sset-label" style="margin-top:8px;">Cantidad de números a sumar</div>
+            ${this.levelBtns('addCountLevel', addCountOpts, w.additionNumAddends)}
           </section>
 
           <!-- Resta -->
@@ -152,19 +159,18 @@ export class SettingsScreen implements BaseScreen {
             ${this.levelBtns('subLevel', twoOpts, w.subtractionDigits)}
           </section>
 
-          <!-- Multiplicación + tablas -->
+          <!-- Multiplicación + tablas 1-9 -->
           <section class="sset-section">
-            <div class="sset-label">× MULTIPLICACIÓN — tamaño de los factores</div>
-            ${this.levelBtns('mulLevel', twoOpts, w.multiplicationDigits)}
-            <div class="sset-label" style="margin-top:8px;">Tablas activas</div>
+            <div class="sset-label">× MULTIPLICACIÓN — elige las tablas (1-9)</div>
+            <div class="sset-sub">La tabla es el primer número: <b>5</b> × 1, 2, 3...</div>
             <div class="sset-hint" id="tableHint">Selecciona al menos una</div>
             <div class="table-grid" id="tableGrid">${tableBtns}</div>
           </section>
 
-          <!-- División -->
+          <!-- División (usa las mismas tablas de multiplicación) -->
           <section class="sset-section">
-            <div class="sset-label">÷ DIVISIÓN — tamaño del divisor</div>
-            ${this.levelBtns('divLevel', twoOpts, w.divisionDigits)}
+            <div class="sset-label">÷ DIVISIÓN</div>
+            <div class="sset-sub">Usa las mismas tablas seleccionadas en multiplicación</div>
           </section>
 
           <!-- Sonido -->
@@ -294,6 +300,10 @@ export class SettingsScreen implements BaseScreen {
       .sset-label {
         font-family:'Courier New',monospace; font-size:clamp(10px,1.8vw,13px);
         color:#8080c0; letter-spacing:2px;
+      }
+      .sset-sub {
+        font-family:'Courier New',monospace; font-size:10px;
+        color:#6060a0; letter-spacing:0.5px; line-height:1.4;
       }
       .sset-hint {
         font-family:'Courier New',monospace; font-size:11px;
@@ -496,25 +506,20 @@ export class SettingsScreen implements BaseScreen {
       hint.classList.remove('sset-hint--show')
     })
 
-    // Digit-level buttons (addition, subtraction, multiplication, division)
-    const levelGroupMap: Record<string, keyof Pick<
-      typeof this.working,
-      'additionDigits' | 'subtractionDigits' | 'multiplicationDigits' | 'divisionDigits'
-    >> = {
-      addLevel: 'additionDigits',
-      subLevel: 'subtractionDigits',
-      mulLevel: 'multiplicationDigits',
-      divLevel: 'divisionDigits',
+    // Level buttons — map group id to settings key
+    const levelGroupMap: Record<string, keyof Settings> = {
+      addOperandLevel: 'additionOperandDigits',
+      addCountLevel:   'additionNumAddends',
+      subLevel:        'subtractionDigits',
     }
 
     container.querySelectorAll<HTMLElement>('.level-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const group = btn.dataset.group ?? ''
-        const key   = levelGroupMap[group]
+        const key   = levelGroupMap[group] as keyof Settings
         if (!key) return
-        const value = Number(btn.dataset.level) as AdditionDigits & SubtractionDigits & MultiplyDigits & DivisionDigits
+        const value = Number(btn.dataset.level)
         ;(this.working as unknown as Record<string, number>)[key] = value
-        // Update visual selection within same group
         container.querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`).forEach((b) =>
           b.classList.toggle('level-btn--sel', b === btn),
         )
