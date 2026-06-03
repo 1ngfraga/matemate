@@ -98,10 +98,12 @@ export class AnimationController {
 
   update(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number): void {
     this.groundY = H * GROUND_FRAC
-    const SPRITE_H = 20
-    this.spr     = Math.max(2, Math.min(5, Math.floor(H * 0.26 / SPRITE_H)))
-    this.animalX = W * 0.14
-    this.animalY = this.groundY - this.spr * SPRITE_H
+    // Use actual sprite gridH so any-size sprite lands feet on ground
+    const frame0 = this.sheet.frames[0]
+    const sprH   = frame0 ? frame0.gridH : 28
+    this.spr     = Math.max(2, Math.min(4, Math.floor(H * 0.32 / sprH)))
+    this.animalX = W * 0.10
+    this.animalY = this.groundY - sprH * this.spr
 
     const { dx, dy } = this.damageEffect.update(dt)
     ctx.save()

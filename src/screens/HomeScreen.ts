@@ -4,6 +4,7 @@ import { BaseScreen } from '../app/ScreenManager'
 import { storage } from '../storage/StorageService'
 import { ProgressAggregator } from '../chart/ProgressAggregator'
 import { ChartRenderer } from '../chart/ChartRenderer'
+import { getAnimalGameSheet } from '../graphics/GameSprites'
 
 const ANIMAL_META: Record<Animal, { label: string; colors: string[] }> = {
   [Animal.Dinosaur]: { label: 'DINO',      colors: ['#5ad45a', '#2a8c2a', '#f0c040'] },
@@ -54,7 +55,7 @@ export class HomeScreen implements BaseScreen {
       const sel  = a === this.settings.animal
       return `
         <button class="animal-btn${sel ? ' animal-btn--selected' : ''}" data-animal="${a}">
-          <canvas class="animal-mini" width="44" height="44" data-animal="${a}"></canvas>
+          <canvas class="animal-mini" width="88" height="72" data-animal="${a}"></canvas>
           <span class="animal-label">${meta.label}</span>
         </button>`
     }).join('')
@@ -223,79 +224,26 @@ export class HomeScreen implements BaseScreen {
 
   // ── Animal pixel-art previews ─────────────────────────────────────────────
 
+  // Use GameSprites frame 0 for the animal selector — same sprite as the game
   private renderAnimalPreviews(container: HTMLElement): void {
-    container.querySelectorAll<HTMLCanvasElement>('canvas.animal-mini').forEach((c) => {
-      const animal = c.dataset.animal as Animal
-      const ctx = c.getContext('2d')!
-      this.drawAnimalMini(ctx, animal, c.width, c.height)
+    container.querySelectorAll<HTMLCanvasElement>('canvas.animal-mini').forEach((canvas) => {
+      const animal = canvas.dataset.animal as Animal
+      const ctx    = canvas.getContext('2d')!
+      const W      = canvas.width, H = canvas.height
+      ctx.clearRect(0, 0, W, H)
+
+      const sheet  = getAnimalGameSheet(animal)
+      const frame  = sheet.frames[0]
+      if (!frame) return
+
+      // Fit sprite inside canvas with a small margin
+      const scaleX = Math.floor((W - 4) / frame.gridW)
+      const scaleY = Math.floor((H - 4) / frame.gridH)
+      const s      = Math.max(1, Math.min(scaleX, scaleY))
+      const ox     = Math.floor((W - frame.gridW * s) / 2)
+      const oy     = Math.floor((H - frame.gridH * s) / 2)
+      frame.draw(ctx, ox, oy, s)
     })
-  }
-
-  private drawAnimalMini(ctx: CanvasRenderingContext2D, animal: Animal, w: number, h: number): void {
-    const s = 3  // pixel block size
-    const px = (color: string, gx: number, gy: number, gw = 1, gh = 1) => {
-      ctx.fillStyle = color
-      ctx.fillRect(gx * s, gy * s, gw * s, gh * s)
-    }
-    ctx.clearRect(0, 0, w, h)
-
-    if (animal === Animal.Dinosaur) {
-      const G = '#5ad45a', D = '#2a8c2a', Y = '#f0c040'
-      // body
-      px(G,  2, 4, 6, 4); px(D, 2, 4); px(D, 7, 4); px(D, 2, 7); px(D, 7, 7)
-      // belly
-      px('#8aec8a', 3, 5, 3, 2)
-      // tail
-      px(G, 0, 5); px(G, 1, 5); px(D, 0, 6)
-      // neck + head
-      px(G, 6, 3, 2, 2); px(G, 6, 1, 3, 3)
-      // eye
-      ctx.fillStyle = '#000'; ctx.fillRect(7 * s + 1, 2 * s + 1, s - 1, s - 1)
-      ctx.fillStyle = '#fff'; ctx.fillRect(7 * s + s / 2, 2 * s + 1, s / 2, s / 2)
-      // spikes
-      px(Y, 3, 3); px(Y, 4, 2); px(Y, 5, 3)
-      // legs
-      px(D, 3, 8); px(D, 4, 8); px(D, 6, 8); px(D, 7, 9)
-
-    } else if (animal === Animal.Opossum) {
-      const G = '#b0b0b0', D = '#707070', P = '#ffaaaa', W = '#ffffff'
-      // body
-      px(G, 2, 4, 6, 4); px(D, 2, 4); px(D, 7, 4); px(D, 2, 7); px(D, 7, 7)
-      // belly
-      px(W, 3, 5, 3, 2)
-      // tail (curly hint)
-      px(D, 0, 6); px(D, 1, 7); px(D, 0, 8)
-      // big ears
-      px(G, 5, 0); px(G, 6, 0); px(P, 5, 1); px(G, 7, 0); px(G, 8, 1)
-      // head
-      px(G, 5, 2, 4, 3)
-      // pointy nose
-      px(G, 8, 4); px(P, 9, 4)
-      // eye
-      ctx.fillStyle = '#000'; ctx.fillRect(6 * s + 1, 3 * s + 1, s - 1, s - 1)
-      // legs
-      px(D, 3, 8); px(D, 6, 8); px(D, 4, 9); px(D, 7, 9)
-
-    } else {
-      // Capybara
-      const B = '#c8843c', D = '#7a4a18', T = '#e8c890', K = '#3a2010'
-      // big round body
-      px(B, 1, 3, 8, 5); px(D, 1, 3); px(D, 8, 3); px(D, 1, 7); px(D, 8, 7)
-      // belly
-      px(T, 2, 4, 6, 3)
-      // square head
-      px(B, 5, 1, 4, 3)
-      // nose
-      px(D, 7, 3, 2, 1)
-      // nostrils
-      px(K, 7, 3); px(K, 8, 3)
-      // eyes
-      ctx.fillStyle = '#000'; ctx.fillRect(6 * s + 1, 1 * s + 1, s - 1, s - 1)
-      // ears
-      px(B, 5, 0); px(B, 6, 0)
-      // legs
-      px(D, 2, 8); px(D, 3, 9); px(D, 6, 8); px(D, 7, 9)
-    }
   }
 
   // ── Chart ─────────────────────────────────────────────────────────────────
