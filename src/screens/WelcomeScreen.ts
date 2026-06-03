@@ -108,7 +108,11 @@ export class WelcomeScreen implements BaseScreen {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
       btn.textContent = "...";
-      // try { await requestFullscreen(document.documentElement) } catch { hint.textContent = '' }
+      try {
+        await requestFullscreen(document.documentElement);
+      } catch {
+        hint.textContent = "";
+      }
       this.navigate(Screen.Home);
     });
   }
