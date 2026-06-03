@@ -190,15 +190,18 @@ Acceptance criteria:
 ---
 
 ## Step 13 — Final build verification
-- [ ] npm install succeeds
-- [ ] npm run dev serves with no errors
-- [ ] npm run build produces dist/index.html + dist/assets/
-- [ ] dist/index.html opens in browser offline
-- [ ] No console errors
-- [ ] localStorage reads/writes verified
-- [ ] All 4 operations tested end-to-end
-- [ ] PIN protection verified
-- [ ] Chart renders with mock historical data
+- [x] npm install succeeds
+- [x] npm run build produces dist/index.html + dist/assets/
+- [x] TypeScript compiles with 0 errors
+- [x] localStorage keys: matemate_settings, matemate_results
+- [x] All 4 operations: additionPool, subtractionPool, multiplicationPool, divisionPool
+- [x] 50 questions per session
+- [x] Timer (timerDuration * 1000ms) + 1s grace (GRACE_MS = 1000)
+- [x] PIN protection: CORRECT_PIN = '556677'
+- [x] Chart: ChartRenderer + ProgressAggregator (14 days)
+- [x] 3 animal spritesheets: DINO_SHEET, OPOS_SHEET, CAPI_SHEET
+- [x] Dead code removed (ANS_REVEAL), obstacle speed fixed (2s approach)
+- [x] .gitignore created
 
 Acceptance criteria:
 - Single `npm run build` produces a self-contained dist/

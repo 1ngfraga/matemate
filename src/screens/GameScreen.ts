@@ -17,7 +17,6 @@ const GRACE_MS     = 1000
 const ANS_COLORS   = ['#2a3a9a', '#1e2e80', '#2a2080']
 const ANS_CORRECT  = '#0e5a28'
 const ANS_WRONG    = '#6a1414'
-const ANS_REVEAL   = '#0e5a28'
 
 type Phase = 'question' | 'grace' | 'feedback' | 'done'
 
@@ -325,8 +324,6 @@ export class GameScreen implements BaseScreen {
         btn.style.background  = ANS_WRONG
         btn.style.borderColor = '#d04040'
         this.addIcon(btn, '✗')
-      } else if (choice.isCorrect) {
-        btn.style.background  = ANS_REVEAL
       }
     })
   }

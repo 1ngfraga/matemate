@@ -143,8 +143,8 @@ export class AnimationController {
 
     switch (obs.phase) {
       case 'approach': {
-        // Slide in from right at a fixed speed
-        const speed = W * 0.18 / 1000  // crosses ~18% of screen per second per ms
+        // Slide in from right: ~2 seconds to reach standoff position
+        const speed = W * 0.38 / 1000
         obs.x = Math.max(this.animalX + sprW * 1.4, obs.x - speed * dt)
         drawSprite(ctx, sprite, obs.x, obsY, s)
         drawGroundShadow(ctx, obs.x + sprW / 2, this.groundY, sprW)
