@@ -1,4 +1,4 @@
-import { Screen, Settings, TimerDuration, AdditionOperandDigits, AdditionNumAddends, SubtractionDigits } from '../core/Types'
+import { Screen, Settings, TimerDuration, AdditionOperandDigits, AdditionNumAddends, SubtractionDigits, Operation } from '../core/Types'
 import { NavigateFn } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 
@@ -112,6 +112,18 @@ export class SettingsScreen implements BaseScreen {
     }).join('')
 
     const muteSel = w.muted
+    const targetRows = [
+      { op: Operation.Addition, label: '+ SUMA' },
+      { op: Operation.Subtraction, label: '− RESTA' },
+      { op: Operation.Multiplication, label: '× MULTIPLICACIÓN' },
+      { op: Operation.Division, label: '÷ DIVISIÓN' },
+    ].map(({ op, label }) => `
+      <label class="goal-row">
+        <span class="goal-label">${label}</span>
+        <input class="goal-input" data-goal-op="${op}" type="number" min="1" max="200" step="1"
+          value="${w.gameTargetByOperation[op]}">
+      </label>
+    `).join('')
 
     // Addition: operand size (1-9 or 10-99)
     const addOperandOpts = [
@@ -143,6 +155,12 @@ export class SettingsScreen implements BaseScreen {
           <section class="sset-section">
             <div class="sset-label">⏱ TIEMPO POR PREGUNTA</div>
             <div class="timer-row" id="timerRow">${timerBtns}</div>
+          </section>
+
+          <section class="sset-section">
+            <div class="sset-label">🏁 META DE RACHA POR JUEGO</div>
+            <div class="sset-sub">El juego termina solo cuando logra esta cantidad correcta seguida</div>
+            <div class="goal-grid">${targetRows}</div>
           </section>
 
           <!-- Suma: dos configuraciones independientes -->
@@ -310,6 +328,29 @@ export class SettingsScreen implements BaseScreen {
         color:#d04040; min-height:14px; opacity:0; transition:opacity 200ms;
       }
       .sset-hint--show { opacity:1; }
+      .goal-grid { display:flex; flex-direction:column; gap:8px; }
+      .goal-row {
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 84px;
+        align-items:center;
+        gap:8px;
+      }
+      .goal-label {
+        font-family:'Courier New',monospace;
+        font-size:clamp(10px,1.8vw,13px);
+        color:#a0a0d0;
+      }
+      .goal-input {
+        width:100%;
+        font-family:'Courier New',monospace;
+        font-size:16px;
+        font-weight:bold;
+        color:#f0c040;
+        background:#06060f;
+        border:2px solid #3a3a6a;
+        padding:8px 10px;
+        min-height:40px;
+      }
 
       /* Timer */
       .timer-row { display:flex; gap:8px; }
@@ -533,6 +574,15 @@ export class SettingsScreen implements BaseScreen {
         this.working.muted = muted
         container.querySelector('#muteOn')?.classList.toggle('mute-btn--sel',  !muted)
         container.querySelector('#muteOff')?.classList.toggle('mute-btn--sel', muted)
+      })
+    })
+
+    container.querySelectorAll<HTMLInputElement>('.goal-input').forEach((input) => {
+      input.addEventListener('change', () => {
+        const op = input.dataset.goalOp as Operation
+        const value = Math.max(1, Math.min(200, Math.round(Number(input.value) || 1)))
+        input.value = String(value)
+        this.working.gameTargetByOperation[op] = value
       })
     })
 

@@ -81,7 +81,7 @@ export class HomeScreen implements BaseScreen {
         <div class="home-body">
           <!-- Left / Top: chart -->
           <section class="home-chart-section">
-            <div class="home-section-label">▸ PROGRESO (14 DÍAS)</div>
+            <div class="home-section-label">▸ INTENTOS (14 DÍAS)</div>
             <div class="home-chart-wrap" id="hChartWrap">
               <canvas id="hChart" class="home-chart"></canvas>
             </div>

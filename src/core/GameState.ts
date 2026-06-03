@@ -2,50 +2,70 @@ import { GameResult, Operation, Question } from './Types'
 import { ProgressAggregator } from '../chart/ProgressAggregator'
 
 export class GameState {
-  private _correct   = 0
-  private _incorrect = 0
-  private _index     = 0
-  private _startedAt = Date.now()
+  private questions: Question[]
+  private currentIdx = 0
+  private totalCorrect = 0
+  private totalIncorrect = 0
+  private streak = 0
+  private bestStreak = 0
+  private startedAt = Date.now()
 
   constructor(
-    readonly operation:  Operation,
-    readonly questions:  Question[],
-  ) {}
+    readonly operation: Operation,
+    initialQuestions: Question[],
+    readonly targetStreak: number,
+  ) {
+    this.questions = [...initialQuestions]
+  }
 
-  // ── Accessors ─────────────────────────────────────────────────────────
+  get currentQuestion(): Question { return this.questions[this.currentIdx] }
+  get currentIndex(): number { return this.currentIdx }
+  get correctCount(): number { return this.totalCorrect }
+  get incorrectCount(): number { return this.totalIncorrect }
+  get currentStreak(): number { return this.streak }
+  get bestRun(): number { return this.bestStreak }
+  get answersPlayed(): number { return this.totalCorrect + this.totalIncorrect }
+  get isComplete(): boolean { return this.streak >= this.targetStreak }
+  get progressText(): string { return `${this.streak} / ${this.targetStreak}` }
+  get correctText(): string { return `✓ ${this.totalCorrect}` }
+  get incorrectText(): string { return `✗ ${this.totalIncorrect}` }
 
-  get currentQuestion(): Question  { return this.questions[this._index] }
-  get currentIndex():    number    { return this._index }
-  get totalQuestions():  number    { return this.questions.length }
-  get correctCount():    number    { return this._correct }
-  get incorrectCount():  number    { return this._incorrect }
-  get isComplete():      boolean   { return this._index >= this.questions.length }
-  get progressText():    string    { return `${this._index + 1} / ${this.questions.length}` }
-  get correctText():     string    { return `✓ ${this._correct}` }
-  get incorrectText():   string    { return `✗ ${this._incorrect}` }
+  appendQuestions(extra: Question[]): void {
+    this.questions.push(...extra)
+  }
 
-  // ── Mutation ──────────────────────────────────────────────────────────
+  recordCorrect(): void {
+    this.totalCorrect++
+    this.streak++
+    this.bestStreak = Math.max(this.bestStreak, this.streak)
+  }
 
-  recordCorrect():   void { this._correct++ }
-  recordIncorrect(): void { this._incorrect++ }
-  advance():         void { this._index++ }
+  recordIncorrect(): void {
+    this.totalIncorrect++
+    this.streak = 0
+  }
 
-  // ── Result building ───────────────────────────────────────────────────
+  advance(): void {
+    this.currentIdx++
+  }
 
   buildResult(): GameResult {
-    const total   = this.questions.length
-    const correct = this._correct
+    const totalAttempts = this.answersPlayed
+    const correct = this.totalCorrect
     const dateISO = ProgressAggregator.todayISO()
 
     return {
-      id:             `${dateISO}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `${dateISO}-${Math.random().toString(36).slice(2, 7)}`,
       dateISO,
-      operation:      this.operation,
+      operation: this.operation,
       correct,
-      incorrect:      this._incorrect,
-      totalQuestions: total,
-      durationMs:     Date.now() - this._startedAt,
-      percentCorrect: Math.round((correct / Math.max(1, total)) * 100),
+      incorrect: this.totalIncorrect,
+      currentTarget: this.targetStreak,
+      answersPlayed: totalAttempts,
+      completed: this.isComplete,
+      totalQuestions: this.targetStreak,
+      durationMs: Date.now() - this.startedAt,
+      percentCorrect: Math.round((correct / Math.max(1, totalAttempts)) * 100),
     }
   }
 }

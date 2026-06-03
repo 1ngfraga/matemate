@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, STORAGE_VERSION, StoredResults, StoredSettings } from '../core/Types'
+import { DEFAULT_SETTINGS, Operation, STORAGE_VERSION, StoredResults, StoredSettings } from '../core/Types'
 
 export class MigrationService {
   static migrateSettings(stored: StoredSettings): StoredSettings {
@@ -37,9 +37,31 @@ export class MigrationService {
           timerDuration:        (raw.timerDuration as typeof DEFAULT_SETTINGS.timerDuration) ?? DEFAULT_SETTINGS.timerDuration,
           muted:                Boolean(raw.muted),
           multiplicationTables: tables,
+          gameTargetByOperation: structuredClone(DEFAULT_SETTINGS.gameTargetByOperation),
           additionOperandDigits:operandDigits,
           additionNumAddends:   2,
           subtractionDigits:    (subDigits === 1 || subDigits === 2 ? subDigits : 1) as 1 | 2,
+        },
+      }
+    }
+
+    if (version < 4) {
+      const prev = stored.data as typeof DEFAULT_SETTINGS
+      const rawTargets = (raw.gameTargetByOperation as Record<string, number> | undefined) ?? {}
+      const clampTarget = (value: unknown, fallback: number) => {
+        const n = Math.round(Number(value))
+        return Number.isFinite(n) ? Math.max(1, Math.min(200, n)) : fallback
+      }
+      return {
+        version: 4,
+        data: {
+          ...prev,
+          gameTargetByOperation: {
+            [Operation.Addition]: clampTarget(rawTargets[Operation.Addition], DEFAULT_SETTINGS.gameTargetByOperation[Operation.Addition]),
+            [Operation.Subtraction]: clampTarget(rawTargets[Operation.Subtraction], DEFAULT_SETTINGS.gameTargetByOperation[Operation.Subtraction]),
+            [Operation.Multiplication]: clampTarget(rawTargets[Operation.Multiplication], DEFAULT_SETTINGS.gameTargetByOperation[Operation.Multiplication]),
+            [Operation.Division]: clampTarget(rawTargets[Operation.Division], DEFAULT_SETTINGS.gameTargetByOperation[Operation.Division]),
+          },
         },
       }
     }
@@ -60,10 +82,23 @@ export class MigrationService {
         .map(r => ({
           ...r,
           id:             r.id ?? `${r.dateISO}-${Math.random().toString(36).slice(2, 7)}`,
+          currentTarget:  r.currentTarget ?? r.totalQuestions ?? (r.correct + r.incorrect),
+          answersPlayed:  r.answersPlayed ?? (r.correct + r.incorrect),
+          completed:      r.completed ?? true,
           totalQuestions: r.totalQuestions ?? (r.correct + r.incorrect),
           durationMs:     r.durationMs ?? 0,
           percentCorrect: r.percentCorrect ?? Math.round((r.correct / Math.max(1, r.correct + r.incorrect)) * 100),
         }))
+      version = 1
+    }
+
+    if (version < 4) {
+      data = data.map(r => ({
+        ...r,
+        currentTarget:  r.currentTarget ?? (r.totalQuestions ?? 50),
+        answersPlayed:  r.answersPlayed ?? (r.correct + r.incorrect),
+        completed:      r.completed ?? true,
+      }))
       version = STORAGE_VERSION
     }
 

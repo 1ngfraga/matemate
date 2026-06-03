@@ -45,6 +45,7 @@ export interface Settings {
   /** Multiplication tables 1–9; at least one must be true */
   multiplicationTables: Record<number, boolean>
   muted: boolean
+  gameTargetByOperation: Record<Operation, number>
 
   // Suma
   additionOperandDigits: AdditionOperandDigits  // size per addend
@@ -62,6 +63,12 @@ export const DEFAULT_SETTINGS: Settings = {
     5: true, 6: true, 7: true, 8: true, 9: true,
   },
   muted: false,
+  gameTargetByOperation: {
+    [Operation.Addition]: 50,
+    [Operation.Subtraction]: 50,
+    [Operation.Multiplication]: 50,
+    [Operation.Division]: 50,
+  },
   additionOperandDigits: 1,
   additionNumAddends:    2,
   subtractionDigits:     1,
@@ -104,6 +111,9 @@ export interface GameResult {
   operation:      Operation
   correct:        number
   incorrect:      number
+  currentTarget:  number
+  answersPlayed:  number
+  completed:      boolean
   totalQuestions: number
   durationMs:     number
   percentCorrect: number
@@ -114,4 +124,4 @@ export interface GameResult {
 export interface StoredSettings { version: number; data: Settings }
 export interface StoredResults  { version: number; data: GameResult[] }
 
-export const STORAGE_VERSION = 3
+export const STORAGE_VERSION = 4

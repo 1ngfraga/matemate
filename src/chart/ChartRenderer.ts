@@ -1,14 +1,28 @@
+import { Operation } from '../core/Types'
 import { DayData } from './ProgressAggregator'
 
-interface BarRect {
+interface DayRect {
   x: number; y: number; w: number; h: number
   day: DayData
 }
 
+const OP_COLORS: Record<Operation, { base: string; dark: string; label: string }> = {
+  [Operation.Addition]:       { base: '#4060d0', dark: '#203078', label: '+' },
+  [Operation.Subtraction]:    { base: '#8030a0', dark: '#4a165e', label: '−' },
+  [Operation.Multiplication]: { base: '#207050', dark: '#12402e', label: '×' },
+  [Operation.Division]:       { base: '#904020', dark: '#5c2810', label: '÷' },
+}
+
+const OP_ORDER: Operation[] = [
+  Operation.Addition,
+  Operation.Subtraction,
+  Operation.Multiplication,
+  Operation.Division,
+]
+
 export class ChartRenderer {
   private tooltip: HTMLElement | null = null
-  private barRects: BarRect[] = []
-  private days: DayData[] = []
+  private dayRects: DayRect[] = []
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -18,112 +32,87 @@ export class ChartRenderer {
   }
 
   render(days: DayData[]): void {
-    this.days = days
-    // Match canvas buffer to displayed size to avoid blur
     const rect = this.canvas.getBoundingClientRect()
     const dpr  = window.devicePixelRatio || 1
-    this.canvas.width  = Math.round(rect.width  * dpr)
+    this.canvas.width  = Math.round(rect.width * dpr)
     this.canvas.height = Math.round(rect.height * dpr)
     const ctx = this.canvas.getContext('2d')!
     ctx.scale(dpr, dpr)
-    this.draw(ctx, rect.width, rect.height)
+    this.draw(ctx, rect.width, rect.height, days)
   }
 
-  private draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+  private draw(ctx: CanvasRenderingContext2D, W: number, H: number, days: DayData[]): void {
     ctx.clearRect(0, 0, W, H)
 
     const PAD_L = 6, PAD_R = 6, PAD_T = 8, PAD_B = 22
     const chartW = W - PAD_L - PAD_R
     const chartH = H - PAD_T - PAD_B
-    const count  = this.days.length
+    const count = days.length
+    const slotW = chartW / count
+    const dayW  = Math.max(18, Math.floor(slotW * 0.82))
+    const dayOff = Math.floor((slotW - dayW) / 2)
+    const rowGap = 4
+    const boxH = Math.max(18, Math.floor((chartH - rowGap * 3) / 4))
 
-    // Background grid
-    ctx.strokeStyle = '#1e1e3e'
-    ctx.lineWidth   = 1
-    for (const pct of [25, 50, 75, 100]) {
-      const gy = PAD_T + chartH - (pct / 100) * chartH
-      ctx.beginPath(); ctx.moveTo(PAD_L, gy); ctx.lineTo(W - PAD_R, gy); ctx.stroke()
-    }
-
-    // Axis line
-    ctx.strokeStyle = '#3a3a6a'
-    ctx.lineWidth   = 2
-    ctx.beginPath()
-    ctx.moveTo(PAD_L, PAD_T + chartH)
-    ctx.lineTo(W - PAD_R, PAD_T + chartH)
-    ctx.stroke()
-
-    const barSlot  = chartW / count
-    const barW     = Math.max(2, Math.floor(barSlot * 0.72))
-    const barOff   = Math.floor((barSlot - barW) / 2)
-    const labelFs  = Math.max(7, Math.floor(barSlot * 0.42))
-
-    this.barRects = []
+    this.dayRects = []
 
     for (let i = 0; i < count; i++) {
-      const day = this.days[i]
-      const bx  = PAD_L + i * barSlot + barOff
+      const day = days[i]
+      const x = PAD_L + i * slotW + dayOff
       const isToday = i === count - 1
 
-      // Label
-      ctx.fillStyle  = isToday ? '#f0c040' : '#5050a0'
-      ctx.font       = `bold ${labelFs}px 'Courier New', monospace`
-      ctx.textAlign  = 'center'
+      for (let row = 0; row < OP_ORDER.length; row++) {
+        const op = OP_ORDER[row]
+        const data = day.byOperation[op]
+        const y = PAD_T + row * (boxH + rowGap)
+        const theme = OP_COLORS[op]
+
+        ctx.fillStyle = data ? theme.base : '#151530'
+        ctx.fillRect(x, y, dayW, boxH)
+        ctx.fillStyle = data ? theme.dark : '#0d0d22'
+        ctx.fillRect(x, y + boxH - 3, dayW, 3)
+
+        ctx.strokeStyle = isToday ? '#f0c040' : '#2a2a5a'
+        ctx.lineWidth = data?.starred ? 2 : 1
+        ctx.strokeRect(x + 0.5, y + 0.5, dayW - 1, boxH - 1)
+
+        ctx.fillStyle = '#ffffff'
+        ctx.font = `bold ${Math.max(8, Math.floor(boxH * 0.32))}px 'Courier New', monospace`
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'top'
+        ctx.fillText(theme.label, x + 4, y + 3)
+
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.font = `bold ${Math.max(9, Math.floor(boxH * 0.42))}px 'Courier New', monospace`
+        ctx.fillText(String(data?.attempts ?? 0), x + dayW / 2, y + boxH / 2 + 1)
+
+        if (data?.starred) {
+          ctx.fillStyle = '#f0c040'
+          ctx.textAlign = 'right'
+          ctx.textBaseline = 'top'
+          ctx.font = `bold ${Math.max(8, Math.floor(boxH * 0.34))}px 'Courier New', monospace`
+          ctx.fillText('★', x + dayW - 4, y + 2)
+        }
+      }
+
+      ctx.fillStyle = isToday ? '#f0c040' : '#5050a0'
+      ctx.font = `bold ${Math.max(7, Math.floor(slotW * 0.42))}px 'Courier New', monospace`
+      ctx.textAlign = 'center'
       ctx.textBaseline = 'bottom'
-      ctx.fillText(day.label, bx + barW / 2, H - 3)
+      ctx.fillText(day.label, x + dayW / 2, H - 3)
 
-      if (day.percentCorrect === null) {
-        // No data — thin placeholder
-        ctx.fillStyle = '#1a1a3a'
-        ctx.fillRect(bx, PAD_T + chartH - 4, barW, 4)
-        continue
-      }
-
-      const pct  = day.percentCorrect
-      const bh   = Math.max(4, Math.floor((pct / 100) * chartH))
-      const by   = PAD_T + chartH - bh
-
-      const [base, dark, hi] =
-        pct >= 80 ? ['#40d060', '#1a6030', '#80ff90'] :
-        pct >= 50 ? ['#f0c040', '#806010', '#ffe880'] :
-                    ['#d04040', '#701818', '#ff8888']
-
-      // Bar body
-      ctx.fillStyle = base
-      ctx.fillRect(bx, by, barW, bh)
-
-      // Pixel depth shadow (right + bottom)
-      const sw = Math.max(1, Math.floor(barW * 0.18))
-      ctx.fillStyle = dark
-      ctx.fillRect(bx + barW - sw, by, sw, bh)
-      ctx.fillRect(bx, by + bh - sw, barW, sw)
-
-      // Highlight top edge
-      ctx.fillStyle = hi
-      ctx.fillRect(bx, by, barW, Math.max(1, Math.floor(bh * 0.06) + 1))
-
-      // Today indicator — small dot above bar
-      if (isToday) {
-        ctx.fillStyle = '#f0c040'
-        const dotS = Math.max(3, Math.floor(barW * 0.3))
-        ctx.fillRect(bx + Math.floor((barW - dotS) / 2), by - dotS - 2, dotS, dotS)
-      }
-
-      this.barRects.push({ x: bx, y: by, w: barW, h: bh, day })
+      this.dayRects.push({ x, y: PAD_T, w: dayW, h: chartH, day })
     }
   }
 
-  // ── Tooltip ───────────────────────────────────────────────────────────────
-
   private setupEvents(): void {
     const hit = (cx: number, cy: number) => {
-      const r     = this.canvas.getBoundingClientRect()
-      const dpr   = window.devicePixelRatio || 1
-      const cvsX  = (cx - r.left)
-      const cvsY  = (cy - r.top)
-      // barRects are in CSS-pixel coordinates (we drew after dividing by dpr)
-      return this.barRects.find(
-        b => cvsX >= b.x && cvsX <= b.x + b.w && cvsY >= b.y && cvsY <= b.y + b.h,
+      const r = this.canvas.getBoundingClientRect()
+      const cvsX = cx - r.left
+      const cvsY = cy - r.top
+      return this.dayRects.find(
+        (b) => cvsX >= b.x && cvsX <= b.x + b.w && cvsY >= b.y && cvsY <= b.y + b.h,
       ) ?? null
     }
 
@@ -132,7 +121,6 @@ export class ChartRenderer {
       this.showTooltip(b ? b.day : null, e.clientX, e.clientY)
     })
     this.canvas.addEventListener('mouseleave', () => this.showTooltip(null, 0, 0))
-
     this.canvas.addEventListener('touchstart', (e) => {
       e.preventDefault()
       const t = e.touches[0]
@@ -155,19 +143,18 @@ export class ChartRenderer {
       this.tooltipHost.appendChild(this.tooltip)
     }
 
-    const mmdd    = day.dateISO.slice(5).replace('-', '/')
-    const pctStr  = day.percentCorrect !== null ? `${day.percentCorrect}%` : 'sin datos'
-    const games   = day.gameCount > 1
-      ? `${day.gameCount} partidas`
-      : day.gameCount === 1 ? '1 partida' : ''
+    const rows = OP_ORDER.map((op) => {
+      const data = day.byOperation[op]
+      const theme = OP_COLORS[op]
+      return `<div class="tt-row"><span style="color:${theme.base}">${theme.label}</span> ${data?.attempts ?? 0}${data?.starred ? ' ★' : ''}</div>`
+    }).join('')
 
     this.tooltip.innerHTML =
-      `<div class="tt-date">${mmdd}</div>` +
-      `<div class="tt-pct">${pctStr}</div>` +
-      (games ? `<div class="tt-games">${games}</div>` : '')
+      `<div class="tt-date">${day.dateISO.slice(5).replace('-', '/')}</div>` +
+      rows
 
     const host = this.tooltipHost.getBoundingClientRect()
-    const TW = 80, TH = 56
+    const TW = 110, TH = 96
     const tx = Math.max(4, Math.min(clientX - host.left - TW / 2, host.width - TW - 4))
     const ty = Math.max(4, clientY - host.top - TH - 8)
 

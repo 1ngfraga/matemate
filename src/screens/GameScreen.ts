@@ -40,6 +40,7 @@ export class GameScreen implements BaseScreen {
   private pickedIdx:  number | null = null  // index into current answers[]
   private lastTickSec = -1
   private graceTriggered = false
+  private streakPulseTimeout: number | null = null
 
   constructor(
     private navigate: NavigateFn,
@@ -65,6 +66,7 @@ export class GameScreen implements BaseScreen {
 
   unmount(): void {
     this.loop.stop()
+    if (this.streakPulseTimeout !== null) window.clearTimeout(this.streakPulseTimeout)
     if (this.container) this.container.innerHTML = ''
     this.container = null
   }
@@ -72,9 +74,10 @@ export class GameScreen implements BaseScreen {
   // ── Initialization ────────────────────────────────────────────────────
 
   private initGame(): void {
-    const questions = QuestionGenerator.generateSession(this.operation, this.settings, 50)
+    const target = this.settings.gameTargetByOperation[this.operation]
+    const questions = QuestionGenerator.generateSession(this.operation, this.settings, target)
     this.answers    = questions.map((q) => AnswerGenerator.generate(q))
-    this.state      = new GameState(this.operation, questions)
+    this.state      = new GameState(this.operation, questions, target)
     this.anim       = new AnimationController(this.settings.animal)
     this.starField  = buildStarField(800, 300)
     this.sound      = new SoundService(this.settings.muted)
@@ -94,6 +97,7 @@ export class GameScreen implements BaseScreen {
 
   private startQuestion(): void {
     if (this.state.isComplete) { this.endGame(); return }
+    this.ensureQuestionBuffer()
 
     this.phase          = 'question'
     this.phaseTimer     = 0
@@ -128,10 +132,12 @@ export class GameScreen implements BaseScreen {
       this.state.recordCorrect()
       this.sound.playCorrect()
       this.anim.onCorrectAnswer()
+      this.bumpStreak(true)
     } else {
       this.state.recordIncorrect()
       this.sound.playWrong()
       this.anim.onWrongAnswer()
+      this.bumpStreak(false)
     }
 
     this.showFeedback(correct)
@@ -142,6 +148,7 @@ export class GameScreen implements BaseScreen {
     this.state.recordIncorrect()
     this.sound.playWrong()
     this.anim.onTimeout()
+    this.bumpStreak(false)
     this.showFeedback(false)
   }
 
@@ -159,8 +166,31 @@ export class GameScreen implements BaseScreen {
     this.loop.stop()
     const result = this.state.buildResult()
     storage.saveResult(result)
-    if (result.percentCorrect >= 70) this.sound.playVictory()
-    setTimeout(() => this.navigate(Screen.Result, result), result.percentCorrect >= 70 ? 700 : 300)
+    this.sound.playVictory()
+    setTimeout(() => this.navigate(Screen.Result, result), 700)
+  }
+
+  private ensureQuestionBuffer(): void {
+    const needIndex = this.state.currentIndex
+    while (this.answers.length <= needIndex + 2) {
+      const extra = QuestionGenerator.generateSession(this.operation, this.settings, this.state.targetStreak)
+      this.state.appendQuestions(extra)
+      this.answers.push(...extra.map((q) => AnswerGenerator.generate(q)))
+    }
+  }
+
+  private bumpStreak(correct: boolean): void {
+    if (!this.container) return
+    const el = this.container.querySelector<HTMLElement>('#gsStreakVal')
+    if (!el) return
+    el.classList.remove('gs-streak-val--pulse', 'gs-streak-val--reset')
+    void el.offsetWidth
+    el.classList.add(correct ? 'gs-streak-val--pulse' : 'gs-streak-val--reset')
+    if (this.streakPulseTimeout !== null) window.clearTimeout(this.streakPulseTimeout)
+    this.streakPulseTimeout = window.setTimeout(() => {
+      el.classList.remove('gs-streak-val--pulse', 'gs-streak-val--reset')
+      this.streakPulseTimeout = null
+    }, 320)
   }
 
   // ── Main loop tick ────────────────────────────────────────────────────
@@ -235,7 +265,7 @@ export class GameScreen implements BaseScreen {
     this.anim.update(this.ctx, W, H, dt)
 
     // Score overlay on canvas (top-left corner)
-    drawPixelText(this.ctx, this.state.progressText, 8, 6, 12, '#8888cc')
+    drawPixelText(this.ctx, `META ${this.state.targetStreak}`, 8, 6, 12, '#8888cc')
     this.ctx.restore()
   }
 
@@ -263,9 +293,10 @@ export class GameScreen implements BaseScreen {
       const el = c.querySelector<HTMLElement>(sel)
       if (el) el.textContent = val
     }
-    setText('#gsProgress',  this.state.progressText)
+    setText('#gsProgress',  `META ${this.state.targetStreak}`)
     setText('#gsCorrect',   this.state.correctText)
     setText('#gsIncorrect', this.state.incorrectText)
+    setText('#gsStreakVal', this.state.progressText)
   }
 
   private updateTimerDOM(): void {
@@ -342,7 +373,7 @@ export class GameScreen implements BaseScreen {
       <div class="gs-root">
         <div class="gs-hud">
           <button class="gs-exit-btn" id="gsExit">✕</button>
-          <span class="gs-stat" id="gsProgress">1 / 50</span>
+          <span class="gs-stat" id="gsProgress">META 50</span>
           <div class="gs-timer-wrap">
             <div class="gs-timer-track">
               <div class="gs-timer-fill" id="gsTimerFill" style="width:100%"></div>
@@ -359,7 +390,11 @@ export class GameScreen implements BaseScreen {
         <canvas id="gsCanvas" class="gs-canvas"></canvas>
 
         <div class="gs-question">
-          <div class="gs-q-text" id="gsQText">…</div>
+          <div class="gs-question-stack">
+            <div class="gs-streak-goal">RACHA</div>
+            <div class="gs-streak-val" id="gsStreakVal">0 / 50</div>
+            <div class="gs-q-text" id="gsQText">…</div>
+          </div>
         </div>
 
         <div class="gs-answers" id="gsAnswers">
@@ -469,9 +504,39 @@ export class GameScreen implements BaseScreen {
         border-bottom:2px solid #1e1e40;
         padding:6px 12px; flex-shrink:0;
       }
+      .gs-question-stack {
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:2px;
+      }
+      .gs-streak-goal {
+        font-family:'Courier New',monospace;
+        font-size:clamp(10px, 2vw, 14px);
+        font-weight:700;
+        color:#8888cc;
+        letter-spacing:2px;
+      }
+      .gs-streak-val {
+        font-family:'Courier New',monospace;
+        font-size:clamp(26px, 6vw, 46px);
+        font-weight:900;
+        color:#f0c040;
+        line-height:1;
+        text-shadow:2px 2px 0 #5a4200;
+        transition:transform 120ms ease, color 120ms ease;
+      }
+      .gs-streak-val--pulse {
+        color:#40d060;
+        transform:scale(1.12);
+      }
+      .gs-streak-val--reset {
+        color:#d04040;
+        transform:scale(0.9);
+      }
       .gs-q-text {
         font-family:'Courier New',monospace;
-        font-size:clamp(22px, 5vw, 42px);
+        font-size:clamp(18px, 4.4vw, 34px);
         font-weight:900; color:#f0c040;
         letter-spacing:3px;
         text-shadow:2px 2px 0 #8a6000, 4px 4px 0 #3a2000;

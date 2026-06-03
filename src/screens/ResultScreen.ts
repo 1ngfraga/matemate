@@ -16,13 +16,13 @@ const OP_LABELS: Record<Operation, string> = {
 
 interface MessageBand { min: number; title: string; sub: string }
 const BANDS: MessageBand[] = [
-  { min: 100, title: '¡PERFECTO!',         sub: '¡Sin un solo error! Eres increíble.' },
-  { min:  90, title: '¡EXCELENTE!',        sub: '¡Casi perfecto! ¡Sigue así!' },
-  { min:  80, title: '¡MUY BIEN!',         sub: '¡Gran resultado! Ya dominas esto.' },
-  { min:  70, title: '¡BIEN!',             sub: 'Buen trabajo. ¡Un poco más de práctica!' },
-  { min:  60, title: '¡PUEDES MÁS!',      sub: '¡Sigue practicando, vas progresando!' },
-  { min:  50, title: 'BUEN INTENTO',       sub: '¡No te rindas! Cada sesión te mejora.' },
-  { min:   0, title: '¡SIGUE ADELANTE!',  sub: 'La práctica hace al maestro. ¡Otra vez!' },
+  { min: 100, title: '¡PLATINADO!',        sub: 'Meta lograda perfecto, sin un solo fallo.' },
+  { min:  90, title: '¡META LOGRADA!',     sub: 'Llegó a la meta con una racha increíble.' },
+  { min:  80, title: '¡META LOGRADA!',     sub: 'Superó la meta. Ahora a repetirlo.' },
+  { min:  70, title: '¡META LOGRADA!',     sub: 'Lo consiguió. Siguiente ronda.' },
+  { min:  60, title: '¡META LOGRADA!',     sub: 'Meta completa. Buena constancia.' },
+  { min:  50, title: '¡META LOGRADA!',     sub: 'Costó, pero llegó. Eso cuenta mucho.' },
+  { min:   0, title: '¡META LOGRADA!',     sub: 'Siguió insistiendo hasta cumplir la racha.' },
 ]
 
 function getBand(pct: number): MessageBand {
@@ -106,6 +106,11 @@ export class ResultScreen implements BaseScreen {
                 <span class="rs-stat-icon" style="color:#d04040">✗</span>
                 <span class="rs-stat-val">${r.incorrect}</span>
                 <span class="rs-stat-label">incorrectas</span>
+              </div>
+              <div class="rs-stat-row">
+                <span class="rs-stat-icon" style="color:#f0c040">★</span>
+                <span class="rs-stat-val">${r.currentTarget}</span>
+                <span class="rs-stat-label">meta</span>
               </div>
               <div class="rs-stat-row">
                 <span class="rs-stat-icon" style="color:#8888cc">⏱</span>
