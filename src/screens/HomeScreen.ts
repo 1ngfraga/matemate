@@ -170,7 +170,9 @@ export class HomeScreen implements BaseScreen {
 
       /* Animals */
       .home-animals {
-        display:flex; gap:6px; flex-wrap:wrap;
+        display:flex;
+        gap:6px;
+        flex-wrap:nowrap;
       }
       .animal-btn {
         display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -178,7 +180,9 @@ export class HomeScreen implements BaseScreen {
         padding:6px 8px 5px; cursor:pointer;
         font-family:'Courier New',monospace;
         transition:transform 80ms, border-color 80ms;
-        min-width:108px;
+        flex:1 1 0;
+        min-width:0;
+        width:100%;
         -webkit-tap-highlight-color:transparent;
       }
       .animal-btn:active { transform:translate(1px,1px); }
@@ -188,8 +192,9 @@ export class HomeScreen implements BaseScreen {
         box-shadow:0 0 8px #f0c04044;
       }
       .animal-mini {
-        width:104px;
-        height:84px;
+        width:min(100%, 104px);
+        height:auto;
+        aspect-ratio:104 / 84;
         image-rendering:pixelated;
         display:block;
       }
@@ -226,6 +231,43 @@ export class HomeScreen implements BaseScreen {
       .home-op-btn:hover { filter:brightness(1.25); }
       .op-symbol { font-size:clamp(18px,3.5vw,30px); font-weight:900; line-height:1; }
       .op-label  { font-size:clamp(8px,1.4vw,12px); letter-spacing:1px; margin-top:2px; }
+
+      @media (max-width: 1100px) and (min-aspect-ratio: 1/1) {
+        .home-body { gap:6px; padding:6px; }
+        .home-controls { flex:0.95; }
+        .home-animals { gap:4px; }
+        .animal-btn {
+          padding:4px 4px 3px;
+          border-width:2px;
+        }
+        .animal-mini {
+          width:min(100%, 84px);
+        }
+        .animal-label {
+          font-size:clamp(6px, 1vw, 8px);
+          letter-spacing:0.5px;
+        }
+        .home-ops { gap:4px; }
+        .home-op-btn {
+          padding:6px 2px;
+          min-height:clamp(40px, 8vh, 60px);
+          border-width:2px;
+        }
+        .op-symbol { font-size:clamp(15px, 2.6vw, 22px); }
+        .op-label  { font-size:clamp(7px, 1vw, 10px); }
+      }
+
+      @media (max-width: 900px) and (min-aspect-ratio: 1/1) {
+        .home-controls { flex:0.9; }
+        .animal-mini {
+          width:min(100%, 72px);
+        }
+        .home-settings-btn {
+          min-width:70px;
+          padding:6px 8px;
+          font-size:11px;
+        }
+      }
     `
     container.appendChild(s)
   }

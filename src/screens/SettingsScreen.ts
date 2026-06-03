@@ -1,20 +1,32 @@
-import { Screen, Settings, TimerDuration, AdditionOperandDigits, AdditionNumAddends, SubtractionDigits, Operation } from '../core/Types'
-import { NavigateFn } from '../app/Router'
-import { BaseScreen } from '../app/ScreenManager'
+import {
+  Screen,
+  Settings,
+  TimerDuration,
+  AdditionOperandDigits,
+  AdditionNumAddends,
+  SubtractionDigits,
+  Operation,
+} from "../core/Types";
+import { NavigateFn } from "../app/Router";
+import { BaseScreen } from "../app/ScreenManager";
 
-const CORRECT_PIN = '556677'
-const TIMERS: TimerDuration[] = [TimerDuration.Short, TimerDuration.Medium, TimerDuration.Long]
+const CORRECT_PIN = "556677";
+const TIMERS: TimerDuration[] = [
+  TimerDuration.Short,
+  TimerDuration.Medium,
+  TimerDuration.Long,
+];
 const TIMER_LABELS: Record<TimerDuration, string> = {
-  [TimerDuration.Short]:  '5s',
-  [TimerDuration.Medium]: '10s',
-  [TimerDuration.Long]:   '15s',
-}
+  [TimerDuration.Short]: "5s",
+  [TimerDuration.Medium]: "10s",
+  [TimerDuration.Long]: "15s",
+};
 
 export class SettingsScreen implements BaseScreen {
-  private container: HTMLElement | null = null
-  private pin = ''
-  private working!: Settings
-  private keyboardHandler: ((e: KeyboardEvent) => void) | null = null
+  private container: HTMLElement | null = null;
+  private pin = "";
+  private working!: Settings;
+  private keyboardHandler: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(
     private navigate: NavigateFn,
@@ -23,22 +35,22 @@ export class SettingsScreen implements BaseScreen {
   ) {}
 
   mount(container: HTMLElement): void {
-    this.container = container
-    this.working   = structuredClone(this.settings)
-    this.pin       = ''
-    container.innerHTML = this.html()
-    this.attachStyles(container)
-    this.attachPinEvents(container)
-    this.attachKeyboard()
+    this.container = container;
+    this.working = structuredClone(this.settings);
+    this.pin = "";
+    container.innerHTML = this.html();
+    this.attachStyles(container);
+    this.attachPinEvents(container);
+    this.attachKeyboard();
   }
 
   unmount(): void {
     if (this.keyboardHandler) {
-      window.removeEventListener('keydown', this.keyboardHandler)
-      this.keyboardHandler = null
+      window.removeEventListener("keydown", this.keyboardHandler);
+      this.keyboardHandler = null;
     }
-    if (this.container) this.container.innerHTML = ''
-    this.container = null
+    if (this.container) this.container.innerHTML = "";
+    this.container = null;
   }
 
   // ── HTML ─────────────────────────────────────────────────────────────────
@@ -49,22 +61,24 @@ export class SettingsScreen implements BaseScreen {
         <!-- ① PIN Phase -->
         <div class="ss-phase" id="ssPin">
           <div class="pin-card">
-            <div class="pin-icon">🔒</div>
-            <div class="pin-title">CONFIGURACIÓN</div>
             <p class="pin-sub">Ingresa el PIN de acceso</p>
 
             <div class="pin-display" id="pinDisplay">
-              ${Array.from({ length: 6 }, (_, i) =>
-                `<div class="pin-dot" id="dot${i}"></div>`
-              ).join('')}
+              ${Array.from(
+                { length: 6 },
+                (_, i) => `<div class="pin-dot" id="dot${i}"></div>`,
+              ).join("")}
             </div>
 
             <div class="pin-error" id="pinError">PIN incorrecto</div>
 
             <div class="pin-pad">
-              ${[1,2,3,4,5,6,7,8,9].map(n =>
-                `<button class="pin-key" data-key="${n}">${n}</button>`
-              ).join('')}
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9]
+                .map(
+                  (n) =>
+                    `<button class="pin-key" data-key="${n}">${n}</button>`,
+                )
+                .join("")}
               <button class="pin-key pin-key--action" data-key="back">⌫</button>
               <button class="pin-key" data-key="0">0</button>
               <button class="pin-key pin-key--action" data-key="ok">✓</button>
@@ -78,7 +92,7 @@ export class SettingsScreen implements BaseScreen {
         <div class="ss-phase ss-phase--hidden" id="ssSettings">
           ${this.settingsHtml()}
         </div>
-      </div>`
+      </div>`;
   }
 
   // ── Digit-level button helpers ─────────────────────────────────────────
@@ -88,59 +102,68 @@ export class SettingsScreen implements BaseScreen {
     options: Array<{ value: number; label: string }>,
     current: number,
   ): string {
-    return `<div class="level-row" id="${id}">` +
-      options.map(({ value, label }) =>
-        `<button class="level-btn${value === current ? ' level-btn--sel' : ''}"
-          data-level="${value}" data-group="${id}">${label}</button>`
-      ).join('') +
-    `</div>`
+    return (
+      `<div class="level-row" id="${id}">` +
+      options
+        .map(
+          ({ value, label }) =>
+            `<button class="level-btn${value === current ? " level-btn--sel" : ""}"
+          data-level="${value}" data-group="${id}">${label}</button>`,
+        )
+        .join("") +
+      `</div>`
+    );
   }
 
   private settingsHtml(): string {
-    const w = this.working
+    const w = this.working;
 
     const timerBtns = TIMERS.map((t) => {
-      const sel = t === w.timerDuration
-      return `<button class="timer-btn${sel ? ' timer-btn--sel' : ''}" data-timer="${t}">${TIMER_LABELS[t]}</button>`
-    }).join('')
+      const sel = t === w.timerDuration;
+      return `<button class="timer-btn${sel ? " timer-btn--sel" : ""}" data-timer="${t}">${TIMER_LABELS[t]}</button>`;
+    }).join("");
 
     // Tables 1-9 only
     const tableBtns = Array.from({ length: 9 }, (_, i) => {
-      const n   = i + 1
-      const sel = w.multiplicationTables[n]
-      return `<button class="table-btn${sel ? ' table-btn--sel' : ''}" data-table="${n}">${n}</button>`
-    }).join('')
+      const n = i + 1;
+      const sel = w.multiplicationTables[n];
+      return `<button class="table-btn${sel ? " table-btn--sel" : ""}" data-table="${n}">${n}</button>`;
+    }).join("");
 
-    const muteSel = w.muted
+    const muteSel = w.muted;
     const targetRows = [
-      { op: Operation.Addition, label: '+ SUMA' },
-      { op: Operation.Subtraction, label: '− RESTA' },
-      { op: Operation.Multiplication, label: '× MULTIPLICACIÓN' },
-      { op: Operation.Division, label: '÷ DIVISIÓN' },
-    ].map(({ op, label }) => `
+      { op: Operation.Addition, label: "+ SUMA" },
+      { op: Operation.Subtraction, label: "− RESTA" },
+      { op: Operation.Multiplication, label: "× MULTIPLICACIÓN" },
+      { op: Operation.Division, label: "÷ DIVISIÓN" },
+    ]
+      .map(
+        ({ op, label }) => `
       <label class="goal-row">
         <span class="goal-label">${label}</span>
         <input class="goal-input" data-goal-op="${op}" type="number" min="1" max="200" step="1"
           value="${w.gameTargetByOperation[op]}">
       </label>
-    `).join('')
+    `,
+      )
+      .join("");
 
     // Addition: operand size (1-9 or 10-99)
     const addOperandOpts = [
-      { value: 1, label: '1 dígito\n(1-9)' },
-      { value: 2, label: '2 dígitos\n(10-99)' },
-    ]
+      { value: 1, label: "1 dígito\n(1-9)" },
+      { value: 2, label: "2 dígitos\n(10-99)" },
+    ];
     // Addition: number of addends
     const addCountOpts = [
-      { value: 2, label: '2 números\n1+2' },
-      { value: 3, label: '3 números\n1+2+3' },
-      { value: 4, label: '4 números\n1+2+3+4' },
-      { value: 5, label: '5 números\n1+2+3+4+5' },
-    ]
+      { value: 2, label: "2 números\n1+2" },
+      { value: 3, label: "3 números\n1+2+3" },
+      { value: 4, label: "4 números\n1+2+3+4" },
+      { value: 5, label: "5 números\n1+2+3+4+5" },
+    ];
     const twoOpts = [
-      { value: 1, label: '1 dígito\n(1-9)' },
-      { value: 2, label: '2 dígitos\n(10-99)' },
-    ]
+      { value: 1, label: "1 dígito\n(1-9)" },
+      { value: 2, label: "2 dígitos\n(10-99)" },
+    ];
 
     return `
       <div class="sset-root">
@@ -166,15 +189,15 @@ export class SettingsScreen implements BaseScreen {
           <!-- Suma: dos configuraciones independientes -->
           <section class="sset-section">
             <div class="sset-label">+ SUMA — tamaño de cada número</div>
-            ${this.levelBtns('addOperandLevel', addOperandOpts, w.additionOperandDigits)}
+            ${this.levelBtns("addOperandLevel", addOperandOpts, w.additionOperandDigits)}
             <div class="sset-label" style="margin-top:8px;">Cantidad de números a sumar</div>
-            ${this.levelBtns('addCountLevel', addCountOpts, w.additionNumAddends)}
+            ${this.levelBtns("addCountLevel", addCountOpts, w.additionNumAddends)}
           </section>
 
           <!-- Resta -->
           <section class="sset-section">
             <div class="sset-label">− RESTA — tamaño de los números</div>
-            ${this.levelBtns('subLevel', twoOpts, w.subtractionDigits)}
+            ${this.levelBtns("subLevel", twoOpts, w.subtractionDigits)}
           </section>
 
           <!-- Multiplicación + tablas 1-9 -->
@@ -195,8 +218,8 @@ export class SettingsScreen implements BaseScreen {
           <section class="sset-section">
             <div class="sset-label">🔊 SONIDO</div>
             <div class="mute-row">
-              <button class="mute-btn${!muteSel ? ' mute-btn--sel' : ''}" id="muteOn"  data-mute="false">🔊 ACTIVADO</button>
-              <button class="mute-btn${muteSel  ? ' mute-btn--sel' : ''}" id="muteOff" data-mute="true">🔇 SILENCIO</button>
+              <button class="mute-btn${!muteSel ? " mute-btn--sel" : ""}" id="muteOn"  data-mute="false">🔊 ACTIVADO</button>
+              <button class="mute-btn${muteSel ? " mute-btn--sel" : ""}" id="muteOff" data-mute="true">🔇 SILENCIO</button>
             </div>
           </section>
 
@@ -205,13 +228,13 @@ export class SettingsScreen implements BaseScreen {
         <div class="sset-footer">
           <button class="btn btn--accent sset-save" id="ssetSave">💾 GUARDAR</button>
         </div>
-      </div>`
+      </div>`;
   }
 
   // ── Styles ────────────────────────────────────────────────────────────────
 
   private attachStyles(container: HTMLElement): void {
-    const s = document.createElement('style')
+    const s = document.createElement("style");
     s.textContent = `
       .ss-root { width:100%; height:100%; position:relative; overflow:auto; }
       .ss-phase {
@@ -226,7 +249,7 @@ export class SettingsScreen implements BaseScreen {
       /* ── PIN ──────────────────────────────────────────────── */
       .pin-card {
         display:flex; flex-direction:column; align-items:center;
-        gap:12px; padding:24px 20px;
+        gap:12px; padding:10px 10px;
         background:#0d0d22; border:3px solid #4a4a8a;
         box-shadow:6px 6px 0 #000;
         max-width:320px; width:90%;
@@ -274,9 +297,9 @@ export class SettingsScreen implements BaseScreen {
       .pin-key {
         font-family:'Courier New',monospace; font-size:22px; font-weight:bold;
         color:#e8e8f0; background:#1a1a3a; border:2px solid #3a3a6a;
-        padding:12px 0; cursor:pointer; text-align:center;
+        padding:0px 0; cursor:pointer; text-align:center;
         transition:background 80ms, transform 80ms;
-        min-height:52px;
+        min-height:35px;
         -webkit-tap-highlight-color:transparent;
       }
       .pin-key:active  { background:#2a2a5a; transform:scale(0.94); }
@@ -421,178 +444,198 @@ export class SettingsScreen implements BaseScreen {
       .sset-save {
         width:100%; font-size:clamp(14px,2.5vw,20px); padding:12px;
       }
-    `
-    container.appendChild(s)
+    `;
+    container.appendChild(s);
   }
 
   // ── PIN events ────────────────────────────────────────────────────────────
 
   private attachPinEvents(container: HTMLElement): void {
-    container.querySelector('#pinCancel')?.addEventListener('click', () =>
-      this.navigate(Screen.Home),
-    )
+    container
+      .querySelector("#pinCancel")
+      ?.addEventListener("click", () => this.navigate(Screen.Home));
 
-    container.querySelectorAll<HTMLElement>('.pin-key').forEach((key) => {
-      key.addEventListener('click', () => this.handlePinKey(key.dataset.key ?? '', container))
-    })
+    container.querySelectorAll<HTMLElement>(".pin-key").forEach((key) => {
+      key.addEventListener("click", () =>
+        this.handlePinKey(key.dataset.key ?? "", container),
+      );
+    });
   }
 
   private attachKeyboard(): void {
     this.keyboardHandler = (e: KeyboardEvent) => {
-      if (!this.container) return
-      const pinPhase = this.container.querySelector('#ssPin')
-      if (!pinPhase || (pinPhase as HTMLElement).style.pointerEvents === 'none') return
-      if (e.key >= '0' && e.key <= '9') this.handlePinKey(e.key, this.container)
-      else if (e.key === 'Backspace') this.handlePinKey('back', this.container)
-      else if (e.key === 'Enter') this.handlePinKey('ok', this.container)
-    }
-    window.addEventListener('keydown', this.keyboardHandler)
+      if (!this.container) return;
+      const pinPhase = this.container.querySelector("#ssPin");
+      if (!pinPhase || (pinPhase as HTMLElement).style.pointerEvents === "none")
+        return;
+      if (e.key >= "0" && e.key <= "9")
+        this.handlePinKey(e.key, this.container);
+      else if (e.key === "Backspace") this.handlePinKey("back", this.container);
+      else if (e.key === "Enter") this.handlePinKey("ok", this.container);
+    };
+    window.addEventListener("keydown", this.keyboardHandler);
   }
 
   private handlePinKey(key: string, container: HTMLElement): void {
-    const display = container.querySelector<HTMLElement>('#pinDisplay')!
-    const errEl   = container.querySelector<HTMLElement>('#pinError')!
+    const display = container.querySelector<HTMLElement>("#pinDisplay")!;
+    const errEl = container.querySelector<HTMLElement>("#pinError")!;
 
-    if (key === 'back') {
-      this.pin = this.pin.slice(0, -1)
-    } else if (key === 'ok') {
-      this.submitPin(container)
-      return
+    if (key === "back") {
+      this.pin = this.pin.slice(0, -1);
+    } else if (key === "ok") {
+      this.submitPin(container);
+      return;
     } else if (/^\d$/.test(key) && this.pin.length < 6) {
-      this.pin += key
+      this.pin += key;
     }
 
     // Update dots
     for (let i = 0; i < 6; i++) {
-      const dot = display.querySelector<HTMLElement>(`#dot${i}`)!
-      dot.classList.toggle('pin-dot--filled', i < this.pin.length)
+      const dot = display.querySelector<HTMLElement>(`#dot${i}`)!;
+      dot.classList.toggle("pin-dot--filled", i < this.pin.length);
     }
 
     // Auto-submit when 6 digits entered
     if (this.pin.length === 6) {
-      setTimeout(() => this.submitPin(container), 120)
+      setTimeout(() => this.submitPin(container), 120);
     }
 
-    errEl.classList.remove('pin-error--show')
+    errEl.classList.remove("pin-error--show");
   }
 
   private submitPin(container: HTMLElement): void {
-    const display = container.querySelector<HTMLElement>('#pinDisplay')!
-    const errEl   = container.querySelector<HTMLElement>('#pinError')!
+    const display = container.querySelector<HTMLElement>("#pinDisplay")!;
+    const errEl = container.querySelector<HTMLElement>("#pinError")!;
 
     if (this.pin === CORRECT_PIN) {
       // Flash correct then transition
-      display.querySelectorAll('.pin-dot').forEach((d) => {
-        d.classList.add('pin-dot--correct')
-        d.classList.remove('pin-dot--filled')
-      })
-      setTimeout(() => this.switchToSettings(container), 300)
+      display.querySelectorAll(".pin-dot").forEach((d) => {
+        d.classList.add("pin-dot--correct");
+        d.classList.remove("pin-dot--filled");
+      });
+      setTimeout(() => this.switchToSettings(container), 300);
     } else {
       // Shake + clear
-      display.classList.add('pin-display--shake')
-      errEl.classList.add('pin-error--show')
+      display.classList.add("pin-display--shake");
+      errEl.classList.add("pin-error--show");
       setTimeout(() => {
-        display.classList.remove('pin-display--shake')
-        this.pin = ''
-        display.querySelectorAll('.pin-dot').forEach((d) => {
-          d.classList.remove('pin-dot--filled', 'pin-dot--correct')
-        })
-      }, 380)
+        display.classList.remove("pin-display--shake");
+        this.pin = "";
+        display.querySelectorAll(".pin-dot").forEach((d) => {
+          d.classList.remove("pin-dot--filled", "pin-dot--correct");
+        });
+      }, 380);
     }
   }
 
   private switchToSettings(container: HTMLElement): void {
-    const pinEl  = container.querySelector<HTMLElement>('#ssPin')!
-    const setEl  = container.querySelector<HTMLElement>('#ssSettings')!
-    pinEl.classList.add('ss-phase--hidden')
-    setEl.classList.remove('ss-phase--hidden')
-    this.attachSettingsEvents(container)
+    const pinEl = container.querySelector<HTMLElement>("#ssPin")!;
+    const setEl = container.querySelector<HTMLElement>("#ssSettings")!;
+    pinEl.classList.add("ss-phase--hidden");
+    setEl.classList.remove("ss-phase--hidden");
+    this.attachSettingsEvents(container);
   }
 
   // ── Settings events ───────────────────────────────────────────────────────
 
   private attachSettingsEvents(container: HTMLElement): void {
     // Back
-    container.querySelector('#ssetBack')?.addEventListener('click', () =>
-      this.navigate(Screen.Home),
-    )
+    container
+      .querySelector("#ssetBack")
+      ?.addEventListener("click", () => this.navigate(Screen.Home));
 
     // Timer
-    container.querySelector('#timerRow')?.addEventListener('click', (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLElement>('.timer-btn')
-      if (!btn) return
-      const t = Number(btn.dataset.timer) as TimerDuration
-      this.working.timerDuration = t
-      container.querySelectorAll('.timer-btn').forEach((b) =>
-        b.classList.toggle('timer-btn--sel', (b as HTMLElement).dataset.timer === String(t)),
-      )
-    })
+    container.querySelector("#timerRow")?.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>(".timer-btn");
+      if (!btn) return;
+      const t = Number(btn.dataset.timer) as TimerDuration;
+      this.working.timerDuration = t;
+      container
+        .querySelectorAll(".timer-btn")
+        .forEach((b) =>
+          b.classList.toggle(
+            "timer-btn--sel",
+            (b as HTMLElement).dataset.timer === String(t),
+          ),
+        );
+    });
 
     // Tables
-    container.querySelector('#tableGrid')?.addEventListener('click', (e) => {
-      const btn  = (e.target as HTMLElement).closest<HTMLElement>('.table-btn')
-      if (!btn) return
-      const n    = Number(btn.dataset.table)
-      const hint = container.querySelector<HTMLElement>('#tableHint')!
+    container.querySelector("#tableGrid")?.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>(".table-btn");
+      if (!btn) return;
+      const n = Number(btn.dataset.table);
+      const hint = container.querySelector<HTMLElement>("#tableHint")!;
 
-      const isSelected = this.working.multiplicationTables[n]
+      const isSelected = this.working.multiplicationTables[n];
       if (isSelected) {
         // Guard: at least one must remain
-        const selectedCount = Object.values(this.working.multiplicationTables).filter(Boolean).length
+        const selectedCount = Object.values(
+          this.working.multiplicationTables,
+        ).filter(Boolean).length;
         if (selectedCount <= 1) {
-          hint.classList.add('sset-hint--show')
-          setTimeout(() => hint.classList.remove('sset-hint--show'), 2000)
-          return
+          hint.classList.add("sset-hint--show");
+          setTimeout(() => hint.classList.remove("sset-hint--show"), 2000);
+          return;
         }
       }
-      this.working.multiplicationTables[n] = !isSelected
-      btn.classList.toggle('table-btn--sel', !isSelected)
-      hint.classList.remove('sset-hint--show')
-    })
+      this.working.multiplicationTables[n] = !isSelected;
+      btn.classList.toggle("table-btn--sel", !isSelected);
+      hint.classList.remove("sset-hint--show");
+    });
 
     // Level buttons — map group id to settings key
     const levelGroupMap: Record<string, keyof Settings> = {
-      addOperandLevel: 'additionOperandDigits',
-      addCountLevel:   'additionNumAddends',
-      subLevel:        'subtractionDigits',
-    }
+      addOperandLevel: "additionOperandDigits",
+      addCountLevel: "additionNumAddends",
+      subLevel: "subtractionDigits",
+    };
 
-    container.querySelectorAll<HTMLElement>('.level-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const group = btn.dataset.group ?? ''
-        const key   = levelGroupMap[group] as keyof Settings
-        if (!key) return
-        const value = Number(btn.dataset.level)
-        ;(this.working as unknown as Record<string, number>)[key] = value
-        container.querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`).forEach((b) =>
-          b.classList.toggle('level-btn--sel', b === btn),
-        )
-      })
-    })
+    container.querySelectorAll<HTMLElement>(".level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const group = btn.dataset.group ?? "";
+        const key = levelGroupMap[group] as keyof Settings;
+        if (!key) return;
+        const value = Number(btn.dataset.level);
+        (this.working as unknown as Record<string, number>)[key] = value;
+        container
+          .querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`)
+          .forEach((b) => b.classList.toggle("level-btn--sel", b === btn));
+      });
+    });
 
     // Mute
-    container.querySelectorAll<HTMLElement>('.mute-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const muted = btn.dataset.mute === 'true'
-        this.working.muted = muted
-        container.querySelector('#muteOn')?.classList.toggle('mute-btn--sel',  !muted)
-        container.querySelector('#muteOff')?.classList.toggle('mute-btn--sel', muted)
-      })
-    })
+    container.querySelectorAll<HTMLElement>(".mute-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const muted = btn.dataset.mute === "true";
+        this.working.muted = muted;
+        container
+          .querySelector("#muteOn")
+          ?.classList.toggle("mute-btn--sel", !muted);
+        container
+          .querySelector("#muteOff")
+          ?.classList.toggle("mute-btn--sel", muted);
+      });
+    });
 
-    container.querySelectorAll<HTMLInputElement>('.goal-input').forEach((input) => {
-      input.addEventListener('change', () => {
-        const op = input.dataset.goalOp as Operation
-        const value = Math.max(1, Math.min(200, Math.round(Number(input.value) || 1)))
-        input.value = String(value)
-        this.working.gameTargetByOperation[op] = value
-      })
-    })
+    container
+      .querySelectorAll<HTMLInputElement>(".goal-input")
+      .forEach((input) => {
+        input.addEventListener("change", () => {
+          const op = input.dataset.goalOp as Operation;
+          const value = Math.max(
+            1,
+            Math.min(200, Math.round(Number(input.value) || 1)),
+          );
+          input.value = String(value);
+          this.working.gameTargetByOperation[op] = value;
+        });
+      });
 
     // Save
-    container.querySelector('#ssetSave')?.addEventListener('click', () => {
-      this.onSettingsChange(this.working)
-      this.navigate(Screen.Home)
-    })
+    container.querySelector("#ssetSave")?.addEventListener("click", () => {
+      this.onSettingsChange(this.working);
+      this.navigate(Screen.Home);
+    });
   }
 }
