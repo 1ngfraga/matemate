@@ -1,6 +1,6 @@
-import { F_RUN0, F_RUN1, F_RUN2, F_RUN3, F_VICTORY, F_HIT } from '../graphics/GameSprites'
+import { F_RUN0, F_RUN1, F_RUN2, F_RUN3, F_VICTORY } from '../graphics/GameSprites'
 
-export type AnimState = 'run' | 'victory' | 'hit' | 'idle'
+export type AnimState = 'run' | 'victory' | 'idle'
 
 export interface AnimSnapshot {
   frameIndex: number
@@ -19,7 +19,6 @@ export class AnimalAnimation {
   private runPhase   = 0   // accumulated ms for run cycle
 
   triggerVictory(): void { this.setState('victory') }
-  triggerHit():    void  { this.setState('hit') }
   startRun():      void  { this.setState('run') }
   get currentState(): AnimState { return this.state }
 
@@ -28,7 +27,6 @@ export class AnimalAnimation {
     switch (this.state) {
       case 'run':    return this.updateRun(dt)
       case 'victory':return this.updateVictory()
-      case 'hit':    return this.updateHit()
       default:       return { frameIndex: F_RUN0, offsetX: 0, offsetY: 0, alpha: 1 }
     }
   }
@@ -48,14 +46,6 @@ export class AnimalAnimation {
     // No jump — just a brief happy pose (the obstacle breaking + confetti is the visual reward)
     if (this.stateTime >= 400) this.setState('run')
     return { frameIndex: F_VICTORY, offsetX: 0, offsetY: 0, alpha: 1 }
-  }
-
-  private updateHit(): AnimSnapshot {
-    const dur   = 550
-    const decay = Math.max(0, 1 - this.stateTime / dur)
-    const shakeX = Math.sin(this.stateTime * 0.08) * 7 * decay
-    if (this.stateTime >= dur) this.setState('run')
-    return { frameIndex: F_HIT, offsetX: shakeX, offsetY: 0, alpha: 1 }
   }
 
   private setState(s: AnimState): void {

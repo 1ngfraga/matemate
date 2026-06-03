@@ -7,6 +7,7 @@ import { drawGroundShadow } from '../graphics/PixelArtRenderer'
 import { ObstacleKind } from '../graphics/ObstacleSprites'
 
 export const GROUND_FRAC = 0.68
+const ANIMAL_HIT_X_FRAC = 0.9
 
 // ── Obstacle state ────────────────────────────────────────────────────────
 
@@ -64,14 +65,12 @@ export class AnimationController {
 
   /** Wrong answer: immediate damage + obstacle collision wherever it is */
   onWrongAnswer(): void {
-    this.animalAnim.triggerHit()
     this.damageEffect.trigger()
     if (this.obstacle) { this.obstacle.phase = 'colliding'; this.obstacle.phaseTime = 0 }
   }
 
   /** Grace period ended without answer → damage (obstacle was already 'waiting') */
   onTimeout(): void {
-    this.animalAnim.triggerHit()
     this.damageEffect.trigger()
     if (this.obstacle) { this.obstacle.phase = 'colliding'; this.obstacle.phaseTime = 0 }
   }
@@ -141,12 +140,14 @@ export class AnimationController {
 
     const s     = this.spr
     const gw    = obstacleGridW(obs.kind)
+    const animalW = this.sheet.frames[0]?.gridW ? this.sheet.frames[0].gridW * s : 0
     const obsY  = this.groundY - OBS_GRID_H * s
 
     // Compute speed on first tick (needs animalX which is only known after first update)
     if (obs.speed === 0 && this.animalX > 0) {
-      // targetX: obstacle right edge touches animal left edge
-      obs.targetX = this.animalX + gw * s * 0.2   // slight overlap for dramatic effect
+      // Trigger impact near the sprite's far edge so the obstacle reaches deep
+      // enough into the visible body before the screen-hit effect starts.
+      obs.targetX = this.animalX + animalW * ANIMAL_HIT_X_FRAC
       const dist  = Math.max(1, obs.startX - obs.targetX)
       obs.speed   = dist / Math.max(1, obs.timerMs)
     }
