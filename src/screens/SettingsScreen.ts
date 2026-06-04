@@ -86,6 +86,7 @@ export class SettingsScreen implements BaseScreen {
         ${needsPin ? `
           <div class="ss-phase${this.mode === GameMode.Free ? " ss-phase--hidden" : ""}" id="ssPin">
             <div class="pin-card">
+              <button class="pin-close" id="pinCancel" aria-label="Cancelar">×</button>
               <p class="pin-title">${this.pinMode === "create" ? "CREA TU PIN" : "INGRESA EL PIN"}</p>
               <p class="pin-sub">${this.pinMode === "create" ? "Se usará para proteger Jugar" : "Necesario para cambiar Jugar"}</p>
 
@@ -105,7 +106,6 @@ export class SettingsScreen implements BaseScreen {
               </div>
 
               ${this.pinMode === "enter" ? `<button class="pin-reset-link" id="pinReset">reset pin</button>` : ""}
-              <button class="btn btn--danger pin-cancel" id="pinCancel">CANCELAR</button>
             </div>
           </div>
         ` : ""}
@@ -259,12 +259,30 @@ export class SettingsScreen implements BaseScreen {
       }
       .ss-phase--hidden { opacity:0; pointer-events:none; }
       .pin-card {
+        position:relative;
         display:flex; flex-direction:column; align-items:center;
         gap:12px; padding:12px 10px;
         background:#0d0d22; border:3px solid #4a4a8a;
         box-shadow:6px 6px 0 #000;
         max-width:320px; width:90%;
         margin:auto;
+      }
+      .pin-close {
+        position:absolute;
+        top:8px;
+        left:8px;
+        width:28px;
+        height:28px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:2px solid #4a5acc;
+        background:#1a1a3a;
+        color:#e8e8f0;
+        font-family:'Courier New',monospace;
+        font-size:18px;
+        font-weight:900;
+        cursor:pointer;
       }
       .pin-title {
         font-family:'Courier New',monospace; font-size:20px;
@@ -305,7 +323,6 @@ export class SettingsScreen implements BaseScreen {
         cursor:pointer; min-height:35px;
       }
       .pin-key--action { color:#f0c040; background:#12122a; }
-      .pin-cancel { width:100%; font-size:14px; padding:10px; margin-top:4px; }
       .pin-reset-link {
         border:none;
         background:transparent;
