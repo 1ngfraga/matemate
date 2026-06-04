@@ -11,6 +11,7 @@ export const enum Animal {
   Dinosaur = 'dinosaur',
   Opossum  = 'opossum',
   Capybara = 'capybara',
+  Unicorn  = 'unicorn',
 }
 
 export const enum TimerDuration {

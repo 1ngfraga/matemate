@@ -91,17 +91,15 @@ export class SettingsScreen implements BaseScreen {
         ${needsPin ? `
           <div class="ss-phase${this.mode === GameMode.Free ? " ss-phase--hidden" : ""}" id="ssPin">
             <div class="pin-card">
-              <button class="pin-close" id="pinCancel" aria-label="Cancelar">×</button>
+              <button class="btn nav-back-btn pin-close" id="pinCancel" aria-label="${t("back")}">← ${t("back")}</button>
               <p class="pin-title">${this.pinMode === "create" ? t("pinCreateTitle") : t("pinEnterTitle")}</p>
-              <p class="pin-sub">${this.pinMode === "create" ? t("pinCreateSub") : t("pinEnterSub")}</p>
+              ${this.pinMode === "create" ? `<p class="pin-sub">${t("pinCreateSub")}</p>` : ""}
 
               <div class="pin-display" id="pinDisplay">
                 ${Array.from({ length: PIN_LENGTH }, (_, i) => `<div class="pin-dot" id="dot${i}"></div>`).join("")}
               </div>
 
-              <div class="pin-error" id="pinError">
-                ${this.pinMode === "create" ? t("pinCreateError") : t("pinEnterError")}
-              </div>
+              <div class="pin-error" id="pinError">${this.pinMode === "create" ? t("pinCreateError") : ""}</div>
 
               <div class="pin-pad">
                 ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button class="pin-key" data-key="${n}">${n}</button>`).join("")}
@@ -198,7 +196,7 @@ export class SettingsScreen implements BaseScreen {
         <div class="sset-body">
           <section class="sset-section">
             <div class="sset-section-title">+ ${t("opAddition")}</div>
-            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
+            <div class="sset-label">${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Addition)}
             ${this.goalInput(Operation.Addition)}
             <div class="sset-label">${t("numberSizeLabel")}</div>
@@ -209,7 +207,7 @@ export class SettingsScreen implements BaseScreen {
 
           <section class="sset-section">
             <div class="sset-section-title">− ${t("opSubtraction")}</div>
-            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
+            <div class="sset-label">${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Subtraction)}
             ${this.goalInput(Operation.Subtraction)}
             <div class="sset-label">${t("numberSizeLabel")}</div>
@@ -218,7 +216,7 @@ export class SettingsScreen implements BaseScreen {
 
           <section class="sset-section">
             <div class="sset-section-title">× ${t("opMultiplication")}</div>
-            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
+            <div class="sset-label">${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Multiplication)}
             ${this.goalInput(Operation.Multiplication)}
             <div class="sset-label">${t("tablesLabel")}</div>
@@ -229,7 +227,7 @@ export class SettingsScreen implements BaseScreen {
 
           <section class="sset-section">
             <div class="sset-section-title">÷ ${t("opDivision")}</div>
-            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
+            <div class="sset-label">${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Division)}
             ${this.goalInput(Operation.Division)}
             <div class="sset-label">${t("tablesLabel")}</div>
@@ -266,18 +264,8 @@ export class SettingsScreen implements BaseScreen {
         position:absolute;
         top:8px;
         left:8px;
-        width:28px;
-        height:28px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        border:2px solid #4a5acc;
-        background:#1a1a3a;
-        color:#e8e8f0;
-        font-family:'Courier New',monospace;
-        font-size:18px;
-        font-weight:900;
-        cursor:pointer;
+        min-width:110px;
+        min-height:40px;
       }
       .pin-title {
         font-family:'Courier New',monospace; font-size:20px;

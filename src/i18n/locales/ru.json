@@ -51,12 +51,13 @@
   "heroDinosaur": "ТИ-РЕКС",
   "heroOpossum": "ОПОССУМ",
   "heroCapybara": "КАПИ",
+  "heroUnicorn": "ЕДИНОРОГ",
   "opAddition": "СУММА",
   "opSubtraction": "РАЗН.",
   "opMultiplication": "МУЛЬТИ",
   "opDivision": "ДЕЛЕНИЕ",
-  "timePerQuestionLabel": "время на вопрос",
-  "numberSizeLabel": "числа из",
-  "quantityLabel": "количество",
-  "tablesLabel": "таблицы"
+  "timePerQuestionLabel": "Время на вопрос",
+  "numberSizeLabel": "Числа из",
+  "quantityLabel": "Количество",
+  "tablesLabel": "Таблицы"
 }

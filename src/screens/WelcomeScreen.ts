@@ -44,7 +44,6 @@ export class WelcomeScreen implements BaseScreen {
           <div class="wl-title">
             <span class="wl-t1">MATE</span><span class="wl-t2">MATE</span>
           </div>
-          <p class="wl-sub">${t("appSubtitle")}</p>
           <div class="wl-actions">
             <button class="btn btn--accent wl-play" id="wlPlay">▶ &nbsp;${t("modePlay")}</button>
             <button class="btn wl-free" id="wlFree">☺ &nbsp;${t("modePractice")}</button>
@@ -254,11 +253,6 @@ export class WelcomeScreen implements BaseScreen {
           from { opacity:0; transform:translateY(-30px) scale(0.6); }
           70%  { transform:translateY(4px) scale(1.05); }
           to   { opacity:1; transform:none; }
-        }
-        .wl-sub {
-          font-family:'Courier New',monospace; font-size:clamp(13px,2.5vw,20px);
-          color:#fff; letter-spacing:2px;
-          text-shadow:1px 1px 3px rgba(0,0,0,0.6);
         }
         .wl-actions {
           display:flex;

@@ -3,7 +3,7 @@ import { AnimalAnimation, AnimSnapshot } from './AnimalAnimation'
 import { DamageEffect } from './DamageEffect'
 import { Confetti } from '../graphics/Confetti'
 import { getAnimalGameSheet, GameSheet, drawObstacle, getObstacleSize } from '../graphics/GameSprites'
-import { drawGroundShadow } from '../graphics/PixelArtRenderer'
+import { drawGroundShadow, WORLD_SCROLL_SPEED } from '../graphics/PixelArtRenderer'
 import { ObstacleKind } from '../graphics/ObstacleSprites'
 
 export const GROUND_FRAC = 0.68
@@ -22,7 +22,6 @@ type ObstaclePhase =
 interface ObstacleAnim {
   kind:     ObstacleKind
   x:        number      // current x (CSS px at scale 1)
-  startX:   number      // initial x
   targetX:  number      // x where it stands next to animal (computed on first tick)
   timerMs:  number      // total question time in ms
   speed:    number      // px per ms (computed on first tick)
@@ -85,9 +84,9 @@ export class AnimationController {
    * Spawn a new obstacle.
    * @param timerMs  Total question duration in ms — obstacle arrives exactly at end.
    */
-  spawnObstacle(kind: ObstacleKind, startX: number, timerMs: number): void {
+  spawnObstacle(kind: ObstacleKind, timerMs: number): void {
     this.obstacle = {
-      kind, x: startX, startX, targetX: 0, timerMs,
+      kind, x: 0, targetX: 0, timerMs,
       speed: 0, phase: 'approach', phaseTime: 0, impactTriggered: false,
     }
   }
@@ -162,8 +161,8 @@ export class AnimationController {
     if (obs.speed === 0 && this.animalX > 0) {
       // The obstacle collides with its left edge, so x itself is the hit point.
       obs.targetX = this.animalX + animalW * ANIMAL_HIT_X_FRAC
-      const dist  = Math.max(1, obs.startX - obs.targetX)
-      obs.speed   = dist / Math.max(1, obs.timerMs)
+      obs.speed   = WORLD_SCROLL_SPEED
+      obs.x       = obs.targetX + obs.speed * Math.max(1, obs.timerMs)
     }
 
     const paint = (x: number, alpha: number, cracked = false) => {

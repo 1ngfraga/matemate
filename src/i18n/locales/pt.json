@@ -51,12 +51,13 @@
   "heroDinosaur": "T-REX",
   "heroOpossum": "GAMBÁ",
   "heroCapybara": "CAPI",
+  "heroUnicorn": "UNICÓRNIO",
   "opAddition": "SOMA",
   "opSubtraction": "SUB",
   "opMultiplication": "MULTI",
   "opDivision": "DIVISÃO",
-  "timePerQuestionLabel": "tempo por pergunta",
-  "numberSizeLabel": "números de",
-  "quantityLabel": "quantidade",
-  "tablesLabel": "tabuadas"
+  "timePerQuestionLabel": "Tempo por pergunta",
+  "numberSizeLabel": "Números de",
+  "quantityLabel": "Quantidade",
+  "tablesLabel": "Tabuadas"
 }

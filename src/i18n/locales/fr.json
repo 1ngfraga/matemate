@@ -51,12 +51,13 @@
   "heroDinosaur": "T-REX",
   "heroOpossum": "OPOSSUM",
   "heroCapybara": "CAPY",
+  "heroUnicorn": "LICORNE",
   "opAddition": "ADD",
   "opSubtraction": "RESTE",
   "opMultiplication": "MULTI",
   "opDivision": "DIVISION",
-  "timePerQuestionLabel": "temps par question",
-  "numberSizeLabel": "nombres de",
-  "quantityLabel": "quantité",
-  "tablesLabel": "tables"
+  "timePerQuestionLabel": "Temps par question",
+  "numberSizeLabel": "Nombres de",
+  "quantityLabel": "Quantité",
+  "tablesLabel": "Tables"
 }

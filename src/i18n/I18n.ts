@@ -67,6 +67,7 @@ export function getHeroName(animal: Animal): string {
     case Animal.Dinosaur: return t('heroDinosaur')
     case Animal.Opossum: return t('heroOpossum')
     case Animal.Capybara: return t('heroCapybara')
+    case Animal.Unicorn: return t('heroUnicorn')
   }
 }
 

@@ -11,6 +11,7 @@ const ANIMAL_META: Record<Animal, { colors: string[] }> = {
   [Animal.Dinosaur]: { colors: ['#5ad45a', '#2a8c2a', '#f0c040'] },
   [Animal.Opossum]:  { colors: ['#aaaaaa', '#606060', '#ffaaaa'] },
   [Animal.Capybara]: { colors: ['#c8843c', '#7a4a18', '#e8c890'] },
+  [Animal.Unicorn]:  { colors: ['#f5eee1', '#ffb4dc', '#ffd700'] },
 }
 
 const OP_META: Array<{ op: Operation; symbol: string; color: string }> = [
@@ -19,12 +20,20 @@ const OP_META: Array<{ op: Operation; symbol: string; color: string }> = [
   { op: Operation.Multiplication, symbol: '×', color: '#207050' },
   { op: Operation.Division,       symbol: '÷', color: '#904020' },
 ]
+const HERO_WINDOW_SIZE = 3
+const HERO_ORDER: Animal[] = [
+  Animal.Dinosaur,
+  Animal.Opossum,
+  Animal.Capybara,
+  Animal.Unicorn,
+]
 
 export class HomeScreen implements BaseScreen {
   private container: HTMLElement | null = null
   private chart: ChartRenderer | null = null
   private settings: Settings
   private previewRaf: number | null = null
+  private animalWindowStart = 0
 
   constructor(
     private navigate: NavigateFn,
@@ -33,6 +42,7 @@ export class HomeScreen implements BaseScreen {
     private onSettingsChange: (mode: GameMode, s: Settings) => void,
   ) {
     this.settings = { ...initialSettings }
+    this.animalWindowStart = this.resolveAnimalWindowStart(this.settings.animal)
   }
 
   mount(container: HTMLElement): void {
@@ -55,7 +65,7 @@ export class HomeScreen implements BaseScreen {
   // ── HTML ─────────────────────────────────────────────────────────────────
 
   private html(): string {
-    const animalBtns = (Object.keys(ANIMAL_META) as Animal[]).map((a) => {
+    const animalBtns = this.visibleAnimals().map((a) => {
       const sel  = a === this.settings.animal
       return `
         <button class="animal-btn${sel ? ' animal-btn--selected' : ''}" data-animal="${a}">
@@ -97,7 +107,11 @@ export class HomeScreen implements BaseScreen {
           <!-- Right / Bottom: animal + ops -->
           <section class="home-controls">
             <div class="home-section-label">▸ ${t('yourHero')}</div>
-            <div class="home-animals">${animalBtns}</div>
+            <div class="animal-carousel">
+              <button class="animal-nav" id="animalPrev" aria-label="Anterior"${this.canShiftAnimals(-1) ? '' : ' disabled'}>‹</button>
+              <div class="home-animals" id="homeAnimals">${animalBtns}</div>
+              <button class="animal-nav" id="animalNext" aria-label="Siguiente"${this.canShiftAnimals(1) ? '' : ' disabled'}>›</button>
+            </div>
 
             <div class="home-section-label" style="margin-top:8px;">▸ ${t('playSection')}</div>
             <div class="home-ops">${opBtns}</div>
@@ -222,6 +236,27 @@ export class HomeScreen implements BaseScreen {
         display:flex;
         gap:6px;
         flex-wrap:nowrap;
+        flex:1;
+      }
+      .animal-carousel {
+        display:flex;
+        align-items:stretch;
+        gap:6px;
+      }
+      .animal-nav {
+        width:42px;
+        min-width:42px;
+        border:3px solid #3a3a6a;
+        background:#0d0d22;
+        color:#a0a0d0;
+        font-family:'Courier New',monospace;
+        font-size:22px;
+        font-weight:900;
+        cursor:pointer;
+      }
+      .animal-nav:disabled {
+        opacity:0.35;
+        cursor:default;
       }
       .animal-btn {
         display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -285,6 +320,13 @@ export class HomeScreen implements BaseScreen {
         .home-body { gap:6px; padding:6px; }
         .home-controls { flex:0.95; }
         .home-animals { gap:4px; }
+        .animal-carousel { gap:4px; }
+        .animal-nav {
+          width:36px;
+          min-width:36px;
+          border-width:2px;
+          font-size:18px;
+        }
         .animal-btn {
           padding:4px 4px 3px;
           border-width:2px;
@@ -396,13 +438,17 @@ export class HomeScreen implements BaseScreen {
         const animal = btn.dataset.animal as Animal
         if (!animal) return
         this.settings = { ...this.settings, animal }
+        this.animalWindowStart = this.resolveAnimalWindowStart(animal)
         this.onSettingsChange(this.mode, this.settings)
-
-        // Update selected state
-        container.querySelectorAll('.animal-btn').forEach((b) =>
-          b.classList.toggle('animal-btn--selected', b === btn),
-        )
+        this.renderAnimalWindow()
       })
+    })
+
+    container.querySelector('#animalPrev')?.addEventListener('click', () => {
+      this.shiftAnimals(-1)
+    })
+    container.querySelector('#animalNext')?.addEventListener('click', () => {
+      this.shiftAnimals(1)
     })
 
     // Operation buttons
@@ -412,6 +458,59 @@ export class HomeScreen implements BaseScreen {
         if (!op) return
         this.navigate(Screen.Game, op)
       })
+    })
+  }
+
+  private visibleAnimals(): Animal[] {
+    return HERO_ORDER.slice(this.animalWindowStart, this.animalWindowStart + HERO_WINDOW_SIZE)
+  }
+
+  private resolveAnimalWindowStart(selected: Animal): number {
+    const selectedIdx = Math.max(0, HERO_ORDER.indexOf(selected))
+    const maxStart = Math.max(0, HERO_ORDER.length - HERO_WINDOW_SIZE)
+    return Math.min(selectedIdx, maxStart)
+  }
+
+  private canShiftAnimals(direction: -1 | 1): boolean {
+    const maxStart = Math.max(0, HERO_ORDER.length - HERO_WINDOW_SIZE)
+    return direction < 0 ? this.animalWindowStart > 0 : this.animalWindowStart < maxStart
+  }
+
+  private shiftAnimals(direction: -1 | 1): void {
+    if (!this.canShiftAnimals(direction)) return
+    this.animalWindowStart += direction
+    this.renderAnimalWindow()
+  }
+
+  private renderAnimalWindow(): void {
+    if (!this.container) return
+    const animalsWrap = this.container.querySelector<HTMLElement>('#homeAnimals')
+    if (!animalsWrap) return
+    animalsWrap.innerHTML = this.visibleAnimals().map((a) => {
+      const sel = a === this.settings.animal
+      return `
+        <button class="animal-btn${sel ? ' animal-btn--selected' : ''}" data-animal="${a}">
+          <canvas class="animal-mini" width="104" height="84" data-animal="${a}"></canvas>
+          <span class="animal-label">${getHeroName(a)}</span>
+        </button>`
+    }).join('')
+    this.container.querySelector<HTMLButtonElement>('#animalPrev')!.disabled = !this.canShiftAnimals(-1)
+    this.container.querySelector<HTMLButtonElement>('#animalNext')!.disabled = !this.canShiftAnimals(1)
+    this.renderAnimalPreviews(this.container)
+    this.attachAnimalEvents()
+  }
+
+  private attachAnimalEvents(): void {
+    if (!this.container) return
+    this.container.querySelectorAll<HTMLElement>('.animal-btn').forEach((btn) => {
+      btn.onclick = () => {
+        const animal = btn.dataset.animal as Animal
+        if (!animal) return
+        this.settings = { ...this.settings, animal }
+        this.animalWindowStart = this.resolveAnimalWindowStart(animal)
+        this.onSettingsChange(this.mode, this.settings)
+        this.renderAnimalWindow()
+      }
     })
   }
 }

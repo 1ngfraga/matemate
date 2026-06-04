@@ -268,5 +268,6 @@ export function getAnimalSheet(animal: Animal): SpriteSheet {
     case Animal.Dinosaur: return DINO_SHEET
     case Animal.Opossum:  return OPOS_SHEET
     case Animal.Capybara: return CAPI_SHEET
+    case Animal.Unicorn:  return DINO_SHEET  // unused legacy file; falls back to dino
   }
 }
