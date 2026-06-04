@@ -24,7 +24,7 @@
   "pinReset": "reset pin",
   "pinResetConfirm": "This will erase the PIN, settings, and saved progress. Start over?",
   "save": "SAVE",
-  "goalLabel": "Streak goal",
+  "goalLabel": "Correct answers in a row",
   "sound": "SOUND",
   "soundOn": "ON",
   "soundOff": "MUTE",

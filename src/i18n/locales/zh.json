@@ -24,7 +24,7 @@
   "pinReset": "重置 pin",
   "pinResetConfirm": "这会删除 PIN、设置和保存的进度。重新开始吗？",
   "save": "保存",
-  "goalLabel": "连胜目标",
+  "goalLabel": "连续答对",
   "sound": "声音",
   "soundOn": "开启",
   "soundOff": "静音",

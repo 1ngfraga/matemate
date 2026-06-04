@@ -24,7 +24,7 @@
   "pinReset": "reset pin",
   "pinResetConfirm": "Esto borrará el PIN, configuraciones y progreso guardado. Vas a empezar de nuevo. ¿Continuar?",
   "save": "GUARDAR",
-  "goalLabel": "Meta de racha",
+  "goalLabel": "Aciertos seguidos",
   "sound": "SONIDO",
   "soundOn": "ACTIVADO",
   "soundOff": "SILENCIO",

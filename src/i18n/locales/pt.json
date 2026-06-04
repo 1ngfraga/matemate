@@ -24,7 +24,7 @@
   "pinReset": "resetar pin",
   "pinResetConfirm": "Isto vai apagar o PIN, configurações e progresso salvo. Recomeçar?",
   "save": "SALVAR",
-  "goalLabel": "Meta de sequência",
+  "goalLabel": "Acertos seguidos",
   "sound": "SOM",
   "soundOn": "ATIVO",
   "soundOff": "MUDO",

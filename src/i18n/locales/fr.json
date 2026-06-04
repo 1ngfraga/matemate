@@ -24,7 +24,7 @@
   "pinReset": "réinitialiser pin",
   "pinResetConfirm": "Cela effacera le PIN, les réglages et la progression. Recommencer ?",
   "save": "SAUVER",
-  "goalLabel": "Objectif de série",
+  "goalLabel": "Bonnes réponses d'affilée",
   "sound": "SON",
   "soundOn": "ACTIVÉ",
   "soundOff": "SILENCE",

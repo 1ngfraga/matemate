@@ -48,6 +48,9 @@ export class SettingsScreen implements BaseScreen {
   private working!: Settings;
   private keyboardHandler: ((e: KeyboardEvent) => void) | null = null;
   private pinMode: "enter" | "create" = "enter";
+  private holdTimeout: number | null = null;
+  private holdInterval: number | null = null;
+  private holdStartedAt = 0;
 
   constructor(
     private navigate: NavigateFn,
@@ -76,6 +79,7 @@ export class SettingsScreen implements BaseScreen {
       window.removeEventListener("keydown", this.keyboardHandler);
       this.keyboardHandler = null;
     }
+    this.clearGoalHold();
     if (this.container) this.container.innerHTML = "";
     this.container = null;
   }
@@ -144,12 +148,16 @@ export class SettingsScreen implements BaseScreen {
   }
 
   private goalInput(op: Operation): string {
+    const value = this.working.gameTargetByOperation[op];
     return `
-      <label class="goal-row">
+      <div class="goal-row" data-goal-row="${op}">
         <span class="goal-label">${t("goalLabel")}</span>
-        <input class="goal-input" data-goal-op="${op}" type="number" min="1" max="200" step="1"
-          value="${this.working.gameTargetByOperation[op]}">
-      </label>`;
+        <div class="goal-stepper" data-goal-op="${op}">
+          <button class="goal-btn goal-btn--minus" data-goal-step="-1" aria-label="${t("goalLabel")} menos 1">−</button>
+          <div class="goal-value" data-goal-value="${op}" aria-live="polite">${value}</div>
+          <button class="goal-btn goal-btn--plus" data-goal-step="1" aria-label="${t("goalLabel")} mas 1">+</button>
+        </div>
+      </div>`;
   }
 
   private settingsHtml(): string {
@@ -384,9 +392,8 @@ export class SettingsScreen implements BaseScreen {
       }
       .sset-hint--show { opacity:1; }
       .goal-row {
-        display:grid;
-        grid-template-columns:minmax(0,1fr) 84px;
-        align-items:center;
+        display:flex;
+        flex-direction:column;
         gap:8px;
       }
       .goal-label {
@@ -394,11 +401,76 @@ export class SettingsScreen implements BaseScreen {
         font-size:clamp(10px,1.8vw,13px);
         color:#a0a0d0;
       }
-      .goal-input {
-        width:100%; font-family:'Courier New',monospace;
-        font-size:16px; font-weight:bold; color:#f0c040;
-        background:#06060f; border:2px solid #3a3a6a;
-        padding:8px 10px; min-height:40px;
+      .goal-stepper {
+        width:min(100%, 360px);
+        margin:0 auto;
+        padding:6px;
+        display:grid;
+        grid-template-columns:64px minmax(0, 1fr) 64px;
+        gap:0;
+        align-items:stretch;
+        background:linear-gradient(180deg, #171133 0%, #0a0818 100%);
+        border:2px solid #4a4a8a;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          inset 0 -2px 0 rgba(0,0,0,0.35),
+          3px 3px 0 rgba(0,0,0,0.45);
+        border-radius:18px;
+        overflow:hidden;
+      }
+      .goal-btn, .goal-value {
+        min-height:56px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-family:'Courier New',monospace;
+        font-weight:bold;
+        border:none;
+      }
+      .goal-btn {
+        font-size:clamp(28px,4vw,34px);
+        color:#cfd3ff;
+        background:linear-gradient(180deg, #23254a 0%, #161832 100%);
+        cursor:pointer;
+        user-select:none;
+        -webkit-user-select:none;
+        touch-action:manipulation;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.08),
+          inset 0 -2px 0 rgba(0,0,0,0.28);
+      }
+      .goal-btn:active {
+        background:linear-gradient(180deg, #171832 0%, #101226 100%);
+        transform:translateY(1px);
+      }
+      .goal-btn--minus {
+        border-right:1px solid rgba(255,255,255,0.08);
+      }
+      .goal-btn--plus {
+        border-left:1px solid rgba(255,255,255,0.08);
+      }
+      .goal-value {
+        font-size:clamp(22px,3vw,30px);
+        color:#f0c040;
+        background:linear-gradient(180deg, #080811 0%, #05050b 100%);
+        letter-spacing:2px;
+        box-shadow:
+          inset 0 0 0 1px rgba(240,192,64,0.08),
+          inset 0 2px 10px rgba(0,0,0,0.45);
+      }
+      .goal-btn--minus {
+        color:#ffb0b0;
+        background:linear-gradient(180deg, #3a1f2f 0%, #26131d 100%);
+      }
+      .goal-btn--plus {
+        color:#bff5b8;
+        background:linear-gradient(180deg, #17361f 0%, #102415 100%);
+      }
+      @media (max-width: 520px) {
+        .goal-stepper {
+          width:min(100%, 320px);
+          grid-template-columns:58px minmax(0, 1fr) 58px;
+        }
       }
       .timer-row { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:6px; }
       .timer-btn, .mute-btn {
@@ -603,12 +675,20 @@ export class SettingsScreen implements BaseScreen {
       });
     });
 
-    container.querySelectorAll<HTMLInputElement>(".goal-input").forEach((input) => {
-      input.addEventListener("change", () => {
-        const op = input.dataset.goalOp as Operation;
-        const value = Math.max(1, Math.min(200, Math.round(Number(input.value) || 1)));
-        input.value = String(value);
-        this.working.gameTargetByOperation[op] = value;
+    container.querySelectorAll<HTMLElement>(".goal-stepper").forEach((stepper) => {
+      const op = stepper.dataset.goalOp as Operation;
+      stepper.querySelectorAll<HTMLElement>(".goal-btn").forEach((btn) => {
+        const step = Number(btn.dataset.goalStep);
+        const start = (e: Event) => {
+          e.preventDefault();
+          this.adjustGoal(op, step);
+          this.beginGoalHold(op, step);
+        };
+        const stop = () => this.clearGoalHold();
+        btn.addEventListener("pointerdown", start);
+        btn.addEventListener("pointerup", stop);
+        btn.addEventListener("pointerleave", stop);
+        btn.addEventListener("pointercancel", stop);
       });
     });
 
@@ -618,5 +698,35 @@ export class SettingsScreen implements BaseScreen {
       if (shouldClearResults && this.mode === GameMode.Free) storage.clearResults(this.mode);
       this.navigate(Screen.Home, this.mode);
     });
+  }
+
+  private adjustGoal(op: Operation, delta: number): void {
+    const current = this.working.gameTargetByOperation[op];
+    const next = Math.max(1, Math.min(500, current + delta));
+    this.working.gameTargetByOperation[op] = next;
+    this.container
+      ?.querySelector<HTMLElement>(`.goal-value[data-goal-value="${op}"]`)
+      ?.replaceChildren(document.createTextNode(String(next)));
+  }
+
+  private beginGoalHold(op: Operation, step: number): void {
+    this.clearGoalHold();
+    this.holdStartedAt = performance.now();
+    this.holdTimeout = window.setTimeout(() => {
+      this.holdInterval = window.setInterval(() => {
+        this.adjustGoal(op, step * 10);
+      }, 90);
+    }, 250);
+  }
+
+  private clearGoalHold(): void {
+    if (this.holdTimeout !== null) {
+      window.clearTimeout(this.holdTimeout);
+      this.holdTimeout = null;
+    }
+    if (this.holdInterval !== null) {
+      window.clearInterval(this.holdInterval);
+      this.holdInterval = null;
+    }
   }
 }

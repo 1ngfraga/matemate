@@ -1,3 +1,5 @@
+import { isNativeApp } from './NativePlatform'
+
 function isWindowsDesktop(): boolean {
   const ua = navigator.userAgent.toLowerCase()
   const platform = (navigator.platform ?? '').toLowerCase()
@@ -7,6 +9,7 @@ function isWindowsDesktop(): boolean {
 }
 
 export function shouldUseFullscreen(): boolean {
+  if (isNativeApp()) return false
   if (isWindowsDesktop()) return false
   const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false
   const smallScreen = Math.min(window.innerWidth, window.innerHeight) <= 1024

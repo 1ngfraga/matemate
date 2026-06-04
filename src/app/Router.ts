@@ -1,4 +1,4 @@
-import { GameMode, GameResult, Screen, Settings } from '../core/Types'
+import { GameMode, GameResult, Operation, Screen, Settings } from '../core/Types'
 import { storage } from '../storage/StorageService'
 import { ScreenManager } from './ScreenManager'
 
@@ -11,7 +11,9 @@ export interface ResultScreenParams {
 export type NavigateFn = (screen: Screen, params?: unknown) => void
 
 export class Router {
+  private currentScreen: Screen = Screen.Welcome
   private activeMode: GameMode = GameMode.Play
+  private lastOperation: Operation = Operation.Addition
   private settingsByMode = storage.loadAppState().profiles
 
   constructor(private manager: ScreenManager) {}
@@ -22,6 +24,10 @@ export class Router {
 
   getActiveMode(): GameMode {
     return this.activeMode
+  }
+
+  getCurrentScreen(): Screen {
+    return this.currentScreen
   }
 
   hasPin(): boolean {
@@ -35,6 +41,7 @@ export class Router {
   }
 
   navigate: NavigateFn = async (screen: Screen, params?: unknown) => {
+    this.currentScreen = screen
     switch (screen) {
       case Screen.Welcome: {
         const { WelcomeScreen } = await import('../screens/WelcomeScreen')
@@ -70,12 +77,13 @@ export class Router {
       }
       case Screen.Game: {
         const { GameScreen } = await import('../screens/GameScreen')
+        this.lastOperation = params as Operation
         await this.manager.show(
           new GameScreen(
             this.navigate,
             this.activeMode,
             this.getSettings(this.activeMode),
-            params as import('../core/Types').Operation,
+            this.lastOperation,
           ),
         )
         break
@@ -87,6 +95,24 @@ export class Router {
         )
         break
       }
+    }
+  }
+
+  async handleSystemBack(): Promise<void> {
+    switch (this.currentScreen) {
+      case Screen.Settings:
+      case Screen.Game:
+      case Screen.Result:
+        await this.navigate(Screen.Home, this.activeMode)
+        break
+      case Screen.Home:
+        await this.navigate(Screen.Welcome)
+        break
+      case Screen.Welcome:
+        break
+      default:
+        await this.navigate(Screen.Home, this.activeMode)
+        break
     }
   }
 }

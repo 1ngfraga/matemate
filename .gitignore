@@ -3,3 +3,7 @@ dist/
 *.local
 .DS_Store
 Thumbs.db
+android/.gradle/
+android/.idea/
+android/local.properties
+android/app/build/
