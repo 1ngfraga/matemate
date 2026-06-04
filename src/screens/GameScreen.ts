@@ -140,7 +140,7 @@ export class GameScreen implements BaseScreen {
     const questionHeight = question.offsetHeight;
     const available = Math.max(0, rootHeight - hudHeight - questionHeight);
 
-    const answersMin = 50;
+    const answersMin = 60;
     const canvasMin = 80;
     const canvasMax = 300;
 
@@ -714,7 +714,7 @@ export class GameScreen implements BaseScreen {
 
       /* Answer buttons */
       .gs-answers {
-        display:flex; gap:6px; padding:6px;
+        display:flex; gap:6px; padding:6px 6px 10px;
         min-height:50px; min-width:400px;
         align-items:stretch;
         flex:0 0 auto;
@@ -732,8 +732,9 @@ export class GameScreen implements BaseScreen {
         align-items:center; justify-content:center;
         gap:6px;
         min-height:50px;
-        height:max(50px, 100%);
+        height:100%;
         padding:6px 10px;
+        box-sizing:border-box;
         border-radius:18px;
         box-shadow:
           inset 0 2px 0 rgba(255,255,255,0.14),
