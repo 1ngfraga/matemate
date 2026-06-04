@@ -25,17 +25,17 @@ const MESSAGES: Record<Locale, Messages> = {
   [Locale.Zh]: zh,
 }
 
-export const LOCALE_OPTIONS: Array<{ locale: Locale; flag: string }> = [
-  { locale: Locale.Es, flag: '🇪🇸' },
-  { locale: Locale.En, flag: '🇺🇸' },
-  { locale: Locale.Zh, flag: '🇨🇳' },
-  { locale: Locale.Hi, flag: '🇮🇳' },
-  { locale: Locale.Ar, flag: '🇸🇦' },
-  { locale: Locale.Fr, flag: '🇫🇷' },
-  { locale: Locale.Bn, flag: '🇧🇩' },
-  { locale: Locale.Pt, flag: '🇧🇷' },
-  { locale: Locale.Ru, flag: '🇷🇺' },
-  { locale: Locale.Ja, flag: '🇯🇵' },
+export const LOCALE_OPTIONS: Array<{ locale: Locale; flagClass: string }> = [
+  { locale: Locale.Es, flagClass: 'es' },
+  { locale: Locale.En, flagClass: 'gb' },
+  { locale: Locale.Zh, flagClass: 'cn' },
+  { locale: Locale.Hi, flagClass: 'in' },
+  { locale: Locale.Ar, flagClass: 'sa' },
+  { locale: Locale.Fr, flagClass: 'fr' },
+  { locale: Locale.Bn, flagClass: 'bd' },
+  { locale: Locale.Pt, flagClass: 'br' },
+  { locale: Locale.Ru, flagClass: 'ru' },
+  { locale: Locale.Ja, flagClass: 'jp' },
 ]
 
 let currentLocale: Locale = Locale.Es
@@ -58,8 +58,8 @@ export function t(key: string): string {
   return MESSAGES[currentLocale][key] ?? MESSAGES[Locale.Es][key] ?? key
 }
 
-export function getFlag(locale: Locale): string {
-  return LOCALE_OPTIONS.find((option) => option.locale === locale)?.flag ?? '🌐'
+export function getFlagClass(locale: Locale): string {
+  return LOCALE_OPTIONS.find((option) => option.locale === locale)?.flagClass ?? 'globe'
 }
 
 export function getHeroName(animal: Animal): string {
