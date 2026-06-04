@@ -1,4 +1,4 @@
-import { Screen } from "../core/Types";
+import { GameMode, Screen } from "../core/Types";
 import { NavigateFn } from "../app/Router";
 import { BaseScreen } from "../app/ScreenManager";
 import { requestFullscreen } from "../core/Fullscreen";
@@ -31,7 +31,10 @@ export class WelcomeScreen implements BaseScreen {
             <span class="wl-t1">MATE</span><span class="wl-t2">MATE</span>
           </div>
           <p class="wl-sub">¡Practica matemáticas!</p>
-          <button class="btn btn--accent wl-play" id="wlPlay">▶ &nbsp;JUGAR</button>
+          <div class="wl-actions">
+            <button class="btn btn--accent wl-play" id="wlPlay">▶ &nbsp;JUGAR</button>
+            <button class="btn wl-free" id="wlFree">☼ &nbsp;PRÁCTICA LIBRE</button>
+          </div>
           <p class="wl-hint" id="wlHint"></p>
         </div>
       </div>
@@ -81,12 +84,25 @@ export class WelcomeScreen implements BaseScreen {
           color:#fff; letter-spacing:2px;
           text-shadow:1px 1px 3px rgba(0,0,0,0.6);
         }
-        .wl-play {
+        .wl-actions {
+          display:flex;
+          flex-direction:column;
+          gap:10px;
+          width:min(320px, 90vw);
+        }
+        .wl-play, .wl-free {
           font-size:clamp(18px,3.5vw,28px); padding:14px 48px;
-          min-width:200px;
+          min-width:200px; width:100%;
           animation:wlPulse 2s ease-in-out infinite;
+        }
+        .wl-play {
           background:#ff8844 !important; border-color:#ffcc44 !important;
           color:#fff !important; box-shadow:4px 4px 0 #cc4400 !important;
+        }
+        .wl-free {
+          background:#3b6ed8 !important; border-color:#9fc2ff !important;
+          color:#fff !important; box-shadow:4px 4px 0 #1b3e8f !important;
+          animation:none;
         }
         @keyframes wlPulse {
           0%,100%{box-shadow:4px 4px 0 #cc4400,0 0 0 rgba(255,136,68,0)!important}
@@ -102,18 +118,23 @@ export class WelcomeScreen implements BaseScreen {
   // ── Events ────────────────────────────────────────────────────────────────
 
   private attachEvents(container: HTMLElement): void {
-    const btn = container.querySelector<HTMLButtonElement>("#wlPlay")!;
+    const playBtn = container.querySelector<HTMLButtonElement>("#wlPlay")!;
+    const freeBtn = container.querySelector<HTMLButtonElement>("#wlFree")!;
     const hint = container.querySelector<HTMLElement>("#wlHint")!;
 
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
+    const startMode = async (btn: HTMLButtonElement, mode: GameMode) => {
+      playBtn.disabled = true;
+      freeBtn.disabled = true;
       btn.textContent = "...";
       try {
         await requestFullscreen(document.documentElement);
       } catch {
         hint.textContent = "";
       }
-      this.navigate(Screen.Home);
-    });
+      this.navigate(Screen.Home, mode);
+    };
+
+    playBtn.addEventListener("click", () => startMode(playBtn, GameMode.Play));
+    freeBtn.addEventListener("click", () => startMode(freeBtn, GameMode.Free));
   }
 }

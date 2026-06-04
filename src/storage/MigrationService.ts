@@ -1,7 +1,25 @@
-import { DEFAULT_SETTINGS, Operation, STORAGE_VERSION, StoredResults, StoredSettings, TimerDuration } from '../core/Types'
+import {
+  AppState,
+  DEFAULT_APP_STATE,
+  DEFAULT_SETTINGS,
+  GameMode,
+  GameResult,
+  Operation,
+  STORAGE_VERSION,
+  StoredResults,
+  StoredSettings,
+  TimerDuration,
+} from '../core/Types'
 
 export class MigrationService {
-  static migrateSettings(stored: StoredSettings): StoredSettings {
+  private static emptyResultsByMode(): Record<GameMode, GameResult[]> {
+    return {
+      [GameMode.Play]: [],
+      [GameMode.Free]: [],
+    }
+  }
+
+  private static migrateLegacySettings(stored: StoredSettings): { version: number; data: typeof DEFAULT_SETTINGS } {
     if (!stored || typeof stored.version !== 'number' || !stored.data) {
       return { version: STORAGE_VERSION, data: structuredClone(DEFAULT_SETTINGS) }
     }
@@ -102,12 +120,71 @@ export class MigrationService {
       }
     }
 
-    return { version, data: stored.data }
+    return { version, data: stored.data as typeof DEFAULT_SETTINGS }
   }
 
-  static migrateResults(stored: StoredResults): StoredResults {
+  static migrateSettings(stored: StoredSettings): { version: number; data: AppState } {
+    if (!stored || typeof stored.version !== 'number' || !stored.data) {
+      return { version: STORAGE_VERSION, data: structuredClone(DEFAULT_APP_STATE) }
+    }
+
+    const rawData = stored.data as unknown as Record<string, unknown>
+    const looksLikeAppState =
+      typeof rawData === 'object' &&
+      rawData !== null &&
+      typeof rawData.profiles === 'object' &&
+      rawData.profiles !== null
+
+    if (!looksLikeAppState) {
+      const legacy = this.migrateLegacySettings(stored)
+      return {
+        version: STORAGE_VERSION,
+        data: {
+          profiles: {
+            [GameMode.Play]: structuredClone(legacy.data),
+            [GameMode.Free]: structuredClone(DEFAULT_SETTINGS),
+          },
+          pin: null,
+        },
+      }
+    }
+
+    const raw = stored.data as AppState
+    const play = this.migrateLegacySettings({ version: stored.version, data: raw.profiles?.[GameMode.Play] ?? DEFAULT_SETTINGS }).data
+    const free = this.migrateLegacySettings({ version: stored.version, data: raw.profiles?.[GameMode.Free] ?? DEFAULT_SETTINGS }).data
+    return {
+      version: STORAGE_VERSION,
+      data: {
+        profiles: {
+          [GameMode.Play]: play,
+          [GameMode.Free]: free,
+        },
+        pin: typeof raw.pin === 'string' && /^\d{6}$/.test(raw.pin) ? raw.pin : null,
+      },
+    }
+  }
+
+  static migrateResults(stored: StoredResults): { version: number; data: Record<GameMode, GameResult[]> } {
     if (!stored || typeof stored.version !== 'number' || !Array.isArray(stored.data)) {
-      return { version: STORAGE_VERSION, data: [] }
+      const raw = stored?.data as Record<string, unknown> | undefined
+      if (
+        raw &&
+        typeof raw === 'object' &&
+        Array.isArray(raw[GameMode.Play]) &&
+        Array.isArray(raw[GameMode.Free])
+      ) {
+        return {
+          version: STORAGE_VERSION,
+          data: {
+            [GameMode.Play]: raw[GameMode.Play] as GameResult[],
+            [GameMode.Free]: raw[GameMode.Free] as GameResult[],
+          },
+        }
+      }
+      return {
+        version: STORAGE_VERSION,
+        data: this.emptyResultsByMode(),
+      }
     }
 
     let { version, data } = stored
@@ -152,6 +229,12 @@ export class MigrationService {
       version = STORAGE_VERSION
     }
 
-    return { version, data }
+    return {
+      version: STORAGE_VERSION,
+      data: {
+        [GameMode.Play]: data,
+        [GameMode.Free]: [],
+      },
+    }
   }
 }

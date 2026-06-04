@@ -1,9 +1,10 @@
 import {
-  DEFAULT_SETTINGS,
+  AppState,
+  DEFAULT_APP_STATE,
+  GameMode,
   GameResult,
   Settings,
   STORAGE_VERSION,
-  StoredResults,
   StoredSettings,
 } from '../core/Types'
 import { MigrationService } from './MigrationService'
@@ -21,27 +22,35 @@ export class StorageService {
     return StorageService.instance
   }
 
-  // ── Settings ─────────────────────────────────────────────────────────────
+  // ── Settings / app state ────────────────────────────────────────────────
 
-  loadSettings(): Settings {
+  loadAppState(): AppState {
     try {
       const raw = localStorage.getItem(KEY_SETTINGS)
-      if (!raw) return structuredClone(DEFAULT_SETTINGS)
+      if (!raw) return structuredClone(DEFAULT_APP_STATE)
 
       const stored: StoredSettings = JSON.parse(raw)
       const migrated = MigrationService.migrateSettings(stored)
       return migrated.data
     } catch {
       this.clearSettings()
-      return structuredClone(DEFAULT_SETTINGS)
+      return structuredClone(DEFAULT_APP_STATE)
     }
   }
 
-  saveSettings(settings: Settings): void {
+  loadSettings(mode: GameMode = GameMode.Play): Settings {
+    return structuredClone(this.loadAppState().profiles[mode])
+  }
+
+  loadPin(): string | null {
+    return this.loadAppState().pin
+  }
+
+  saveAppState(state: AppState): void {
     try {
       const stored: StoredSettings = {
         version: STORAGE_VERSION,
-        data: settings,
+        data: state,
       }
       localStorage.setItem(KEY_SETTINGS, JSON.stringify(stored))
     } catch {
@@ -49,49 +58,87 @@ export class StorageService {
     }
   }
 
+  saveSettings(mode: GameMode, settings: Settings): void {
+    const state = this.loadAppState()
+    state.profiles[mode] = structuredClone(settings)
+    this.saveAppState(state)
+  }
+
+  savePin(pin: string | null): void {
+    const state = this.loadAppState()
+    state.pin = pin
+    this.saveAppState(state)
+  }
+
   clearSettings(): void {
     try { localStorage.removeItem(KEY_SETTINGS) } catch { /* ignore */ }
   }
 
-  // ── Results ───────────────────────────────────────────────────────────────
+  // ── Results ──────────────────────────────────────────────────────────────
 
-  loadResults(): GameResult[] {
+  private loadAllResults(): Record<GameMode, GameResult[]> {
     try {
       const raw = localStorage.getItem(KEY_RESULTS)
-      if (!raw) return []
-
-      const stored: StoredResults = JSON.parse(raw)
-      const migrated = MigrationService.migrateResults(stored)
+      if (!raw) {
+        return {
+          [GameMode.Play]: [],
+          [GameMode.Free]: [],
+        }
+      }
+      const migrated = MigrationService.migrateResults(JSON.parse(raw))
       return migrated.data
     } catch {
       this.clearResults()
-      return []
+      return {
+        [GameMode.Play]: [],
+        [GameMode.Free]: [],
+      }
     }
   }
 
-  saveResult(result: GameResult): void {
+  loadResults(mode: GameMode = GameMode.Play): GameResult[] {
+    return this.loadAllResults()[mode] ?? []
+  }
+
+  saveResult(mode: GameMode, result: GameResult): void {
     try {
-      const results = this.loadResults()
-      results.push(result)
-
-      // Keep only last 365 results to avoid unbounded growth
-      const trimmed = results.slice(-365)
-
-      const stored: StoredResults = {
+      const allResults = this.loadAllResults()
+      const nextResults = [...(allResults[mode] ?? []), result].slice(-365)
+      allResults[mode] = nextResults
+      localStorage.setItem(KEY_RESULTS, JSON.stringify({
         version: STORAGE_VERSION,
-        data: trimmed,
-      }
-      localStorage.setItem(KEY_RESULTS, JSON.stringify(stored))
+        data: allResults,
+      }))
     } catch {
       // Storage full — silently ignore
     }
   }
 
-  clearResults(): void {
-    try { localStorage.removeItem(KEY_RESULTS) } catch { /* ignore */ }
+  clearResults(mode?: GameMode): void {
+    try {
+      if (!mode) {
+        localStorage.removeItem(KEY_RESULTS)
+        return
+      }
+      const allResults = this.loadAllResults()
+      allResults[mode] = []
+      localStorage.setItem(KEY_RESULTS, JSON.stringify({
+        version: STORAGE_VERSION,
+        data: allResults,
+      }))
+    } catch {
+      if (!mode) {
+        try { localStorage.removeItem(KEY_RESULTS) } catch { /* ignore */ }
+      }
+    }
   }
 
-  // ── Utilities ─────────────────────────────────────────────────────────────
+  resetAllProgress(): void {
+    this.clearResults()
+    this.saveAppState(structuredClone(DEFAULT_APP_STATE))
+  }
+
+  // ── Utilities ────────────────────────────────────────────────────────────
 
   isAvailable(): boolean {
     try {

@@ -1,7 +1,6 @@
-import { Animal, GameResult, Operation, Screen } from '../core/Types'
-import { NavigateFn } from '../app/Router'
+import { Animal, GameMode, Operation, Screen } from '../core/Types'
+import { NavigateFn, ResultScreenParams } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
-import { storage } from '../storage/StorageService'
 import { getAnimalVictoryGameSheet } from '../graphics/GameSprites'
 
 const OP_LABELS: Record<Operation, string> = {
@@ -23,7 +22,7 @@ export class ResultScreen implements BaseScreen {
 
   constructor(
     private navigate: NavigateFn,
-    private result: GameResult,
+    private params: ResultScreenParams,
   ) {}
 
   mount(container: HTMLElement): void {
@@ -45,14 +44,14 @@ export class ResultScreen implements BaseScreen {
   }
 
   private html(): string {
-    const r = this.result
+    const r = this.params.result
     const opLabel = OP_LABELS[r.operation] ?? r.operation
 
     return `
       <div class="rs-root">
         <div class="rs-header">
           <span class="rs-op-label">${opLabel}</span>
-          <span class="rs-title">LO LOGRASTE</span>
+          <span class="rs-title">${this.params.mode === GameMode.Play ? 'LO LOGRASTE' : 'PRÁCTICA LISTA'}</span>
         </div>
 
         <div class="rs-body">
@@ -62,7 +61,7 @@ export class ResultScreen implements BaseScreen {
           </div>
 
           <div class="rs-hero">
-            <div class="rs-message">Meta completada. Ahora sí vale estrella.</div>
+            <div class="rs-message">${this.params.mode === GameMode.Play ? 'Meta completada. Ahora sí vale estrella.' : 'En práctica libre no se guardan premios ni progreso.'}</div>
             <div class="rs-score-wrap">
               <canvas id="rAnimal" class="rs-animal" width="220" height="180"></canvas>
             </div>
@@ -71,7 +70,7 @@ export class ResultScreen implements BaseScreen {
           <div class="rs-stats">
             <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#40d060">✓</span><span class="rs-stat-val">${r.correct}</span><span class="rs-stat-label">correctas</span></div>
             <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#d04040">✗</span><span class="rs-stat-val">${r.incorrect}</span><span class="rs-stat-label">incorrectas</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#f0c040">★</span><span class="rs-stat-val">${r.currentTarget}</span><span class="rs-stat-label">meta alcanzada</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#f0c040">${this.params.mode === GameMode.Play ? '★' : '○'}</span><span class="rs-stat-val">${r.currentTarget}</span><span class="rs-stat-label">${this.params.mode === GameMode.Play ? 'meta alcanzada' : 'meta usada'}</span></div>
             <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#8888cc">⏱</span><span class="rs-stat-val">${formatTime(r.durationMs)}</span><span class="rs-stat-label">tiempo</span></div>
           </div>
         </div>
@@ -84,7 +83,7 @@ export class ResultScreen implements BaseScreen {
   }
 
   private animateScore(container: HTMLElement): void {
-    const target = this.result.percentCorrect
+    const target = this.params.result.percentCorrect
     const el = container.querySelector<HTMLElement>('#rScore')
     if (!el) return
     const start = performance.now()
@@ -103,7 +102,7 @@ export class ResultScreen implements BaseScreen {
     const canvas = container.querySelector<HTMLCanvasElement>('#rAnimal')
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
-    const animal = storage.loadSettings().animal as Animal
+    const animal = this.params.animal as Animal
     const sheet = getAnimalVictoryGameSheet(animal)
     const loopFrames = [0, 1, 2, 1]
 
@@ -128,7 +127,7 @@ export class ResultScreen implements BaseScreen {
 
   private attachEvents(container: HTMLElement): void {
     container.querySelector('#rRetry')?.addEventListener('click', () =>
-      this.navigate(Screen.Game, this.result.operation),
+      this.navigate(Screen.Game, this.params.result.operation),
     )
     container.querySelector('#rHome')?.addEventListener('click', () =>
       this.navigate(Screen.Home),

@@ -1,25 +1,40 @@
-import { Screen, Settings } from '../core/Types'
+import { GameMode, GameResult, Screen, Settings } from '../core/Types'
 import { storage } from '../storage/StorageService'
 import { ScreenManager } from './ScreenManager'
+
+export interface ResultScreenParams {
+  result: GameResult
+  mode: GameMode
+  animal: Settings['animal']
+}
 
 export type NavigateFn = (screen: Screen, params?: unknown) => void
 
 export class Router {
-  private settings: Settings
+  private activeMode: GameMode = GameMode.Play
+  private settingsByMode = storage.loadAppState().profiles
 
-  constructor(private manager: ScreenManager) {
-    this.settings = storage.loadSettings()
+  constructor(private manager: ScreenManager) {}
+
+  getSettings(mode: GameMode = this.activeMode): Settings {
+    return structuredClone(this.settingsByMode[mode])
   }
 
-  getSettings(): Settings { return this.settings }
+  getActiveMode(): GameMode {
+    return this.activeMode
+  }
 
-  updateSettings(next: Settings): void {
-    this.settings = next
-    storage.saveSettings(next)
+  hasPin(): boolean {
+    return !!storage.loadPin()
+  }
+
+  updateSettings(mode: GameMode, next: Settings): void {
+    this.settingsByMode[mode] = structuredClone(next)
+    if (mode === this.activeMode) this.activeMode = mode
+    storage.saveSettings(mode, next)
   }
 
   navigate: NavigateFn = async (screen: Screen, params?: unknown) => {
-    // Lazy-import each screen to keep initial bundle small
     switch (screen) {
       case Screen.Welcome: {
         const { WelcomeScreen } = await import('../screens/WelcomeScreen')
@@ -27,30 +42,48 @@ export class Router {
         break
       }
       case Screen.Home: {
+        if (params === GameMode.Play || params === GameMode.Free) {
+          this.activeMode = params
+        }
         const { HomeScreen } = await import('../screens/HomeScreen')
         await this.manager.show(
-          new HomeScreen(this.navigate, this.settings, (s) => this.updateSettings(s)),
+          new HomeScreen(
+            this.navigate,
+            this.activeMode,
+            this.getSettings(this.activeMode),
+            (mode, s) => this.updateSettings(mode, s),
+          ),
         )
         break
       }
       case Screen.Settings: {
         const { SettingsScreen } = await import('../screens/SettingsScreen')
         await this.manager.show(
-          new SettingsScreen(this.navigate, this.settings, (s) => this.updateSettings(s)),
+          new SettingsScreen(
+            this.navigate,
+            this.activeMode,
+            this.getSettings(this.activeMode),
+            (mode, s) => this.updateSettings(mode, s),
+          ),
         )
         break
       }
       case Screen.Game: {
         const { GameScreen } = await import('../screens/GameScreen')
         await this.manager.show(
-          new GameScreen(this.navigate, this.settings, params as import('../core/Types').Operation),
+          new GameScreen(
+            this.navigate,
+            this.activeMode,
+            this.getSettings(this.activeMode),
+            params as import('../core/Types').Operation,
+          ),
         )
         break
       }
       case Screen.Result: {
         const { ResultScreen } = await import('../screens/ResultScreen')
         await this.manager.show(
-          new ResultScreen(this.navigate, params as import('../core/Types').GameResult),
+          new ResultScreen(this.navigate, params as ResultScreenParams),
         )
         break
       }

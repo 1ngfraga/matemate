@@ -1,5 +1,6 @@
-import { Animal, AnswerChoice, Operation, Screen, Settings } from '../core/Types'
+import { Animal, AnswerChoice, GameMode, Operation, Screen, Settings } from '../core/Types'
 import { NavigateFn } from '../app/Router'
+import { ResultScreenParams } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 import { QuestionGenerator } from '../math/QuestionGenerator'
 import { AnswerGenerator } from '../math/AnswerGenerator'
@@ -47,6 +48,7 @@ export class GameScreen implements BaseScreen {
 
   constructor(
     private navigate: NavigateFn,
+    private mode: GameMode,
     private settings: Settings,
     private operation: Operation,
   ) {}
@@ -173,9 +175,16 @@ export class GameScreen implements BaseScreen {
     this.phase = 'done'
     this.loop.stop()
     const result = this.state.buildResult()
-    storage.saveResult(result)
-    this.sound.playVictory()
-    setTimeout(() => this.navigate(Screen.Result, result), 700)
+    if (this.mode === GameMode.Play) {
+      storage.saveResult(this.mode, result)
+      this.sound.playVictory()
+    }
+    const params: ResultScreenParams = {
+      result,
+      mode: this.mode,
+      animal: this.settings.animal,
+    }
+    setTimeout(() => this.navigate(Screen.Result, params), 700)
   }
 
   private ensureQuestionBuffer(): void {
@@ -456,8 +465,8 @@ export class GameScreen implements BaseScreen {
       const muted = !this.sound.isMuted
       this.sound.setMuted(muted)
       btn.textContent = muted ? '🔇' : '🔊'
-      // Persist to settings
-      storage.saveSettings({ ...this.settings, muted })
+      this.settings = { ...this.settings, muted }
+      storage.saveSettings(this.mode, this.settings)
     })
 
     container.querySelectorAll<HTMLElement>('.gs-ans').forEach((btn) => {

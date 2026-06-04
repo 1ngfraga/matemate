@@ -31,6 +31,11 @@ export const enum Screen {
   Result         = 'result',
 }
 
+export const enum GameMode {
+  Play = 'play',
+  Free = 'free',
+}
+
 // ── Difficulty types ───────────────────────────────────────────────────────
 
 /** Size of each addend: 1 → single-digit (1-9), 2 → two-digit (10-99) */
@@ -129,7 +134,34 @@ export interface GameResult {
 
 // ── Stored shapes (versioned) ──────────────────────────────────────────────
 
-export interface StoredSettings { version: number; data: Settings }
-export interface StoredResults  { version: number; data: GameResult[] }
+export interface AppProfiles {
+  [GameMode.Play]: Settings
+  [GameMode.Free]: Settings
+}
 
-export const STORAGE_VERSION = 6
+export interface AppState {
+  profiles: AppProfiles
+  pin: string | null
+}
+
+export interface StoredSettings {
+  version: number
+  data: Settings | AppState
+}
+
+export interface StoredResults {
+  version: number
+  data: GameResult[] | Record<GameMode, GameResult[]>
+}
+
+export const DEFAULT_APP_PROFILES: AppProfiles = {
+  [GameMode.Play]: structuredClone(DEFAULT_SETTINGS),
+  [GameMode.Free]: structuredClone(DEFAULT_SETTINGS),
+}
+
+export const DEFAULT_APP_STATE: AppState = {
+  profiles: DEFAULT_APP_PROFILES,
+  pin: null,
+}
+
+export const STORAGE_VERSION = 7

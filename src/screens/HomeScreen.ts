@@ -1,4 +1,4 @@
-import { Animal, Operation, Screen, Settings } from '../core/Types'
+import { Animal, GameMode, Operation, Screen, Settings } from '../core/Types'
 import { NavigateFn } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 import { storage } from '../storage/StorageService'
@@ -27,8 +27,9 @@ export class HomeScreen implements BaseScreen {
 
   constructor(
     private navigate: NavigateFn,
+    private mode: GameMode,
     initialSettings: Settings,
-    private onSettingsChange: (s: Settings) => void,
+    private onSettingsChange: (mode: GameMode, s: Settings) => void,
   ) {
     this.settings = { ...initialSettings }
   }
@@ -75,16 +76,26 @@ export class HomeScreen implements BaseScreen {
       <div class="home-root">
         <header class="home-header">
           <span class="home-logo">MATE<span style="color:#8888ff">MATE</span></span>
-          <button class="btn home-settings-btn" id="hSettings">⚙ CONFIG</button>
+          <div class="home-header-actions">
+            <span class="home-mode-badge">${this.mode === GameMode.Play ? 'MODO JUGAR' : 'PRÁCTICA LIBRE'}</span>
+            <button class="btn home-settings-btn" id="hSettings">⚙ CONFIG</button>
+          </div>
         </header>
 
         <div class="home-body">
           <!-- Left / Top: chart -->
           <section class="home-chart-section">
-            <div class="home-section-label">▸ INTENTOS (14 DÍAS)</div>
-            <div class="home-chart-wrap" id="hChartWrap">
-              <canvas id="hChart" class="home-chart"></canvas>
-            </div>
+            ${this.mode === GameMode.Play ? `
+              <div class="home-section-label">▸ INTENTOS (14 DÍAS)</div>
+              <div class="home-chart-wrap" id="hChartWrap">
+                <canvas id="hChart" class="home-chart"></canvas>
+              </div>
+            ` : `
+              <div class="home-section-label">▸ PRÁCTICA LIBRE</div>
+              <div class="home-chart-wrap home-chart-wrap--empty">
+                <div class="home-free-note">Aquí no se guardan premios ni estadísticas.</div>
+              </div>
+            `}
           </section>
 
           <!-- Right / Bottom: animal + ops -->
@@ -128,6 +139,20 @@ export class HomeScreen implements BaseScreen {
         font-size:12px; padding:6px 12px;
         min-height:36px; min-width:80px;
       }
+      .home-header-actions {
+        display:flex;
+        align-items:center;
+        gap:8px;
+      }
+      .home-mode-badge {
+        font-family:'Courier New',monospace;
+        font-size:10px;
+        color:${this.mode === GameMode.Play ? '#f0c040' : '#80b0ff'};
+        background:${this.mode === GameMode.Play ? '#241800' : '#102040'};
+        border:2px solid ${this.mode === GameMode.Play ? '#8a6000' : '#4060d0'};
+        padding:5px 8px;
+        letter-spacing:1px;
+      }
 
       .home-body {
         display:flex; flex:1; gap:8px;
@@ -159,6 +184,19 @@ export class HomeScreen implements BaseScreen {
         flex:1; position:relative; min-height:80px;
         background:#0d0d22;
         border:2px solid #2a2a5a;
+      }
+      .home-chart-wrap--empty {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+      }
+      .home-free-note {
+        font-family:'Courier New',monospace;
+        color:#80b0ff;
+        text-align:center;
+        font-size:clamp(12px, 2vw, 16px);
+        line-height:1.5;
       }
       .home-chart {
         position:absolute; inset:0; width:100%; height:100%;
@@ -324,7 +362,7 @@ export class HomeScreen implements BaseScreen {
 
     // Defer until layout is complete so getBoundingClientRect is accurate
     requestAnimationFrame(() => {
-      const results = storage.loadResults()
+      const results = storage.loadResults(this.mode)
       const days    = ProgressAggregator.getLast14Days(results)
       this.chart!.render(days)
     })
@@ -344,7 +382,7 @@ export class HomeScreen implements BaseScreen {
         const animal = btn.dataset.animal as Animal
         if (!animal) return
         this.settings = { ...this.settings, animal }
-        this.onSettingsChange(this.settings)
+        this.onSettingsChange(this.mode, this.settings)
 
         // Update selected state
         container.querySelectorAll('.animal-btn').forEach((b) =>
