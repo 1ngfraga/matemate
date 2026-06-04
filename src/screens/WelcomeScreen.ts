@@ -33,7 +33,7 @@ export class WelcomeScreen implements BaseScreen {
           <p class="wl-sub">¡Practica matemáticas!</p>
           <div class="wl-actions">
             <button class="btn btn--accent wl-play" id="wlPlay">▶ &nbsp;JUGAR</button>
-            <button class="btn wl-free" id="wlFree">☼ &nbsp;PRÁCTICA LIBRE</button>
+            <button class="btn wl-free" id="wlFree">☺ &nbsp;PRÁCTICA</button>
           </div>
           <p class="wl-hint" id="wlHint"></p>
         </div>

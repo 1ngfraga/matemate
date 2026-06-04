@@ -418,7 +418,7 @@ export class SettingsScreen implements BaseScreen {
   }
 
   private attachPinEvents(container: HTMLElement): void {
-    container.querySelector("#pinCancel")?.addEventListener("click", () => this.navigate(Screen.Home));
+    container.querySelector("#pinCancel")?.addEventListener("click", () => this.navigate(Screen.Home, this.mode));
     container.querySelector("#pinReset")?.addEventListener("click", () => this.resetPinAndProgress());
     container.querySelectorAll<HTMLElement>(".pin-key").forEach((key) => {
       key.addEventListener("click", () => this.handlePinKey(key.dataset.key ?? "", container));
@@ -510,7 +510,7 @@ export class SettingsScreen implements BaseScreen {
   }
 
   private attachSettingsEvents(container: HTMLElement): void {
-    container.querySelector("#ssetBack")?.addEventListener("click", () => this.navigate(Screen.Home));
+    container.querySelector("#ssetBack")?.addEventListener("click", () => this.navigate(Screen.Home, this.mode));
 
     container.querySelectorAll<HTMLElement>(".timer-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -583,7 +583,7 @@ export class SettingsScreen implements BaseScreen {
       const shouldClearResults = progressSignature(this.settings) !== progressSignature(this.working);
       this.onSettingsChange(this.mode, this.working);
       if (shouldClearResults) storage.clearResults(this.mode);
-      this.navigate(Screen.Home);
+      this.navigate(Screen.Home, this.mode);
     });
   }
 }

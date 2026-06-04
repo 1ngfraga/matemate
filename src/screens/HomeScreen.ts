@@ -75,9 +75,12 @@ export class HomeScreen implements BaseScreen {
     return `
       <div class="home-root">
         <header class="home-header">
-          <span class="home-logo">MATE<span style="color:#8888ff">MATE</span></span>
+          <div class="home-header-left">
+            <button class="btn home-back-btn" id="hMode" aria-label="Volver">←</button>
+            <span class="home-logo">MATE<span style="color:#8888ff">MATE</span></span>
+          </div>
           <div class="home-header-actions">
-            <span class="home-mode-badge">${this.mode === GameMode.Play ? 'MODO JUGAR' : 'PRÁCTICA LIBRE'}</span>
+            <span class="home-mode-badge">${this.mode === GameMode.Play ? 'MODO JUGAR' : 'PRÁCTICA'}</span>
             <button class="btn home-settings-btn" id="hSettings">⚙ CONFIG</button>
           </div>
         </header>
@@ -85,17 +88,10 @@ export class HomeScreen implements BaseScreen {
         <div class="home-body">
           <!-- Left / Top: chart -->
           <section class="home-chart-section">
-            ${this.mode === GameMode.Play ? `
-              <div class="home-section-label">▸ INTENTOS (14 DÍAS)</div>
-              <div class="home-chart-wrap" id="hChartWrap">
-                <canvas id="hChart" class="home-chart"></canvas>
-              </div>
-            ` : `
-              <div class="home-section-label">▸ PRÁCTICA LIBRE</div>
-              <div class="home-chart-wrap home-chart-wrap--empty">
-                <div class="home-free-note">Aquí no se guardan premios ni estadísticas.</div>
-              </div>
-            `}
+            <div class="home-section-label">▸ INTENTOS (14 DÍAS)</div>
+            <div class="home-chart-wrap" id="hChartWrap">
+              <canvas id="hChart" class="home-chart"></canvas>
+            </div>
           </section>
 
           <!-- Right / Bottom: animal + ops -->
@@ -128,12 +124,29 @@ export class HomeScreen implements BaseScreen {
         border-bottom:3px solid #2a2a5a;
         flex-shrink:0;
       }
+      .home-header-left {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        min-width:0;
+      }
       .home-logo {
         font-family:'Courier New',monospace;
         font-size:clamp(16px,3vw,26px);
         font-weight:900; color:#f0c040;
         letter-spacing:3px;
         text-shadow:2px 2px 0 #8a6000;
+      }
+      .home-back-btn {
+        font-size:20px;
+        font-weight:900;
+        padding:0;
+        min-height:36px;
+        min-width:36px;
+        line-height:1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
       }
       .home-settings-btn {
         font-size:12px; padding:6px 12px;
@@ -184,19 +197,6 @@ export class HomeScreen implements BaseScreen {
         flex:1; position:relative; min-height:80px;
         background:#0d0d22;
         border:2px solid #2a2a5a;
-      }
-      .home-chart-wrap--empty {
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding:16px;
-      }
-      .home-free-note {
-        font-family:'Courier New',monospace;
-        color:#80b0ff;
-        text-align:center;
-        font-size:clamp(12px, 2vw, 16px);
-        line-height:1.5;
       }
       .home-chart {
         position:absolute; inset:0; width:100%; height:100%;
@@ -374,6 +374,9 @@ export class HomeScreen implements BaseScreen {
     // Settings button
     container.querySelector('#hSettings')?.addEventListener('click', () => {
       this.navigate(Screen.Settings)
+    })
+    container.querySelector('#hMode')?.addEventListener('click', () => {
+      this.navigate(Screen.Welcome)
     })
 
     // Animal selector

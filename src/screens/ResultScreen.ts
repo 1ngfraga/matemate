@@ -130,7 +130,7 @@ export class ResultScreen implements BaseScreen {
       this.navigate(Screen.Game, this.params.result.operation),
     )
     container.querySelector('#rHome')?.addEventListener('click', () =>
-      this.navigate(Screen.Home),
+      this.navigate(Screen.Home, this.params.mode),
     )
   }
 
