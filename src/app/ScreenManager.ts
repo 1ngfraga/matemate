@@ -6,6 +6,7 @@ export interface BaseScreen {
 export class ScreenManager {
   private current: BaseScreen | null = null
   private wrapper: HTMLElement
+  private transitionToken = 0
 
   constructor(private root: HTMLElement) {
     this.wrapper = document.createElement('div')
@@ -14,6 +15,7 @@ export class ScreenManager {
   }
 
   async show(next: BaseScreen): Promise<void> {
+    const token = ++this.transitionToken
     const prev = this.current
 
     // Mount next screen (hidden behind prev)
@@ -27,6 +29,11 @@ export class ScreenManager {
     if (prev) {
       // Fade out old, fade in new simultaneously
       await this.animate(nextEl, 'in')
+      if (token !== this.transitionToken) {
+        next.unmount()
+        if (nextEl.parentElement === this.wrapper) this.wrapper.removeChild(nextEl)
+        return
+      }
       // Unmount previous after transition
       prev.unmount()
       // Remove all children except the new screen element
@@ -35,6 +42,10 @@ export class ScreenManager {
       })
     } else {
       await this.animate(nextEl, 'in')
+      if (token !== this.transitionToken) {
+        next.unmount()
+        if (nextEl.parentElement === this.wrapper) this.wrapper.removeChild(nextEl)
+      }
     }
   }
 
