@@ -22,17 +22,17 @@ export class AnimalAnimation {
   startRun():      void  { this.setState('run') }
   get currentState(): AnimState { return this.state }
 
-  update(dt: number): AnimSnapshot {
+  update(dt: number, speedScale = 1): AnimSnapshot {
     this.stateTime += dt
     switch (this.state) {
-      case 'run':    return this.updateRun(dt)
+      case 'run':    return this.updateRun(dt, speedScale)
       case 'victory':return this.updateVictory()
       default:       return { frameIndex: F_RUN0, offsetX: 0, offsetY: 0, alpha: 1 }
     }
   }
 
-  private updateRun(dt: number): AnimSnapshot {
-    this.runPhase += dt
+  private updateRun(dt: number, speedScale: number): AnimSnapshot {
+    this.runPhase += dt * speedScale
     // 4-frame cycle
     const frameIdx  = Math.floor(this.runPhase / FRAME_MS) % 4
     const frameIndex = RUN_FRAMES[frameIdx]

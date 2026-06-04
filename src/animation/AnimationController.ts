@@ -3,11 +3,13 @@ import { AnimalAnimation, AnimSnapshot } from './AnimalAnimation'
 import { DamageEffect } from './DamageEffect'
 import { Confetti } from '../graphics/Confetti'
 import { getAnimalGameSheet, GameSheet, drawObstacle, getObstacleSize } from '../graphics/GameSprites'
-import { drawGroundShadow, WORLD_SCROLL_SPEED } from '../graphics/PixelArtRenderer'
+import { drawGroundShadow } from '../graphics/PixelArtRenderer'
 import { ObstacleKind } from '../graphics/ObstacleSprites'
 
 export const GROUND_FRAC = 0.68
 const ANIMAL_HIT_X_FRAC = 0.9
+const BASE_QUESTION_MS = 10000
+const OBSTACLE_ENTRY_INSET = 12
 
 // ── Obstacle state ────────────────────────────────────────────────────────
 
@@ -38,6 +40,8 @@ export class AnimationController {
   private confetti     = new Confetti()
   private obstacle: ObstacleAnim | null = null
   private sheet: GameSheet
+  private worldSpeed = 0
+  private runSpeedScale = 1
 
   private animalX = 0
   private animalY = 0
@@ -84,11 +88,25 @@ export class AnimationController {
    * Spawn a new obstacle.
    * @param timerMs  Total question duration in ms — obstacle arrives exactly at end.
    */
-  spawnObstacle(kind: ObstacleKind, timerMs: number): void {
+  spawnObstacle(kind: ObstacleKind, timerMs: number, canvasWidth: number): void {
+    const animalW = this.sheet.frames[0]?.gridW ?? 0
+    const targetX = canvasWidth * 0.10 + animalW * ANIMAL_HIT_X_FRAC
+    const startX = canvasWidth - OBSTACLE_ENTRY_INSET
+    const distance = Math.max(24, startX - targetX)
+    const speed = distance / Math.max(1, timerMs)
+
     this.obstacle = {
-      kind, x: 0, targetX: 0, timerMs,
-      speed: 0, phase: 'approach', phaseTime: 0, impactTriggered: false,
+      kind,
+      x: startX,
+      targetX,
+      timerMs,
+      speed,
+      phase: 'approach',
+      phaseTime: 0,
+      impactTriggered: false,
     }
+    this.worldSpeed = speed
+    this.runSpeedScale = BASE_QUESTION_MS / Math.max(1, timerMs)
   }
 
   clearObstacle(): void { this.obstacle = null }
@@ -112,7 +130,7 @@ export class AnimationController {
     ctx.save()
     ctx.translate(dx, dy)
 
-    const snap = this.animalAnim.update(dt)
+    const snap = this.animalAnim.update(dt, this.runSpeedScale)
     this.drawAnimal(ctx, snap)
 
     if (this.obstacle) this.updateObstacle(ctx, dt, W)
@@ -154,16 +172,7 @@ export class AnimationController {
     const obsSize = getObstacleSize(obs.kind)
     const obsW    = obsSize.width * s
     const obsH    = obsSize.height * s
-    const animalW = this.sheet.frames[0]?.gridW ? this.sheet.frames[0].gridW * s : 0
     const obsY    = this.groundY - obsH
-
-    // Compute speed on first tick (needs animalX which is only known after first update)
-    if (obs.speed === 0 && this.animalX > 0) {
-      // The obstacle collides with its left edge, so x itself is the hit point.
-      obs.targetX = this.animalX + animalW * ANIMAL_HIT_X_FRAC
-      obs.speed   = WORLD_SCROLL_SPEED
-      obs.x       = obs.targetX + obs.speed * Math.max(1, obs.timerMs)
-    }
 
     const paint = (x: number, alpha: number, cracked = false) => {
       ctx.save(); ctx.globalAlpha = Math.max(0, alpha)
@@ -261,4 +270,5 @@ export class AnimationController {
 
   get obstaclePhase(): ObstaclePhase | null { return this.obstacle?.phase ?? null }
   get animalState() { return this.animalAnim.currentState }
+  get scrollSpeed(): number { return this.worldSpeed }
 }

@@ -28,7 +28,6 @@ export function buildStarField(_W: number, _H: number, _count = 30): StarField {
 
 // Ground surface fraction — where the green ground starts
 export const GROUND_FRAC = 0.66
-export const WORLD_SCROLL_SPEED = 0.267
 
 // ── Main draw ─────────────────────────────────────────────────────────────
 

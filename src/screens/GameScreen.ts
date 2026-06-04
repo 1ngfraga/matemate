@@ -19,7 +19,6 @@ import {
   buildStarField,
   StarField,
   drawBackground,
-  WORLD_SCROLL_SPEED,
 } from "../graphics/PixelArtRenderer";
 import { randomObstacleKind } from "../graphics/ObstacleSprites";
 import { storage } from "../storage/StorageService";
@@ -189,7 +188,7 @@ export class GameScreen implements BaseScreen {
     const obsKind = randomObstacleKind();
     const rect = this.canvas.getBoundingClientRect();
     const timerMs = timerSeconds * 1000;
-    this.anim.spawnObstacle(obsKind, timerMs);
+    this.anim.spawnObstacle(obsKind, timerMs, rect.width);
 
     // DOM: render question + answers
     this.renderQuestion();
@@ -328,8 +327,7 @@ export class GameScreen implements BaseScreen {
         break;
     }
 
-    // Scroll synchronized to run cycle: FRAME_MS=150ms, target ~40px per frame
-    this.scrollX += dt * WORLD_SCROLL_SPEED;
+    this.scrollX += dt * this.anim.scrollSpeed;
 
     // Render canvas
     this.renderCanvas(dt);
