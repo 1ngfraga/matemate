@@ -82,10 +82,10 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   animal:        Animal.Dinosaur,
   timerByOperation: {
-    [Operation.Addition]: TimerDuration.Medium,
-    [Operation.Subtraction]: TimerDuration.Medium,
-    [Operation.Multiplication]: TimerDuration.Medium,
-    [Operation.Division]: TimerDuration.Medium,
+    [Operation.Addition]: TimerDuration.Long,
+    [Operation.Subtraction]: TimerDuration.Long,
+    [Operation.Multiplication]: TimerDuration.Long,
+    [Operation.Division]: TimerDuration.Long,
   },
   multiplicationTables: {
     1: true, 2: true, 3: true, 4: true,
@@ -97,10 +97,10 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   muted: false,
   gameTargetByOperation: {
-    [Operation.Addition]: 50,
-    [Operation.Subtraction]: 50,
-    [Operation.Multiplication]: 50,
-    [Operation.Division]: 50,
+    [Operation.Addition]: 30,
+    [Operation.Subtraction]: 30,
+    [Operation.Multiplication]: 30,
+    [Operation.Division]: 30,
   },
   additionOperandDigits: 1,
   additionNumAddends:    2,

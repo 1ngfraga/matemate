@@ -51,3 +51,6 @@ $env:ANDROID_HOME="C:\Users\elcua\AppData\Local\Android\Sdk"
 $env:ANDROID_SDK_ROOT="C:\Users\elcua\AppData\Local\Android\Sdk"
 cd C:\APP\math-game\android
 .\gradlew.bat clean assembleDebug
+
+pixelar:
+python scripts/pixel_art.py C:\APP\math-game\reference\unicorn_face.png
