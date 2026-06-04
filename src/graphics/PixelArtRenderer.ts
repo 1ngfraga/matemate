@@ -146,11 +146,15 @@ function drawMountains(
   ctx.imageSmoothingEnabled = false
 
   for (let pi = 0; pi < positions.length; pi++) {
-    const base      = ((positions[pi] - scroll) % PERIOD + PERIOD) % PERIOD
-    const scrollIdx = Math.floor(scroll / PERIOD)
+    const rx = positions[pi]
+    const base = ((rx - scroll) % PERIOD + PERIOD) % PERIOD
+    // Tie the variant to the mountain's world slot, not the current scroll bucket.
+    // This keeps the same mountain visible until it fully leaves the screen.
+    const firstWorldIdx = -Math.floor((rx - scroll) / PERIOD)
     for (let rep = -1; rep <= Math.ceil(W / PERIOD) + 1; rep++) {
       const mx = base + rep * PERIOD
-      const img = mountainImgs[mountainVariant((scrollIdx + rep) * positions.length + pi)]
+      const worldIdx = firstWorldIdx + rep
+      const img = mountainImgs[mountainVariant(worldIdx * positions.length + pi)]
       if (!img.complete || img.naturalWidth === 0) continue
       const dw = img.naturalWidth, dh = img.naturalHeight
       if (mx > W + dw || mx < -dw) continue
