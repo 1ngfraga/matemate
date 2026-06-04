@@ -472,7 +472,7 @@ export class GameScreen implements BaseScreen {
     return `
       <div class="gs-root">
         <div class="gs-hud">
-          <button class="gs-exit-btn" id="gsExit">✕</button>
+          <button class="gs-exit-btn" id="gsExit" aria-label="Volver">←</button>
           <span class="gs-stat" id="gsProgress">META 50</span>
           <div class="gs-timer-wrap">
             <div class="gs-timer-track">
