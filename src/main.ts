@@ -1,7 +1,10 @@
 import './styles.css'
 import { preloadSprites } from './graphics/SpriteLoader'
+import { setLocale } from './i18n/I18n'
+import { storage } from './storage/StorageService'
 
 preloadSprites()
+setLocale(storage.loadLocale())
 
 // Bootstrap the app
 async function bootstrap() {

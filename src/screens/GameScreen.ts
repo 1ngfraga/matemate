@@ -25,6 +25,7 @@ import { randomObstacleKind } from "../graphics/ObstacleSprites";
 import { storage } from "../storage/StorageService";
 import { SoundService } from "../audio/SoundService";
 import { getAnimalFaceImage } from "../graphics/GameSprites";
+import { t } from "../i18n/I18n";
 
 const FEEDBACK_MS = 700;
 const GRACE_MS = 1000;
@@ -362,7 +363,7 @@ export class GameScreen implements BaseScreen {
     // Score overlay on canvas (top-left corner)
     drawPixelText(
       this.ctx,
-      `META ${this.state.targetStreak}`,
+      `${t("meta")} ${this.state.targetStreak}`,
       8,
       6,
       12,
@@ -395,7 +396,7 @@ export class GameScreen implements BaseScreen {
       const el = c.querySelector<HTMLElement>(sel);
       if (el) el.textContent = val;
     };
-    setText("#gsProgress", `META ${this.state.targetStreak}`);
+    setText("#gsProgress", `${t("meta")} ${this.state.targetStreak}`);
     setText("#gsCorrect", this.state.correctText);
     setText("#gsIncorrect", this.state.incorrectText);
     setText("#gsStreakVal", String(this.state.currentStreak));
@@ -523,7 +524,7 @@ export class GameScreen implements BaseScreen {
       <div class="gs-root">
         <div class="gs-hud">
           <button class="gs-exit-btn" id="gsExit" aria-label="Volver">←</button>
-          <span class="gs-stat" id="gsProgress">META 50</span>
+          <span class="gs-stat" id="gsProgress">${t("meta")} 50</span>
           <div class="gs-timer-wrap">
             <div class="gs-timer-track">
               <div class="gs-timer-fill" id="gsTimerFill" style="width:100%"></div>
@@ -532,7 +533,7 @@ export class GameScreen implements BaseScreen {
           </div>
           <span class="gs-stat gs-correct"   id="gsCorrect">✓ 0</span>
           <span class="gs-stat gs-incorrect" id="gsIncorrect">✗ 0</span>
-          <button class="gs-mute-btn" id="gsMute" title="Silencio">
+          <button class="gs-mute-btn" id="gsMute" title="${t("muteTitle")}">
             ${this.settings.muted ? "🔇" : "🔊"}
           </button>
         </div>

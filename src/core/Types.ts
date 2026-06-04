@@ -36,6 +36,19 @@ export const enum GameMode {
   Free = 'free',
 }
 
+export const enum Locale {
+  Ar = 'ar',
+  En = 'en',
+  Es = 'es',
+  Fr = 'fr',
+  Hi = 'hi',
+  Ja = 'ja',
+  Pt = 'pt',
+  Ru = 'ru',
+  Zh = 'zh',
+  Bn = 'bn',
+}
+
 // ── Difficulty types ───────────────────────────────────────────────────────
 
 /** Size of each addend: 1 → single-digit (1-9), 2 → two-digit (10-99) */
@@ -148,6 +161,7 @@ export interface AppProfiles {
 export interface AppState {
   profiles: AppProfiles
   pin: string | null
+  locale: Locale
 }
 
 export interface StoredSettings {
@@ -168,6 +182,7 @@ export const DEFAULT_APP_PROFILES: AppProfiles = {
 export const DEFAULT_APP_STATE: AppState = {
   profiles: DEFAULT_APP_PROFILES,
   pin: null,
+  locale: Locale.Es,
 }
 
-export const STORAGE_VERSION = 8
+export const STORAGE_VERSION = 9

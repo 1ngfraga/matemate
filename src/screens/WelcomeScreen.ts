@@ -2,6 +2,8 @@ import { GameMode, Screen } from "../core/Types";
 import { NavigateFn } from "../app/Router";
 import { BaseScreen } from "../app/ScreenManager";
 import { requestFullscreen } from "../core/Fullscreen";
+import { getFlag, getLocale, LOCALE_OPTIONS, setLocale, t } from "../i18n/I18n";
+import { storage } from "../storage/StorageService";
 
 export class WelcomeScreen implements BaseScreen {
   private container: HTMLElement | null = null;
@@ -25,15 +27,23 @@ export class WelcomeScreen implements BaseScreen {
     return `
       <div class="wl-root">
         <img class="wl-bg" src="portada.png" alt="">
+        <div class="wl-lang">
+          <button class="wl-lang-current" id="wlLangCurrent" aria-label="${t("practiceIconLabel")}">${getFlag(getLocale())}</button>
+          <div class="wl-lang-menu wl-lang-menu--hidden" id="wlLangMenu">
+            ${LOCALE_OPTIONS.map((option) =>
+              `<button class="wl-lang-btn${option.locale === getLocale() ? " wl-lang-btn--sel" : ""}" data-locale="${option.locale}" aria-label="${option.locale}">${option.flag}</button>`,
+            ).join("")}
+          </div>
+        </div>
 
         <div class="wl-center">
           <div class="wl-title">
             <span class="wl-t1">MATE</span><span class="wl-t2">MATE</span>
           </div>
-          <p class="wl-sub">¡Practica matemáticas!</p>
+          <p class="wl-sub">${t("appSubtitle")}</p>
           <div class="wl-actions">
-            <button class="btn btn--accent wl-play" id="wlPlay">▶ &nbsp;JUGAR</button>
-            <button class="btn wl-free" id="wlFree">☺ &nbsp;PRÁCTICA</button>
+            <button class="btn btn--accent wl-play" id="wlPlay">▶ &nbsp;${t("modePlay")}</button>
+            <button class="btn wl-free" id="wlFree">☺ &nbsp;${t("modePractice")}</button>
           </div>
           <p class="wl-hint" id="wlHint"></p>
         </div>
@@ -55,6 +65,42 @@ export class WelcomeScreen implements BaseScreen {
           position:relative; z-index:2;
           display:flex; flex-direction:column; align-items:center;
           gap:clamp(10px,2vh,18px); padding:16px;
+        }
+        .wl-lang {
+          position:absolute;
+          top:12px;
+          right:12px;
+          z-index:3;
+          display:flex;
+          flex-direction:column;
+          align-items:flex-end;
+          gap:6px;
+        }
+        .wl-lang-current, .wl-lang-btn {
+          width:42px;
+          height:42px;
+          border:3px solid #ffe080;
+          background:#0d0d22;
+          color:#fff;
+          font-size:22px;
+          cursor:pointer;
+          box-shadow:3px 3px 0 rgba(0,0,0,0.35);
+        }
+        .wl-lang-menu {
+          display:grid;
+          grid-template-columns:repeat(5, 1fr);
+          gap:6px;
+          background:rgba(13,13,34,0.92);
+          border:2px solid #4a4a8a;
+          padding:8px;
+          width:max-content;
+        }
+        .wl-lang-menu--hidden {
+          display:none;
+        }
+        .wl-lang-btn--sel {
+          border-color:#40d060;
+          background:#102010;
         }
         .wl-title {
           display:flex; gap:2px;
@@ -121,6 +167,21 @@ export class WelcomeScreen implements BaseScreen {
     const playBtn = container.querySelector<HTMLButtonElement>("#wlPlay")!;
     const freeBtn = container.querySelector<HTMLButtonElement>("#wlFree")!;
     const hint = container.querySelector<HTMLElement>("#wlHint")!;
+    const langCurrent = container.querySelector<HTMLButtonElement>("#wlLangCurrent")!;
+    const langMenu = container.querySelector<HTMLElement>("#wlLangMenu")!;
+
+    langCurrent.addEventListener("click", () => {
+      langMenu.classList.toggle("wl-lang-menu--hidden");
+    });
+    container.querySelectorAll<HTMLElement>(".wl-lang-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const locale = btn.dataset.locale as ReturnType<typeof getLocale>;
+        setLocale(locale);
+        storage.saveLocale(locale);
+        container.innerHTML = this.html();
+        this.attachEvents(container);
+      });
+    });
 
     const startMode = async (btn: HTMLButtonElement, mode: GameMode) => {
       playBtn.disabled = true;

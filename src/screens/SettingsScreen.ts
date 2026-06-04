@@ -11,6 +11,7 @@ import {
 import { NavigateFn } from "../app/Router";
 import { BaseScreen } from "../app/ScreenManager";
 import { storage } from "../storage/StorageService";
+import { t } from "../i18n/I18n";
 
 const TIMERS: TimerDuration[] = [
   TimerDuration.Short,
@@ -87,15 +88,15 @@ export class SettingsScreen implements BaseScreen {
           <div class="ss-phase${this.mode === GameMode.Free ? " ss-phase--hidden" : ""}" id="ssPin">
             <div class="pin-card">
               <button class="pin-close" id="pinCancel" aria-label="Cancelar">×</button>
-              <p class="pin-title">${this.pinMode === "create" ? "CREA TU PIN" : "INGRESA EL PIN"}</p>
-              <p class="pin-sub">${this.pinMode === "create" ? "Se usará para proteger Jugar" : "Necesario para cambiar Jugar"}</p>
+              <p class="pin-title">${this.pinMode === "create" ? t("pinCreateTitle") : t("pinEnterTitle")}</p>
+              <p class="pin-sub">${this.pinMode === "create" ? t("pinCreateSub") : t("pinEnterSub")}</p>
 
               <div class="pin-display" id="pinDisplay">
                 ${Array.from({ length: 6 }, (_, i) => `<div class="pin-dot" id="dot${i}"></div>`).join("")}
               </div>
 
               <div class="pin-error" id="pinError">
-                ${this.pinMode === "create" ? "El PIN debe tener 6 números" : "PIN incorrecto"}
+                ${this.pinMode === "create" ? t("pinCreateError") : t("pinEnterError")}
               </div>
 
               <div class="pin-pad">
@@ -105,7 +106,7 @@ export class SettingsScreen implements BaseScreen {
                 <button class="pin-key pin-key--action" data-key="ok">✓</button>
               </div>
 
-              ${this.pinMode === "enter" ? `<button class="pin-reset-link" id="pinReset">reset pin</button>` : ""}
+              ${this.pinMode === "enter" ? `<button class="pin-reset-link" id="pinReset">${t("pinReset")}</button>` : ""}
             </div>
           </div>
         ` : ""}
@@ -145,7 +146,7 @@ export class SettingsScreen implements BaseScreen {
   private goalInput(op: Operation): string {
     return `
       <label class="goal-row">
-        <span class="goal-label">Meta de racha</span>
+        <span class="goal-label">${t("goalLabel")}</span>
         <input class="goal-input" data-goal-op="${op}" type="number" min="1" max="200" step="1"
           value="${this.working.gameTargetByOperation[op]}">
       </label>`;
@@ -165,83 +166,83 @@ export class SettingsScreen implements BaseScreen {
     }).join("");
 
     const addOperandOpts = [
-      { value: 1, label: "1 dígito\n(1-9)" },
-      { value: 2, label: "2 dígitos\n(10-99)" },
+      { value: 1, label: t("levelOneDigit") },
+      { value: 2, label: t("levelTwoDigits") },
     ];
     const addCountOpts = [
-      { value: 2, label: "2 números\n1+2" },
-      { value: 3, label: "3 números\n1+2+3" },
-      { value: 4, label: "4 números\n1+2+3+4" },
-      { value: 5, label: "5 números\n1+2+3+4+5" },
+      { value: 2, label: t("addends2") },
+      { value: 3, label: t("addends3") },
+      { value: 4, label: t("addends4") },
+      { value: 5, label: t("addends5") },
     ];
     const twoOpts = [
-      { value: 1, label: "1 dígito\n(1-9)" },
-      { value: 2, label: "2 dígitos\n(10-99)" },
+      { value: 1, label: t("levelOneDigit") },
+      { value: 2, label: t("levelTwoDigits") },
     ];
 
     return `
       <div class="sset-root">
         <header class="sset-header">
-          <span class="sset-title">⚙ CONFIGURACIÓN ${this.mode === GameMode.Play ? "JUGAR" : "PRÁCTICA"}</span>
-          <button class="btn sset-back" id="ssetBack">← VOLVER</button>
+          <span class="sset-title">⚙ ${this.mode === GameMode.Play ? t("settingsTitlePlay") : t("settingsTitlePractice")}</span>
+          <button class="btn sset-back" id="ssetBack">← ${t("back")}</button>
         </header>
 
         <div class="sset-warning">
           ${this.mode === GameMode.Play
-            ? "Estas reglas están protegidas con PIN."
-            : "Si cambias estas reglas, se borran las estadísticas de este modo."}
+            ? t("pinProtected")
+            : t("practiceResetWarning")}
         </div>
 
         <div class="sset-body">
           <section class="sset-section">
-            <div class="sset-label">⏱ SUMA — tiempo por pregunta</div>
+            <div class="sset-label">⏱ ${t("additionTimer")}</div>
             ${this.timerBtns(Operation.Addition)}
             ${this.goalInput(Operation.Addition)}
-            <div class="sset-label">+ SUMA — tamaño de cada número</div>
+            <div class="sset-label">+ ${t("additionSize")}</div>
             ${this.levelBtns("addOperandLevel", addOperandOpts, w.additionOperandDigits)}
-            <div class="sset-label" style="margin-top:8px;">Cantidad de números a sumar</div>
+            <div class="sset-label" style="margin-top:8px;">${t("additionCount")}</div>
             ${this.levelBtns("addCountLevel", addCountOpts, w.additionNumAddends)}
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">⏱ RESTA — tiempo por pregunta</div>
+            <div class="sset-label">⏱ ${t("subtractionTimer")}</div>
             ${this.timerBtns(Operation.Subtraction)}
             ${this.goalInput(Operation.Subtraction)}
-            <div class="sset-label">− RESTA — tamaño de los números</div>
+            <div class="sset-label">− ${t("subtractionSize")}</div>
             ${this.levelBtns("subLevel", twoOpts, w.subtractionDigits)}
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">⏱ MULTIPLICACIÓN — tiempo por pregunta</div>
+            <div class="sset-label">⏱ ${t("multiplicationTimer")}</div>
             ${this.timerBtns(Operation.Multiplication)}
             ${this.goalInput(Operation.Multiplication)}
-            <div class="sset-label">× MULTIPLICACIÓN — elige las tablas (1-10)</div>
-            <div class="sset-sub">La tabla es el primer número: <b>5</b> × 1, 2, 3...</div>
-            <div class="sset-hint" id="tableHintMultiplication">Selecciona al menos una</div>
+            <div class="sset-label">× ${t("multiplicationTables")}</div>
+            <div class="sset-sub">${t("multiplicationHelp")}</div>
+            <div class="sset-hint" id="tableHintMultiplication">${t("tableHint")}</div>
             <div class="table-grid" id="tableGridMultiplication" data-table-group="multiplicationTables">${multiplicationTableBtns}</div>
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">⏱ DIVISIÓN — tiempo por pregunta</div>
+            <div class="sset-label">⏱ ${t("divisionTimer")}</div>
             ${this.timerBtns(Operation.Division)}
             ${this.goalInput(Operation.Division)}
-            <div class="sset-label">÷ DIVISIÓN — elige las tablas (1-10)</div>
-            <div class="sset-sub">La tabla es el divisor: <b>20</b> ÷ <b>5</b>, <b>18</b> ÷ <b>3</b>...</div>
-            <div class="sset-hint" id="tableHintDivision">Selecciona al menos una</div>
+            <div class="sset-label">÷ ${t("divisionTables")}</div>
+            <div class="sset-sub">${t("divisionHelp")}</div>
+            <div class="sset-hint" id="tableHintDivision">${t("tableHint")}</div>
             <div class="table-grid" id="tableGridDivision" data-table-group="divisionTables">${divisionTableBtns}</div>
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">🔊 SONIDO</div>
+            <div class="sset-label">🔊 ${t("sound")}</div>
             <div class="mute-row">
-              <button class="mute-btn${!w.muted ? " mute-btn--sel" : ""}" id="muteOn" data-mute="false">🔊 ACTIVADO</button>
-              <button class="mute-btn${w.muted ? " mute-btn--sel" : ""}" id="muteOff" data-mute="true">🔇 SILENCIO</button>
+              <button class="mute-btn${!w.muted ? " mute-btn--sel" : ""}" id="muteOn" data-mute="false">🔊 ${t("soundOn")}</button>
+              <button class="mute-btn${w.muted ? " mute-btn--sel" : ""}" id="muteOff" data-mute="true">🔇 ${t("soundOff")}</button>
             </div>
           </section>
         </div>
 
         <div class="sset-footer">
-          <button class="btn btn--accent sset-save" id="ssetSave">💾 GUARDAR</button>
+          <button class="btn btn--accent sset-save" id="ssetSave">💾 ${t("save")}</button>
         </div>
       </div>`;
   }
@@ -529,7 +530,7 @@ export class SettingsScreen implements BaseScreen {
 
   private resetPinAndProgress(): void {
     const confirmed = window.confirm(
-      "Esto borrará el PIN, configuraciones y progreso guardado. Vas a empezar de nuevo. ¿Continuar?",
+      t("pinResetConfirm"),
     );
     if (!confirmed) return;
     storage.resetAllProgress();

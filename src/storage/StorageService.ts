@@ -3,6 +3,7 @@ import {
   DEFAULT_APP_STATE,
   GameMode,
   GameResult,
+  Locale,
   Settings,
   STORAGE_VERSION,
   StoredSettings,
@@ -46,6 +47,10 @@ export class StorageService {
     return this.loadAppState().pin
   }
 
+  loadLocale(): Locale {
+    return this.loadAppState().locale
+  }
+
   saveAppState(state: AppState): void {
     try {
       const stored: StoredSettings = {
@@ -67,6 +72,12 @@ export class StorageService {
   savePin(pin: string | null): void {
     const state = this.loadAppState()
     state.pin = pin
+    this.saveAppState(state)
+  }
+
+  saveLocale(locale: Locale): void {
+    const state = this.loadAppState()
+    state.locale = locale
     this.saveAppState(state)
   }
 
@@ -134,8 +145,11 @@ export class StorageService {
   }
 
   resetAllProgress(): void {
+    const locale = this.loadLocale()
     this.clearResults()
-    this.saveAppState(structuredClone(DEFAULT_APP_STATE))
+    const nextState = structuredClone(DEFAULT_APP_STATE)
+    nextState.locale = locale
+    this.saveAppState(nextState)
   }
 
   // ── Utilities ────────────────────────────────────────────────────────────

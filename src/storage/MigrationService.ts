@@ -4,12 +4,26 @@ import {
   DEFAULT_SETTINGS,
   GameMode,
   GameResult,
+  Locale,
   Operation,
   STORAGE_VERSION,
   StoredResults,
   StoredSettings,
   TimerDuration,
 } from '../core/Types'
+
+const VALID_LOCALES = [
+  Locale.Ar,
+  Locale.Bn,
+  Locale.En,
+  Locale.Es,
+  Locale.Fr,
+  Locale.Hi,
+  Locale.Ja,
+  Locale.Pt,
+  Locale.Ru,
+  Locale.Zh,
+]
 
 export class MigrationService {
   private static emptyResultsByMode(): Record<GameMode, GameResult[]> {
@@ -160,6 +174,7 @@ export class MigrationService {
             [GameMode.Free]: structuredClone(DEFAULT_SETTINGS),
           },
           pin: null,
+          locale: Locale.Es,
         },
       }
     }
@@ -175,6 +190,7 @@ export class MigrationService {
           [GameMode.Free]: free,
         },
         pin: typeof raw.pin === 'string' && /^\d{6}$/.test(raw.pin) ? raw.pin : null,
+        locale: VALID_LOCALES.includes(raw.locale as Locale) ? raw.locale as Locale : Locale.Es,
       },
     }
   }

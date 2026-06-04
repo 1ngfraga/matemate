@@ -5,18 +5,19 @@ import { storage } from '../storage/StorageService'
 import { ProgressAggregator } from '../chart/ProgressAggregator'
 import { ChartRenderer } from '../chart/ChartRenderer'
 import { getAnimalGameSheet } from '../graphics/GameSprites'
+import { getHeroName, getOperationLabel, t } from '../i18n/I18n'
 
-const ANIMAL_META: Record<Animal, { label: string; colors: string[] }> = {
-  [Animal.Dinosaur]: { label: 'T-REX',  colors: ['#5ad45a', '#2a8c2a', '#f0c040'] },
-  [Animal.Opossum]:  { label: 'TLACUA', colors: ['#aaaaaa', '#606060', '#ffaaaa'] },
-  [Animal.Capybara]: { label: 'CAPI',   colors: ['#c8843c', '#7a4a18', '#e8c890'] },
+const ANIMAL_META: Record<Animal, { colors: string[] }> = {
+  [Animal.Dinosaur]: { colors: ['#5ad45a', '#2a8c2a', '#f0c040'] },
+  [Animal.Opossum]:  { colors: ['#aaaaaa', '#606060', '#ffaaaa'] },
+  [Animal.Capybara]: { colors: ['#c8843c', '#7a4a18', '#e8c890'] },
 }
 
-const OP_META: Array<{ op: Operation; symbol: string; label: string; color: string }> = [
-  { op: Operation.Addition,       symbol: '+', label: 'SUMA',     color: '#4060d0' },
-  { op: Operation.Subtraction,    symbol: '−', label: 'RESTA',    color: '#8030a0' },
-  { op: Operation.Multiplication, symbol: '×', label: 'MULTI',    color: '#207050' },
-  { op: Operation.Division,       symbol: '÷', label: 'DIVISIÓN', color: '#904020' },
+const OP_META: Array<{ op: Operation; symbol: string; color: string }> = [
+  { op: Operation.Addition,       symbol: '+', color: '#4060d0' },
+  { op: Operation.Subtraction,    symbol: '−', color: '#8030a0' },
+  { op: Operation.Multiplication, symbol: '×', color: '#207050' },
+  { op: Operation.Division,       symbol: '÷', color: '#904020' },
 ]
 
 export class HomeScreen implements BaseScreen {
@@ -55,20 +56,19 @@ export class HomeScreen implements BaseScreen {
 
   private html(): string {
     const animalBtns = (Object.keys(ANIMAL_META) as Animal[]).map((a) => {
-      const meta = ANIMAL_META[a]
       const sel  = a === this.settings.animal
       return `
         <button class="animal-btn${sel ? ' animal-btn--selected' : ''}" data-animal="${a}">
           <canvas class="animal-mini" width="104" height="84" data-animal="${a}"></canvas>
-          <span class="animal-label">${meta.label}</span>
+          <span class="animal-label">${getHeroName(a)}</span>
         </button>`
     }).join('')
 
-    const opBtns = OP_META.map(({ op, symbol, label, color }) => `
+    const opBtns = OP_META.map(({ op, symbol, color }) => `
       <button class="home-op-btn" data-op="${op}"
         style="--op-color:${color};--op-border:${color}cc;">
         <span class="op-symbol">${symbol}</span>
-        <span class="op-label">${label}</span>
+        <span class="op-label">${getOperationLabel(op)}</span>
       </button>`
     ).join('')
 
@@ -80,15 +80,15 @@ export class HomeScreen implements BaseScreen {
             <span class="home-logo">MATE<span style="color:#8888ff">MATE</span></span>
           </div>
           <div class="home-header-actions">
-            <span class="home-mode-badge">${this.mode === GameMode.Play ? 'MODO JUGAR' : 'PRÁCTICA'}</span>
-            <button class="btn home-settings-btn" id="hSettings">⚙ CONFIG</button>
+            <span class="home-mode-badge">${this.mode === GameMode.Play ? t('modePlayBadge') : t('modePracticeBadge')}</span>
+            <button class="btn home-settings-btn" id="hSettings">⚙ ${t('config')}</button>
           </div>
         </header>
 
         <div class="home-body">
           <!-- Left / Top: chart -->
           <section class="home-chart-section">
-            <div class="home-section-label">▸ INTENTOS (14 DÍAS)</div>
+            <div class="home-section-label">▸ ${t('report')} (14 DÍAS)</div>
             <div class="home-chart-wrap" id="hChartWrap">
               <canvas id="hChart" class="home-chart"></canvas>
             </div>
@@ -96,10 +96,10 @@ export class HomeScreen implements BaseScreen {
 
           <!-- Right / Bottom: animal + ops -->
           <section class="home-controls">
-            <div class="home-section-label">▸ TU ANIMAL</div>
+            <div class="home-section-label">▸ ${t('yourHero')}</div>
             <div class="home-animals">${animalBtns}</div>
 
-            <div class="home-section-label" style="margin-top:8px;">▸ JUGAR</div>
+            <div class="home-section-label" style="margin-top:8px;">▸ ${t('playSection')}</div>
             <div class="home-ops">${opBtns}</div>
           </section>
         </div>

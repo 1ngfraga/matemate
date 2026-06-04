@@ -2,13 +2,7 @@ import { Animal, GameMode, Operation, Screen } from '../core/Types'
 import { NavigateFn, ResultScreenParams } from '../app/Router'
 import { BaseScreen } from '../app/ScreenManager'
 import { getAnimalVictoryGameSheet } from '../graphics/GameSprites'
-
-const OP_LABELS: Record<Operation, string> = {
-  [Operation.Addition]: '+ SUMA',
-  [Operation.Subtraction]: '− RESTA',
-  [Operation.Multiplication]: '× MULTIPLICACIÓN',
-  [Operation.Division]: '÷ DIVISIÓN',
-}
+import { getOperationLabel, t } from '../i18n/I18n'
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -45,39 +39,39 @@ export class ResultScreen implements BaseScreen {
 
   private html(): string {
     const r = this.params.result
-    const opLabel = OP_LABELS[r.operation] ?? r.operation
+    const opLabel = `${r.operation === Operation.Addition ? '+' : r.operation === Operation.Subtraction ? '−' : r.operation === Operation.Multiplication ? '×' : '÷'} ${getOperationLabel(r.operation)}`
 
     return `
       <div class="rs-root">
         <div class="rs-header">
           <span class="rs-op-label">${opLabel}</span>
-          <span class="rs-title">${this.params.mode === GameMode.Play ? 'LO LOGRASTE' : 'PRÁCTICA LISTA'}</span>
+          <span class="rs-title">${this.params.mode === GameMode.Play ? t('resultWin') : t('resultPractice')}</span>
         </div>
 
         <div class="rs-body">
           <div class="rs-score-wrap">
             <div class="rs-score" id="rScore">0%</div>
-            <div class="rs-score-sub">precisión total</div>
+            <div class="rs-score-sub">${t('accuracyTotal')}</div>
           </div>
 
           <div class="rs-hero">
-            <div class="rs-message">${this.params.mode === GameMode.Play ? 'Meta completada. Ahora sí vale estrella.' : 'En práctica libre no se guardan premios ni progreso.'}</div>
+            <div class="rs-message">${this.params.mode === GameMode.Play ? t('resultWinMessage') : t('resultPracticeMessage')}</div>
             <div class="rs-score-wrap">
               <canvas id="rAnimal" class="rs-animal" width="220" height="180"></canvas>
             </div>
           </div>
 
           <div class="rs-stats">
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#40d060">✓</span><span class="rs-stat-val">${r.correct}</span><span class="rs-stat-label">correctas</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#d04040">✗</span><span class="rs-stat-val">${r.incorrect}</span><span class="rs-stat-label">incorrectas</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#f0c040">${this.params.mode === GameMode.Play ? '★' : '○'}</span><span class="rs-stat-val">${r.currentTarget}</span><span class="rs-stat-label">${this.params.mode === GameMode.Play ? 'meta alcanzada' : 'meta usada'}</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#8888cc">⏱</span><span class="rs-stat-val">${formatTime(r.durationMs)}</span><span class="rs-stat-label">tiempo</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#40d060">✓</span><span class="rs-stat-val">${r.correct}</span><span class="rs-stat-label">${t('correct')}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#d04040">✗</span><span class="rs-stat-val">${r.incorrect}</span><span class="rs-stat-label">${t('incorrect')}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#f0c040">${this.params.mode === GameMode.Play ? '★' : '○'}</span><span class="rs-stat-val">${r.currentTarget}</span><span class="rs-stat-label">${this.params.mode === GameMode.Play ? t('goalReached') : t('goalUsed')}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#8888cc">⏱</span><span class="rs-stat-val">${formatTime(r.durationMs)}</span><span class="rs-stat-label">${t('time')}</span></div>
           </div>
         </div>
 
         <div class="rs-actions">
-          <button class="btn btn--accent rs-btn" id="rRetry">↺ REPETIR</button>
-          <button class="btn rs-btn" id="rHome">⌂ MENÚ</button>
+          <button class="btn btn--accent rs-btn" id="rRetry">↺ ${t('retry')}</button>
+          <button class="btn rs-btn" id="rHome">⌂ ${t('menu')}</button>
         </div>
       </div>`
   }
