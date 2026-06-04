@@ -157,13 +157,25 @@ export class HomeScreen implements BaseScreen {
         gap:8px;
       }
       .home-mode-badge {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
         font-family:'Courier New',monospace;
         font-size:10px;
         color:${this.mode === GameMode.Play ? '#f0c040' : '#80b0ff'};
-        background:${this.mode === GameMode.Play ? '#241800' : '#102040'};
-        border:2px solid ${this.mode === GameMode.Play ? '#8a6000' : '#4060d0'};
-        padding:5px 8px;
+        background:${this.mode === GameMode.Play ? 'rgba(138,96,0,0.12)' : 'rgba(64,96,208,0.12)'};
+        border:1px solid ${this.mode === GameMode.Play ? 'rgba(240,192,64,0.22)' : 'rgba(128,176,255,0.22)'};
+        padding:4px 8px;
         letter-spacing:1px;
+        pointer-events:none;
+      }
+      .home-mode-badge::before {
+        content:'';
+        width:6px;
+        height:6px;
+        border-radius:999px;
+        background:${this.mode === GameMode.Play ? '#f0c040' : '#80b0ff'};
+        box-shadow:0 0 6px ${this.mode === GameMode.Play ? 'rgba(240,192,64,0.35)' : 'rgba(128,176,255,0.35)'};
       }
 
       .home-body {
