@@ -40,6 +40,7 @@ export class GameScreen implements BaseScreen {
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
   private dpr = 1;
+  private resizeHandler: (() => void) | null = null;
 
   private state!: GameState;
   private timer = new Timer();
@@ -77,12 +78,18 @@ export class GameScreen implements BaseScreen {
     this.dpr = window.devicePixelRatio || 1;
 
     this.initGame();
+    this.updateLayout();
     this.attachEvents(container);
+    this.attachResize();
     this.loop.start((dt) => this.tick(dt));
   }
 
   unmount(): void {
     this.loop.stop();
+    if (this.resizeHandler) {
+      window.removeEventListener("resize", this.resizeHandler);
+      this.resizeHandler = null;
+    }
     if (this.streakPulseTimeout !== null)
       window.clearTimeout(this.streakPulseTimeout);
     if (this.container) this.container.innerHTML = "";
@@ -113,6 +120,47 @@ export class GameScreen implements BaseScreen {
     this.canvas.width = Math.round(rect.width * this.dpr);
     this.canvas.height = Math.round(rect.height * this.dpr);
     this.ctx.scale(this.dpr, this.dpr);
+  }
+
+  private attachResize(): void {
+    this.resizeHandler = () => this.updateLayout();
+    window.addEventListener("resize", this.resizeHandler);
+  }
+
+  private updateLayout(): void {
+    if (!this.container) return;
+    const root = this.container.querySelector<HTMLElement>(".gs-root");
+    const hud = this.container.querySelector<HTMLElement>(".gs-hud");
+    const question = this.container.querySelector<HTMLElement>(".gs-question");
+    const answers = this.container.querySelector<HTMLElement>(".gs-answers");
+    if (!root || !hud || !question || !answers) return;
+
+    const rootHeight = root.clientHeight;
+    const hudHeight = hud.offsetHeight;
+    const questionHeight = question.offsetHeight;
+    const available = Math.max(0, rootHeight - hudHeight - questionHeight);
+
+    const answersMin = 50;
+    const canvasMin = 80;
+    const canvasMax = 300;
+
+    let canvasHeight = Math.min(canvasMax, Math.max(0, available - answersMin));
+    if (available > answersMin && canvasHeight < canvasMin) {
+      canvasHeight = Math.min(canvasMin, Math.max(0, available - answersMin));
+    }
+
+    let answersHeight = Math.max(answersMin, available - canvasHeight);
+
+    if (available <= answersMin) {
+      answersHeight = available;
+      canvasHeight = 0;
+    } else if (canvasHeight >= canvasMax) {
+      answersHeight = available - canvasMax;
+      canvasHeight = canvasMax;
+    }
+
+    this.canvas.style.height = `${Math.max(0, canvasHeight)}px`;
+    answers.style.height = `${Math.max(0, answersHeight)}px`;
   }
 
   // ── Question lifecycle ────────────────────────────────────────────────
@@ -238,6 +286,7 @@ export class GameScreen implements BaseScreen {
 
   private tick(dt: number): void {
     if (!this.container) return;
+    this.updateLayout();
 
     // Phase logic
     switch (this.phase) {
@@ -553,13 +602,14 @@ export class GameScreen implements BaseScreen {
         min-height:34px;
       }
       .gs-exit-btn {
-        background:#3a0a0a; border:2px solid #8a2020;
-        color:#ff6060; font-family:'Courier New',monospace;
-        font-size:14px; font-weight:bold;
-        padding:4px 8px; cursor:pointer; min-height:28px;
+        background:#1a1a3a; border:2px solid #4a5acc;
+        color:#e8e8f0; font-family:'Courier New',monospace;
+        font-size:20px; font-weight:900;
+        padding:0; cursor:pointer; min-height:32px; min-width:32px;
+        display:flex; align-items:center; justify-content:center;
         -webkit-tap-highlight-color:transparent;
       }
-      .gs-exit-btn:active { background:#5a1010; }
+      .gs-exit-btn:active { background:#2a2a5a; }
       .gs-mute-btn {
         background:transparent; border:none; font-size:16px;
         cursor:pointer; padding:2px 4px; line-height:1;
@@ -596,9 +646,11 @@ export class GameScreen implements BaseScreen {
 
       /* Canvas */
       .gs-canvas {
-        width:max(100%, 400px); min-width:400px; align-self:center; flex:0 0 auto;
-        height:clamp(80px, 32vh, 200px);
+        width:max(100%, 400px); min-width:400px; align-self:center;
+        height:80px;
+        max-height:300px;
         image-rendering:pixelated; display:block;
+        flex:0 0 auto;
       }
 
       .gs-streak-hud {
@@ -663,7 +715,10 @@ export class GameScreen implements BaseScreen {
       /* Answer buttons */
       .gs-answers {
         display:flex; gap:6px; padding:6px;
-        flex:1; min-height:0; min-width:400px;
+        min-height:50px; min-width:400px;
+        align-items:stretch;
+        flex:0 0 auto;
+        box-sizing:border-box;
       }
       .gs-ans {
         flex:1;
@@ -676,8 +731,9 @@ export class GameScreen implements BaseScreen {
         cursor:pointer; display:flex;
         align-items:center; justify-content:center;
         gap:6px;
-        min-height:clamp(64px, 14vh, 108px);
-        padding:10px 14px 12px;
+        min-height:50px;
+        height:max(50px, 100%);
+        padding:6px 10px;
         border-radius:18px;
         box-shadow:
           inset 0 2px 0 rgba(255,255,255,0.14),
@@ -693,8 +749,8 @@ export class GameScreen implements BaseScreen {
         position:absolute;
         left:8px;
         right:8px;
-        top:7px;
-        height:32%;
+        top:5px;
+        height:28%;
         border-radius:12px;
         background:rgba(255,255,255,0.08);
         pointer-events:none;
