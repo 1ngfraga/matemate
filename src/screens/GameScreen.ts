@@ -139,10 +139,11 @@ export class GameScreen implements BaseScreen {
     const hudHeight = hud.offsetHeight;
     const questionHeight = question.offsetHeight;
     const available = Math.max(0, rootHeight - hudHeight - questionHeight);
+    const isPortrait = root.clientHeight >= root.clientWidth;
 
     const answersMin = 60;
-    const canvasMin = 80;
-    const canvasMax = 300;
+    const canvasMin = isPortrait ? 120 : 80;
+    const canvasMax = isPortrait ? 220 : 300;
 
     let canvasHeight = Math.min(canvasMax, Math.max(0, available - answersMin));
     if (available > answersMin && canvasHeight < canvasMin) {
@@ -590,7 +591,7 @@ export class GameScreen implements BaseScreen {
       .gs-root {
         width:100%; height:100%;
         display:flex; flex-direction:column;
-        background:var(--color-bg); overflow-x:auto; overflow-y:hidden;
+        background:var(--color-bg); overflow:hidden;
         position:relative;
       }
 
@@ -770,6 +771,36 @@ export class GameScreen implements BaseScreen {
         position:relative;
         z-index:1;
         font-size:0.7em;
+      }
+
+      @media (max-aspect-ratio: 1/1) {
+        .gs-canvas,
+        .gs-question,
+        .gs-answers {
+          width:100%;
+          min-width:0;
+          align-self:stretch;
+        }
+        .gs-q-text {
+          font-size:clamp(16px, 6vw, 28px);
+          letter-spacing:2px;
+        }
+        .gs-ans {
+          font-size:clamp(16px, 8vw, 32px);
+          padding:6px 8px;
+        }
+        .gs-streak-hud {
+          top:46px;
+          right:6px;
+        }
+        .gs-streak-coin {
+          gap:4px;
+          padding:4px 6px 4px 8px;
+        }
+        .gs-face {
+          width:34px;
+          height:34px;
+        }
       }
     `;
     container.appendChild(s);
