@@ -11,8 +11,8 @@ function makeQ(
   return { operation: op, operandA: a, operandB: b, answer, display, addends }
 }
 
-function selectedTables(settings: Settings): number[] {
-  return Object.entries(settings.multiplicationTables)
+function selectedTables(tableMap: Record<number, boolean>): number[] {
+  return Object.entries(tableMap)
     .filter(([k, v]) => v && Number(k) >= 1 && Number(k) <= 10)
     .map(([k]) => Number(k))
 }
@@ -74,7 +74,7 @@ export function subtractionPool(settings: Settings): Question[] {
 // Display: TABLE × multiplier  (table is always first number).
 
 export function multiplicationPool(settings: Settings): Question[] {
-  const tables = selectedTables(settings)
+  const tables = selectedTables(settings.multiplicationTables)
   const use    = tables.length > 0 ? tables : [5]   // safety fallback
 
   const pool: Question[] = []
@@ -88,7 +88,7 @@ export function multiplicationPool(settings: Settings): Question[] {
 // Exact division. Divisor from selected tables (1-10), quotient 2-10.
 
 export function divisionPool(settings: Settings): Question[] {
-  const tables = selectedTables(settings)
+  const tables = selectedTables(settings.divisionTables)
   const use    = tables.length > 0 ? tables : [5]
 
   const pool: Question[] = []

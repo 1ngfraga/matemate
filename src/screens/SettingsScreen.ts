@@ -33,6 +33,7 @@ function progressSignature(settings: Settings): string {
   return JSON.stringify({
     timerByOperation: settings.timerByOperation,
     multiplicationTables: settings.multiplicationTables,
+    divisionTables: settings.divisionTables,
     gameTargetByOperation: settings.gameTargetByOperation,
     additionOperandDigits: settings.additionOperandDigits,
     additionNumAddends: settings.additionNumAddends,
@@ -152,9 +153,14 @@ export class SettingsScreen implements BaseScreen {
 
   private settingsHtml(): string {
     const w = this.working;
-    const tableBtns = Array.from({ length: 10 }, (_, i) => {
+    const multiplicationTableBtns = Array.from({ length: 10 }, (_, i) => {
       const n = i + 1;
       const sel = w.multiplicationTables[n];
+      return `<button class="table-btn${sel ? " table-btn--sel" : ""}" data-table="${n}">${n}</button>`;
+    }).join("");
+    const divisionTableBtns = Array.from({ length: 10 }, (_, i) => {
+      const n = i + 1;
+      const sel = w.divisionTables[n];
       return `<button class="table-btn${sel ? " table-btn--sel" : ""}" data-table="${n}">${n}</button>`;
     }).join("");
 
@@ -181,7 +187,9 @@ export class SettingsScreen implements BaseScreen {
         </header>
 
         <div class="sset-warning">
-          Si cambias estas reglas, se borran las estadísticas de este modo.
+          ${this.mode === GameMode.Play
+            ? "Estas reglas están protegidas con PIN."
+            : "Si cambias estas reglas, se borran las estadísticas de este modo."}
         </div>
 
         <div class="sset-body">
@@ -209,16 +217,18 @@ export class SettingsScreen implements BaseScreen {
             ${this.goalInput(Operation.Multiplication)}
             <div class="sset-label">× MULTIPLICACIÓN — elige las tablas (1-10)</div>
             <div class="sset-sub">La tabla es el primer número: <b>5</b> × 1, 2, 3...</div>
-            <div class="sset-hint" id="tableHint">Selecciona al menos una</div>
-            <div class="table-grid" id="tableGrid">${tableBtns}</div>
+            <div class="sset-hint" id="tableHintMultiplication">Selecciona al menos una</div>
+            <div class="table-grid" id="tableGridMultiplication" data-table-group="multiplicationTables">${multiplicationTableBtns}</div>
           </section>
 
           <section class="sset-section">
             <div class="sset-label">⏱ DIVISIÓN — tiempo por pregunta</div>
             ${this.timerBtns(Operation.Division)}
             ${this.goalInput(Operation.Division)}
-            <div class="sset-label">÷ DIVISIÓN</div>
-            <div class="sset-sub">Usa las mismas tablas seleccionadas en multiplicación</div>
+            <div class="sset-label">÷ DIVISIÓN — elige las tablas (1-10)</div>
+            <div class="sset-sub">La tabla es el divisor: <b>20</b> ÷ <b>5</b>, <b>18</b> ÷ <b>3</b>...</div>
+            <div class="sset-hint" id="tableHintDivision">Selecciona al menos una</div>
+            <div class="table-grid" id="tableGridDivision" data-table-group="divisionTables">${divisionTableBtns}</div>
           </section>
 
           <section class="sset-section">
@@ -523,23 +533,28 @@ export class SettingsScreen implements BaseScreen {
       });
     });
 
-    container.querySelector("#tableGrid")?.addEventListener("click", (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLElement>(".table-btn");
-      if (!btn) return;
-      const n = Number(btn.dataset.table);
-      const hint = container.querySelector<HTMLElement>("#tableHint")!;
-      const isSelected = this.working.multiplicationTables[n];
-      if (isSelected) {
-        const count = Object.values(this.working.multiplicationTables).filter(Boolean).length;
-        if (count <= 1) {
-          hint.classList.add("sset-hint--show");
-          setTimeout(() => hint.classList.remove("sset-hint--show"), 2000);
-          return;
+    container.querySelectorAll<HTMLElement>(".table-grid").forEach((grid) => {
+      grid.addEventListener("click", (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLElement>(".table-btn");
+        if (!btn) return;
+        const group = grid.dataset.tableGroup as "multiplicationTables" | "divisionTables";
+        const n = Number(btn.dataset.table);
+        const hintId = group === "multiplicationTables" ? "#tableHintMultiplication" : "#tableHintDivision";
+        const hint = container.querySelector<HTMLElement>(hintId)!;
+        const tableMap = this.working[group];
+        const isSelected = tableMap[n];
+        if (isSelected) {
+          const count = Object.values(tableMap).filter(Boolean).length;
+          if (count <= 1) {
+            hint.classList.add("sset-hint--show");
+            setTimeout(() => hint.classList.remove("sset-hint--show"), 2000);
+            return;
+          }
         }
-      }
-      this.working.multiplicationTables[n] = !isSelected;
-      btn.classList.toggle("table-btn--sel", !isSelected);
-      hint.classList.remove("sset-hint--show");
+        tableMap[n] = !isSelected;
+        btn.classList.toggle("table-btn--sel", !isSelected);
+        hint.classList.remove("sset-hint--show");
+      });
     });
 
     const levelGroupMap: Record<string, keyof Settings> = {
@@ -582,7 +597,7 @@ export class SettingsScreen implements BaseScreen {
     container.querySelector("#ssetSave")?.addEventListener("click", () => {
       const shouldClearResults = progressSignature(this.settings) !== progressSignature(this.working);
       this.onSettingsChange(this.mode, this.working);
-      if (shouldClearResults) storage.clearResults(this.mode);
+      if (shouldClearResults && this.mode === GameMode.Free) storage.clearResults(this.mode);
       this.navigate(Screen.Home, this.mode);
     });
   }

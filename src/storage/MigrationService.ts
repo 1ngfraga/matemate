@@ -55,6 +55,7 @@ export class MigrationService {
           timerByOperation: structuredClone(DEFAULT_SETTINGS.timerByOperation),
           muted:                Boolean(raw.muted),
           multiplicationTables: tables,
+          divisionTables:       structuredClone(DEFAULT_SETTINGS.divisionTables),
           gameTargetByOperation: structuredClone(DEFAULT_SETTINGS.gameTargetByOperation),
           additionOperandDigits:operandDigits,
           additionNumAddends:   2,
@@ -115,7 +116,21 @@ export class MigrationService {
         data: {
           ...prev,
           multiplicationTables: nextTables,
+          divisionTables: prev.divisionTables ?? structuredClone(nextTables),
           timerByOperation: prev.timerByOperation ?? structuredClone(DEFAULT_SETTINGS.timerByOperation),
+        },
+      }
+    }
+
+    if (version < 8) {
+      const prev = stored.data as typeof DEFAULT_SETTINGS
+      const nextDivisionTables = { ...DEFAULT_SETTINGS.divisionTables, ...(prev.divisionTables ?? prev.multiplicationTables) }
+      if (!Object.values(nextDivisionTables).some(Boolean)) nextDivisionTables[5] = true
+      return {
+        version: 8,
+        data: {
+          ...prev,
+          divisionTables: nextDivisionTables,
         },
       }
     }

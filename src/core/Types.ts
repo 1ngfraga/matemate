@@ -52,6 +52,8 @@ export interface Settings {
   timerByOperation: Record<Operation, TimerDuration>
   /** Multiplication tables 1–9; at least one must be true */
   multiplicationTables: Record<number, boolean>
+  /** Division tables 1–10; at least one must be true */
+  divisionTables: Record<number, boolean>
   muted: boolean
   gameTargetByOperation: Record<Operation, number>
 
@@ -72,6 +74,10 @@ export const DEFAULT_SETTINGS: Settings = {
     [Operation.Division]: TimerDuration.Medium,
   },
   multiplicationTables: {
+    1: true, 2: true, 3: true, 4: true,
+    5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
+  },
+  divisionTables: {
     1: true, 2: true, 3: true, 4: true,
     5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
   },
@@ -164,4 +170,4 @@ export const DEFAULT_APP_STATE: AppState = {
   pin: null,
 }
 
-export const STORAGE_VERSION = 7
+export const STORAGE_VERSION = 8
