@@ -29,6 +29,7 @@ const TIMER_LABELS: Record<TimerDuration, string> = {
   [TimerDuration.XXLong]: "25s",
   [TimerDuration.Mega]: "30s",
 };
+const PIN_LENGTH = 4;
 
 function progressSignature(settings: Settings): string {
   return JSON.stringify({
@@ -50,7 +51,6 @@ export class SettingsScreen implements BaseScreen {
   private pinMode: "enter" | "create" = "enter";
   private holdTimeout: number | null = null;
   private holdInterval: number | null = null;
-  private holdStartedAt = 0;
 
   constructor(
     private navigate: NavigateFn,
@@ -96,7 +96,7 @@ export class SettingsScreen implements BaseScreen {
               <p class="pin-sub">${this.pinMode === "create" ? t("pinCreateSub") : t("pinEnterSub")}</p>
 
               <div class="pin-display" id="pinDisplay">
-                ${Array.from({ length: 6 }, (_, i) => `<div class="pin-dot" id="dot${i}"></div>`).join("")}
+                ${Array.from({ length: PIN_LENGTH }, (_, i) => `<div class="pin-dot" id="dot${i}"></div>`).join("")}
               </div>
 
               <div class="pin-error" id="pinError">
@@ -131,7 +131,7 @@ export class SettingsScreen implements BaseScreen {
       options
         .map(
           ({ value, label }) =>
-            `<button class="level-btn${value === current ? " level-btn--sel" : ""}" data-level="${value}" data-group="${id}">${label}</button>`,
+            `<button class="ui-option-btn level-btn${value === current ? " ui-option-btn--selected" : ""}" data-level="${value}" data-group="${id}">${label}</button>`,
         )
         .join("") +
       `</div>`
@@ -142,7 +142,7 @@ export class SettingsScreen implements BaseScreen {
     const current = this.working.timerByOperation[op];
     return `<div class="timer-row" data-timer-group="${op}">` +
       TIMERS.map((t) =>
-        `<button class="timer-btn${t === current ? " timer-btn--sel" : ""}" data-timer="${t}" data-timer-op="${op}">${TIMER_LABELS[t]}</button>`,
+        `<button class="ui-option-btn timer-btn${t === current ? " ui-option-btn--selected" : ""}" data-timer="${t}" data-timer-op="${op}">${TIMER_LABELS[t]}</button>`,
       ).join("") +
       `</div>`;
   }
@@ -165,12 +165,12 @@ export class SettingsScreen implements BaseScreen {
     const multiplicationTableBtns = Array.from({ length: 10 }, (_, i) => {
       const n = i + 1;
       const sel = w.multiplicationTables[n];
-      return `<button class="table-btn${sel ? " table-btn--sel" : ""}" data-table="${n}">${n}</button>`;
+      return `<button class="ui-option-btn table-btn${sel ? " ui-option-btn--selected" : ""}" data-table="${n}">${n}</button>`;
     }).join("");
     const divisionTableBtns = Array.from({ length: 10 }, (_, i) => {
       const n = i + 1;
       const sel = w.divisionTables[n];
-      return `<button class="table-btn${sel ? " table-btn--sel" : ""}" data-table="${n}">${n}</button>`;
+      return `<button class="ui-option-btn table-btn${sel ? " ui-option-btn--selected" : ""}" data-table="${n}">${n}</button>`;
     }).join("");
 
     const addOperandOpts = [
@@ -197,49 +197,45 @@ export class SettingsScreen implements BaseScreen {
 
         <div class="sset-body">
           <section class="sset-section">
-            <div class="sset-label">⏱ ${t("additionTimer")}</div>
+            <div class="sset-section-title">+ ${t("opAddition")}</div>
+            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Addition)}
             ${this.goalInput(Operation.Addition)}
-            <div class="sset-label">+ ${t("additionSize")}</div>
+            <div class="sset-label">${t("numberSizeLabel")}</div>
             ${this.levelBtns("addOperandLevel", addOperandOpts, w.additionOperandDigits)}
-            <div class="sset-label" style="margin-top:8px;">${t("additionCount")}</div>
+            <div class="sset-label" style="margin-top:8px;">${t("quantityLabel")}</div>
             ${this.levelBtns("addCountLevel", addCountOpts, w.additionNumAddends)}
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">⏱ ${t("subtractionTimer")}</div>
+            <div class="sset-section-title">− ${t("opSubtraction")}</div>
+            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Subtraction)}
             ${this.goalInput(Operation.Subtraction)}
-            <div class="sset-label">− ${t("subtractionSize")}</div>
+            <div class="sset-label">${t("numberSizeLabel")}</div>
             ${this.levelBtns("subLevel", twoOpts, w.subtractionDigits)}
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">⏱ ${t("multiplicationTimer")}</div>
+            <div class="sset-section-title">× ${t("opMultiplication")}</div>
+            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Multiplication)}
             ${this.goalInput(Operation.Multiplication)}
-            <div class="sset-label">× ${t("multiplicationTables")}</div>
+            <div class="sset-label">${t("tablesLabel")}</div>
             <div class="sset-sub">${t("multiplicationHelp")}</div>
             <div class="sset-hint" id="tableHintMultiplication">${t("tableHint")}</div>
             <div class="table-grid" id="tableGridMultiplication" data-table-group="multiplicationTables">${multiplicationTableBtns}</div>
           </section>
 
           <section class="sset-section">
-            <div class="sset-label">⏱ ${t("divisionTimer")}</div>
+            <div class="sset-section-title">÷ ${t("opDivision")}</div>
+            <div class="sset-label">⏱ ${t("timePerQuestionLabel")}</div>
             ${this.timerBtns(Operation.Division)}
             ${this.goalInput(Operation.Division)}
-            <div class="sset-label">÷ ${t("divisionTables")}</div>
+            <div class="sset-label">${t("tablesLabel")}</div>
             <div class="sset-sub">${t("divisionHelp")}</div>
             <div class="sset-hint" id="tableHintDivision">${t("tableHint")}</div>
             <div class="table-grid" id="tableGridDivision" data-table-group="divisionTables">${divisionTableBtns}</div>
-          </section>
-
-          <section class="sset-section">
-            <div class="sset-label">🔊 ${t("sound")}</div>
-            <div class="mute-row">
-              <button class="mute-btn${!w.muted ? " mute-btn--sel" : ""}" id="muteOn" data-mute="false">🔊 ${t("soundOn")}</button>
-              <button class="mute-btn${w.muted ? " mute-btn--sel" : ""}" id="muteOff" data-mute="true">🔇 ${t("soundOff")}</button>
-            </div>
           </section>
         </div>
       </div>`;
@@ -368,11 +364,15 @@ export class SettingsScreen implements BaseScreen {
           display:grid; grid-template-columns:1fr 1fr; gap:12px;
           align-content:start;
         }
-        .sset-section:last-child { grid-column:1/-1; }
       }
       .sset-section {
         display:flex; flex-direction:column; gap:8px;
         background:#0d0d22; border:2px solid #2a2a5a; padding:12px;
+      }
+      .sset-section-title {
+        font-family:'Courier New',monospace; font-size:clamp(18px,2.6vw,22px);
+        font-weight:900; color:#f0c040; letter-spacing:2px;
+        margin-bottom:2px;
       }
       .sset-label {
         font-family:'Courier New',monospace; font-size:clamp(13px,2vw,16px);
@@ -394,8 +394,8 @@ export class SettingsScreen implements BaseScreen {
       }
       .goal-label {
         font-family:'Courier New',monospace;
-        font-size:clamp(10px,1.8vw,13px);
-        color:#a0a0d0;
+        font-size:clamp(13px,2vw,16px);
+        color:#aeb4ff;
       }
       .goal-stepper {
         width:min(100%, 360px);
@@ -469,56 +469,25 @@ export class SettingsScreen implements BaseScreen {
         }
       }
       .timer-row { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:6px; }
-      .timer-btn, .mute-btn {
-        font-family:'Courier New',monospace; font-weight:bold;
-        background:#0d0d22; border:3px solid #3a3a6a; color:#6060a0;
-        min-height:48px; cursor:pointer;
-        box-shadow:none;
+      .timer-btn {
+        min-height:48px;
       }
       .timer-btn { font-size:clamp(16px,2.5vw,20px); padding:10px 0; }
-      .timer-btn--sel {
-        background:#1a1500; border-color:#f0c040; color:#f0c040;
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,0.04),
-          0 0 10px rgba(240,192,64,0.28);
-      }
       .level-row { display:flex; gap:6px; flex-wrap:wrap; }
       .level-btn {
         flex:1; min-width:60px; min-height:44px; white-space:pre-line;
-        font-family:'Courier New',monospace; font-size:clamp(14px,2.1vw,17px);
-        font-weight:bold; padding:7px 4px; cursor:pointer; text-align:center;
-        background:#0d0d22; border:2px solid #3a3a6a; color:#6060a0;
-        box-shadow:none;
-      }
-      .level-btn--sel {
-        background:#1a1500; border-color:#f0c040; color:#f0c040;
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,0.04),
-          0 0 10px rgba(240,192,64,0.28);
+        font-size:clamp(14px,2.1vw,17px);
+        padding:7px 4px; text-align:center;
+        border-width:2px;
       }
       .table-grid {
         display:grid; grid-template-columns:repeat(6,1fr); gap:4px;
       }
       .table-btn {
-        font-family:'Courier New',monospace; font-size:clamp(15px,2.2vw,18px);
-        font-weight:bold; padding:8px 0; cursor:pointer;
-        background:#0d0d22; border:2px solid #3a3a6a; color:#6060a0;
+        font-size:clamp(15px,2.2vw,18px);
+        padding:8px 0;
         min-height:40px;
-        box-shadow:none;
-      }
-      .table-btn--sel {
-        background:#1a1500; border-color:#f0c040; color:#f0c040;
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,0.04),
-          0 0 10px rgba(240,192,64,0.28);
-      }
-      .mute-row { display:flex; gap:8px; }
-      .mute-btn { flex:1; font-size:clamp(15px,2.2vw,18px); padding:10px 0; }
-      .mute-btn--sel {
-        background:#1a1500; border-color:#f0c040; color:#f0c040;
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,0.04),
-          0 0 10px rgba(240,192,64,0.28);
+        border-width:2px;
       }
     `;
     container.appendChild(s);
@@ -551,26 +520,26 @@ export class SettingsScreen implements BaseScreen {
     else if (key === "ok") {
       this.submitPin(container);
       return;
-    } else if (/^\d$/.test(key) && this.pin.length < 6) {
+    } else if (/^\d$/.test(key) && this.pin.length < PIN_LENGTH) {
       this.pin += key;
     }
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < PIN_LENGTH; i++) {
       const dot = display.querySelector<HTMLElement>(`#dot${i}`)!;
       dot.classList.toggle("pin-dot--filled", i < this.pin.length);
     }
 
-    if (this.pin.length === 6) setTimeout(() => this.submitPin(container), 120);
+    if (this.pin.length === PIN_LENGTH) setTimeout(() => this.submitPin(container), 120);
     errEl.classList.remove("pin-error--show");
   }
 
   private submitPin(container: HTMLElement): void {
     const display = container.querySelector<HTMLElement>("#pinDisplay")!;
     const errEl = container.querySelector<HTMLElement>("#pinError")!;
-    const storedPin = storage.loadPin();
+    const storedPin = storage.loadPin()?.slice(0, PIN_LENGTH) ?? null;
 
     if (this.pinMode === "create") {
-      if (this.pin.length !== 6) {
+      if (this.pin.length !== PIN_LENGTH) {
         errEl.classList.add("pin-error--show");
         return;
       }
@@ -627,7 +596,7 @@ export class SettingsScreen implements BaseScreen {
         this.persistWorkingSettings();
         container
           .querySelectorAll<HTMLElement>(`.timer-btn[data-timer-op="${op}"]`)
-          .forEach((b) => b.classList.toggle("timer-btn--sel", b === btn));
+          .forEach((b) => b.classList.toggle("ui-option-btn--selected", b === btn));
       });
     });
 
@@ -651,7 +620,7 @@ export class SettingsScreen implements BaseScreen {
         }
         tableMap[n] = !isSelected;
         this.persistWorkingSettings();
-        btn.classList.toggle("table-btn--sel", !isSelected);
+        btn.classList.toggle("ui-option-btn--selected", !isSelected);
         hint.classList.remove("sset-hint--show");
       });
     });
@@ -672,17 +641,7 @@ export class SettingsScreen implements BaseScreen {
         this.persistWorkingSettings();
         container
           .querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`)
-          .forEach((b) => b.classList.toggle("level-btn--sel", b === btn));
-      });
-    });
-
-    container.querySelectorAll<HTMLElement>(".mute-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const muted = btn.dataset.mute === "true";
-        this.working.muted = muted;
-        this.persistWorkingSettings();
-        container.querySelector("#muteOn")?.classList.toggle("mute-btn--sel", !muted);
-        container.querySelector("#muteOff")?.classList.toggle("mute-btn--sel", muted);
+          .forEach((b) => b.classList.toggle("ui-option-btn--selected", b === btn));
       });
     });
 
@@ -716,7 +675,6 @@ export class SettingsScreen implements BaseScreen {
 
   private beginGoalHold(op: Operation, step: number): void {
     this.clearGoalHold();
-    this.holdStartedAt = performance.now();
     this.holdTimeout = window.setTimeout(() => {
       this.holdInterval = window.setInterval(() => {
         this.adjustGoal(op, step * 10);

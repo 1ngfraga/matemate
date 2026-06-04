@@ -138,6 +138,27 @@ html, body {
   background: #c03030;
 }
 
+/* Shared selectable option button */
+.ui-option-btn {
+  font-family: var(--font-pixel);
+  font-weight: bold;
+  background: #0d0d22;
+  border: 3px solid #3a3a6a;
+  color: #6060a0;
+  cursor: pointer;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ui-option-btn--selected {
+  background: #1a1500;
+  border-color: #f0c040;
+  color: #f0c040;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    0 0 10px rgba(240,192,64,0.28);
+}
+
 /* Pixel text sizes */
 .text-xl  { font-size: clamp(24px, 5vw, 48px); }
 .text-lg  { font-size: clamp(18px, 4vw, 32px); }
