@@ -91,7 +91,10 @@ export class SettingsScreen implements BaseScreen {
         ${needsPin ? `
           <div class="ss-phase${this.mode === GameMode.Free ? " ss-phase--hidden" : ""}" id="ssPin">
             <div class="pin-card">
-              <button class="btn nav-back-btn pin-close" id="pinCancel" aria-label="${t("back")}">← ${t("back")}</button>
+              <div class="pin-topbar">
+                <button class="btn nav-back-btn pin-close" id="pinCancel" aria-label="${t("back")}">← ${t("back")}</button>
+                ${this.pinMode === "enter" ? `<button class="pin-reset-link pin-reset-link--top" id="pinReset">${t("pinReset")}</button>` : `<span class="pin-topbar-spacer"></span>`}
+              </div>
               <p class="pin-title">${this.pinMode === "create" ? t("pinCreateTitle") : t("pinEnterTitle")}</p>
               ${this.pinMode === "create" ? `<p class="pin-sub">${t("pinCreateSub")}</p>` : ""}
 
@@ -99,16 +102,12 @@ export class SettingsScreen implements BaseScreen {
                 ${Array.from({ length: PIN_LENGTH }, (_, i) => `<div class="pin-dot" id="dot${i}"></div>`).join("")}
               </div>
 
-              <div class="pin-error" id="pinError">${this.pinMode === "create" ? t("pinCreateError") : ""}</div>
-
               <div class="pin-pad">
                 ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button class="pin-key" data-key="${n}">${n}</button>`).join("")}
                 <button class="pin-key pin-key--action" data-key="back">⌫</button>
                 <button class="pin-key" data-key="0">0</button>
                 <button class="pin-key pin-key--action" data-key="ok">✓</button>
               </div>
-
-              ${this.pinMode === "enter" ? `<button class="pin-reset-link" id="pinReset">${t("pinReset")}</button>` : ""}
             </div>
           </div>
         ` : ""}
@@ -252,7 +251,6 @@ export class SettingsScreen implements BaseScreen {
       }
       .ss-phase--hidden { opacity:0; pointer-events:none; }
       .pin-card {
-        position:relative;
         display:flex; flex-direction:column; align-items:center;
         gap:12px; padding:12px 10px;
         background:#0d0d22; border:3px solid #4a4a8a;
@@ -260,12 +258,20 @@ export class SettingsScreen implements BaseScreen {
         max-width:320px; width:90%;
         margin:auto;
       }
+      .pin-topbar {
+        width:100%;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+      }
       .pin-close {
-        position:absolute;
-        top:8px;
-        left:8px;
         min-width:110px;
         min-height:40px;
+      }
+      .pin-topbar-spacer {
+        min-width:72px;
+        min-height:1px;
       }
       .pin-title {
         font-family:'Courier New',monospace; font-size:20px;
@@ -282,12 +288,6 @@ export class SettingsScreen implements BaseScreen {
       }
       .pin-dot--filled { background:#f0c040; border-color:#f0c040; }
       .pin-dot--correct { background:#40d060; border-color:#40d060; }
-      .pin-error {
-        font-family:'Courier New',monospace; font-size:13px;
-        color:#d04040; min-height:18px; opacity:0;
-        transition:opacity 150ms;
-      }
-      .pin-error--show { opacity:1; }
       @keyframes pinShake {
         0%,100% { transform:translateX(0); }
         20% { transform:translateX(-8px); }
@@ -314,6 +314,10 @@ export class SettingsScreen implements BaseScreen {
         font-size:11px;
         text-decoration:underline;
         cursor:pointer;
+      }
+      .pin-reset-link--top {
+        font-size:12px;
+        text-transform:lowercase;
       }
       .sset-root {
         width:100%; height:100%; display:flex; flex-direction:column;
@@ -515,7 +519,6 @@ export class SettingsScreen implements BaseScreen {
 
   private handlePinKey(key: string, container: HTMLElement): void {
     const display = container.querySelector<HTMLElement>("#pinDisplay")!;
-    const errEl = container.querySelector<HTMLElement>("#pinError")!;
     if (key === "back") this.pin = this.pin.slice(0, -1);
     else if (key === "ok") {
       this.submitPin(container);
@@ -530,17 +533,14 @@ export class SettingsScreen implements BaseScreen {
     }
 
     if (this.pin.length === PIN_LENGTH) setTimeout(() => this.submitPin(container), 120);
-    errEl.classList.remove("pin-error--show");
   }
 
   private submitPin(container: HTMLElement): void {
     const display = container.querySelector<HTMLElement>("#pinDisplay")!;
-    const errEl = container.querySelector<HTMLElement>("#pinError")!;
     const storedPin = storage.loadPin()?.slice(0, PIN_LENGTH) ?? null;
 
     if (this.pinMode === "create") {
       if (this.pin.length !== PIN_LENGTH) {
-        errEl.classList.add("pin-error--show");
         return;
       }
       storage.savePin(this.pin);
@@ -557,7 +557,6 @@ export class SettingsScreen implements BaseScreen {
       setTimeout(() => this.switchToSettings(container), 300);
     } else {
       display.classList.add("pin-display--shake");
-      errEl.classList.add("pin-error--show");
       setTimeout(() => {
         display.classList.remove("pin-display--shake");
         this.pin = "";
