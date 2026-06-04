@@ -34,6 +34,7 @@ export class HomeScreen implements BaseScreen {
   private settings: Settings
   private previewRaf: number | null = null
   private animalWindowStart = 0
+  private animalSlideDirection: -1 | 1 = 1
 
   constructor(
     private navigate: NavigateFn,
@@ -108,9 +109,15 @@ export class HomeScreen implements BaseScreen {
           <section class="home-controls">
             <div class="home-section-label">▸ ${t('yourHero')}</div>
             <div class="animal-carousel">
-              <button class="animal-nav" id="animalPrev" aria-label="Anterior"${this.canShiftAnimals(-1) ? '' : ' disabled'}>‹</button>
-              <div class="home-animals" id="homeAnimals">${animalBtns}</div>
-              <button class="animal-nav" id="animalNext" aria-label="Siguiente"${this.canShiftAnimals(1) ? '' : ' disabled'}>›</button>
+              <button class="animal-nav animal-nav--prev" id="animalPrev" aria-label="Anterior"${this.canShiftAnimals(-1) ? '' : ' disabled'}>
+                <span class="animal-nav__glyph">‹</span>
+              </button>
+              <div class="home-animals-viewport">
+                <div class="home-animals" id="homeAnimals">${animalBtns}</div>
+              </div>
+              <button class="animal-nav animal-nav--next" id="animalNext" aria-label="Siguiente"${this.canShiftAnimals(1) ? '' : ' disabled'}>
+                <span class="animal-nav__glyph">›</span>
+              </button>
             </div>
 
             <div class="home-section-label" style="margin-top:8px;">▸ ${t('playSection')}</div>
@@ -237,25 +244,61 @@ export class HomeScreen implements BaseScreen {
         gap:6px;
         flex-wrap:nowrap;
         flex:1;
+        transition:transform 220ms cubic-bezier(.22,1,.36,1), opacity 220ms ease;
+      }
+      .home-animals--slide-left {
+        animation:animalSlideLeft 220ms cubic-bezier(.22,1,.36,1);
+      }
+      .home-animals--slide-right {
+        animation:animalSlideRight 220ms cubic-bezier(.22,1,.36,1);
       }
       .animal-carousel {
+        position:relative;
         display:flex;
-        align-items:stretch;
-        gap:6px;
+        align-items:center;
+        justify-content:center;
+        padding:0 40px;
+      }
+      .home-animals-viewport {
+        width:100%;
+        overflow:hidden;
       }
       .animal-nav {
-        width:42px;
-        min-width:42px;
-        border:3px solid #3a3a6a;
-        background:#0d0d22;
-        color:#a0a0d0;
-        font-family:'Courier New',monospace;
-        font-size:22px;
-        font-weight:900;
+        position:absolute;
+        top:50%;
+        transform:translateY(-50%);
+        width:38px;
+        height:38px;
+        border:2px solid rgba(255,255,255,0.14);
+        border-radius:999px;
+        background:radial-gradient(circle at 30% 30%, rgba(126,138,255,0.98), rgba(64,76,176,0.92));
+        color:#fff4cc;
+        box-shadow:
+          0 8px 18px rgba(0,0,0,0.28),
+          inset 0 1px 0 rgba(255,255,255,0.28);
         cursor:pointer;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:2;
+        transition:transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+      }
+      .animal-nav--prev { left:0; }
+      .animal-nav--next { right:0; }
+      .animal-nav__glyph {
+        font-size:24px;
+        font-weight:900;
+        line-height:1;
+        transform:translateY(-1px);
+      }
+      .animal-nav:hover:not(:disabled) {
+        filter:brightness(1.08) saturate(1.15);
+      }
+      .animal-nav:active:not(:disabled) {
+        transform:translateY(-50%) scale(0.92);
       }
       .animal-nav:disabled {
-        opacity:0.35;
+        opacity:0.22;
         cursor:default;
       }
       .animal-btn {
@@ -320,12 +363,13 @@ export class HomeScreen implements BaseScreen {
         .home-body { gap:6px; padding:6px; }
         .home-controls { flex:0.95; }
         .home-animals { gap:4px; }
-        .animal-carousel { gap:4px; }
+        .animal-carousel { padding:0 34px; }
         .animal-nav {
-          width:36px;
-          min-width:36px;
-          border-width:2px;
-          font-size:18px;
+          width:32px;
+          height:32px;
+        }
+        .animal-nav__glyph {
+          font-size:20px;
         }
         .animal-btn {
           padding:4px 4px 3px;
@@ -358,6 +402,15 @@ export class HomeScreen implements BaseScreen {
           padding:6px 8px;
           font-size:11px;
         }
+      }
+
+      @keyframes animalSlideLeft {
+        from { opacity:0; transform:translateX(22px) scale(0.985); }
+        to   { opacity:1; transform:translateX(0) scale(1); }
+      }
+      @keyframes animalSlideRight {
+        from { opacity:0; transform:translateX(-22px) scale(0.985); }
+        to   { opacity:1; transform:translateX(0) scale(1); }
       }
     `
     container.appendChild(s)
@@ -478,6 +531,7 @@ export class HomeScreen implements BaseScreen {
 
   private shiftAnimals(direction: -1 | 1): void {
     if (!this.canShiftAnimals(direction)) return
+    this.animalSlideDirection = direction
     this.animalWindowStart += direction
     this.renderAnimalWindow()
   }
@@ -494,6 +548,9 @@ export class HomeScreen implements BaseScreen {
           <span class="animal-label">${getHeroName(a)}</span>
         </button>`
     }).join('')
+    animalsWrap.classList.remove('home-animals--slide-left', 'home-animals--slide-right')
+    void animalsWrap.offsetWidth
+    animalsWrap.classList.add(this.animalSlideDirection > 0 ? 'home-animals--slide-left' : 'home-animals--slide-right')
     this.container.querySelector<HTMLButtonElement>('#animalPrev')!.disabled = !this.canShiftAnimals(-1)
     this.container.querySelector<HTMLButtonElement>('#animalNext')!.disabled = !this.canShiftAnimals(1)
     this.renderAnimalPreviews(this.container)
