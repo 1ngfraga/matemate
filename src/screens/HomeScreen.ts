@@ -76,7 +76,7 @@ export class HomeScreen implements BaseScreen {
       <div class="home-root">
         <header class="home-header">
           <div class="home-header-left">
-            <button class="btn home-back-btn" id="hMode" aria-label="Volver">←</button>
+            <button class="btn nav-back-btn home-back-btn" id="hMode" aria-label="Volver">← ${t('back')}</button>
             <span class="home-logo">MATE<span style="color:#8888ff">MATE</span></span>
           </div>
           <div class="home-header-actions">
@@ -137,16 +137,15 @@ export class HomeScreen implements BaseScreen {
         letter-spacing:3px;
         text-shadow:2px 2px 0 #8a6000;
       }
-      .home-back-btn {
-        font-size:20px;
-        font-weight:900;
-        padding:0;
-        min-height:36px;
-        min-width:36px;
-        line-height:1;
+      .nav-back-btn {
+        font-size:14px;
+        padding:8px 14px;
+        min-height:40px;
+        min-width:110px;
         display:flex;
         align-items:center;
         justify-content:center;
+        line-height:1;
       }
       .home-settings-btn {
         font-size:12px; padding:6px 12px;

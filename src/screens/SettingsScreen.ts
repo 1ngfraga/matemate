@@ -191,15 +191,9 @@ export class SettingsScreen implements BaseScreen {
     return `
       <div class="sset-root">
         <header class="sset-header">
-          <span class="sset-title">⚙ ${this.mode === GameMode.Play ? t("settingsTitlePlay") : t("settingsTitlePractice")}</span>
-          <button class="btn sset-back" id="ssetBack">← ${t("back")}</button>
+          <button class="btn nav-back-btn sset-back" id="ssetBack">← ${t("back")}</button>
+          <span class="sset-mode-badge">${this.mode === GameMode.Play ? t("modePlayBadge") : t("modePracticeBadge")}</span>
         </header>
-
-        <div class="sset-warning">
-          ${this.mode === GameMode.Play
-            ? t("pinProtected")
-            : t("practiceResetWarning")}
-        </div>
 
         <div class="sset-body">
           <section class="sset-section">
@@ -247,10 +241,6 @@ export class SettingsScreen implements BaseScreen {
               <button class="mute-btn${w.muted ? " mute-btn--sel" : ""}" id="muteOff" data-mute="true">🔇 ${t("soundOff")}</button>
             </div>
           </section>
-        </div>
-
-        <div class="sset-footer">
-          <button class="btn btn--accent sset-save" id="ssetSave">💾 ${t("save")}</button>
         </div>
       </div>`;
   }
@@ -350,19 +340,25 @@ export class SettingsScreen implements BaseScreen {
         padding:8px 12px; background:#0d0d22;
         border-bottom:3px solid #2a2a5a; flex-shrink:0;
       }
-      .sset-title {
-        font-family:'Courier New',monospace; font-size:clamp(14px,2.5vw,20px);
-        font-weight:900; color:#f0c040; letter-spacing:2px;
+      .nav-back-btn {
+        font-size:14px;
+        padding:8px 14px;
+        min-height:40px;
+        min-width:110px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        line-height:1;
       }
-      .sset-warning {
+      .sset-mode-badge {
         font-family:'Courier New',monospace;
         font-size:11px;
-        color:#ffb060;
-        background:#2b1600;
-        border-bottom:2px solid #7a4b00;
-        padding:8px 12px;
+        color:${this.mode === GameMode.Play ? '#f0c040' : '#80b0ff'};
+        background:${this.mode === GameMode.Play ? '#241800' : '#102040'};
+        border:2px solid ${this.mode === GameMode.Play ? '#8a6000' : '#4060d0'};
+        padding:5px 8px;
+        letter-spacing:1px;
       }
-      .sset-back { font-size:13px; padding:6px 12px; min-height:36px; }
       .sset-body {
         flex:1; overflow-y:auto; padding:12px;
         display:flex; flex-direction:column; gap:16px;
@@ -379,15 +375,15 @@ export class SettingsScreen implements BaseScreen {
         background:#0d0d22; border:2px solid #2a2a5a; padding:12px;
       }
       .sset-label {
-        font-family:'Courier New',monospace; font-size:clamp(10px,1.8vw,13px);
-        color:#8080c0; letter-spacing:2px;
+        font-family:'Courier New',monospace; font-size:clamp(13px,2vw,16px);
+        color:#aeb4ff; letter-spacing:1px;
       }
       .sset-sub {
-        font-family:'Courier New',monospace; font-size:10px;
+        font-family:'Courier New',monospace; font-size:12px;
         color:#6060a0; line-height:1.4;
       }
       .sset-hint {
-        font-family:'Courier New',monospace; font-size:11px;
+        font-family:'Courier New',monospace; font-size:12px;
         color:#d04040; min-height:14px; opacity:0; transition:opacity 200ms;
       }
       .sset-hint--show { opacity:1; }
@@ -406,7 +402,7 @@ export class SettingsScreen implements BaseScreen {
         margin:0 auto;
         padding:6px;
         display:grid;
-        grid-template-columns:64px minmax(0, 1fr) 64px;
+        grid-template-columns:56px minmax(0, 1fr) 56px;
         gap:0;
         align-items:stretch;
         background:linear-gradient(180deg, #171133 0%, #0a0818 100%);
@@ -419,7 +415,7 @@ export class SettingsScreen implements BaseScreen {
         overflow:hidden;
       }
       .goal-btn, .goal-value {
-        min-height:56px;
+        min-height:48px;
         display:flex;
         align-items:center;
         justify-content:center;
@@ -428,7 +424,7 @@ export class SettingsScreen implements BaseScreen {
         border:none;
       }
       .goal-btn {
-        font-size:clamp(28px,4vw,34px);
+        font-size:clamp(20px,3vw,24px);
         color:#cfd3ff;
         background:linear-gradient(180deg, #23254a 0%, #161832 100%);
         cursor:pointer;
@@ -450,7 +446,7 @@ export class SettingsScreen implements BaseScreen {
         border-left:1px solid rgba(255,255,255,0.08);
       }
       .goal-value {
-        font-size:clamp(22px,3vw,30px);
+        font-size:clamp(18px,2.8vw,22px);
         color:#f0c040;
         background:linear-gradient(180deg, #080811 0%, #05050b 100%);
         letter-spacing:2px;
@@ -469,7 +465,7 @@ export class SettingsScreen implements BaseScreen {
       @media (max-width: 520px) {
         .goal-stepper {
           width:min(100%, 320px);
-          grid-template-columns:58px minmax(0, 1fr) 58px;
+          grid-template-columns:48px minmax(0, 1fr) 48px;
         }
       }
       .timer-row { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:6px; }
@@ -477,41 +473,52 @@ export class SettingsScreen implements BaseScreen {
         font-family:'Courier New',monospace; font-weight:bold;
         background:#0d0d22; border:3px solid #3a3a6a; color:#6060a0;
         min-height:48px; cursor:pointer;
+        box-shadow:none;
       }
-      .timer-btn { font-size:clamp(14px,2.5vw,20px); padding:10px 0; }
-      .timer-btn--sel, .mute-btn--sel {
+      .timer-btn { font-size:clamp(16px,2.5vw,20px); padding:10px 0; }
+      .timer-btn--sel {
         background:#1a1500; border-color:#f0c040; color:#f0c040;
-        box-shadow:0 0 8px #f0c04044;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,0.04),
+          0 0 10px rgba(240,192,64,0.28);
       }
       .level-row { display:flex; gap:6px; flex-wrap:wrap; }
       .level-btn {
         flex:1; min-width:60px; min-height:44px; white-space:pre-line;
-        font-family:'Courier New',monospace; font-size:clamp(9px,1.6vw,12px);
+        font-family:'Courier New',monospace; font-size:clamp(14px,2.1vw,17px);
         font-weight:bold; padding:7px 4px; cursor:pointer; text-align:center;
         background:#0d0d22; border:2px solid #3a3a6a; color:#6060a0;
+        box-shadow:none;
       }
       .level-btn--sel {
-        background:#0e1e3a; border-color:#4080ff; color:#80b0ff;
-        box-shadow:0 0 6px #4080ff44;
+        background:#1a1500; border-color:#f0c040; color:#f0c040;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,0.04),
+          0 0 10px rgba(240,192,64,0.28);
       }
       .table-grid {
         display:grid; grid-template-columns:repeat(6,1fr); gap:4px;
       }
       .table-btn {
-        font-family:'Courier New',monospace; font-size:clamp(12px,2vw,16px);
+        font-family:'Courier New',monospace; font-size:clamp(15px,2.2vw,18px);
         font-weight:bold; padding:8px 0; cursor:pointer;
         background:#0d0d22; border:2px solid #3a3a6a; color:#6060a0;
         min-height:40px;
+        box-shadow:none;
       }
-      .table-btn--sel { background:#102010; border-color:#40d060; color:#40d060; }
+      .table-btn--sel {
+        background:#1a1500; border-color:#f0c040; color:#f0c040;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,0.04),
+          0 0 10px rgba(240,192,64,0.28);
+      }
       .mute-row { display:flex; gap:8px; }
-      .mute-btn { flex:1; font-size:clamp(12px,2vw,15px); padding:10px 0; }
-      .sset-footer {
-        padding:10px 12px; background:#0d0d22;
-        border-top:3px solid #2a2a5a; flex-shrink:0;
-      }
-      .sset-save {
-        width:100%; font-size:clamp(14px,2.5vw,20px); padding:12px;
+      .mute-btn { flex:1; font-size:clamp(15px,2.2vw,18px); padding:10px 0; }
+      .mute-btn--sel {
+        background:#1a1500; border-color:#f0c040; color:#f0c040;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,0.04),
+          0 0 10px rgba(240,192,64,0.28);
       }
     `;
     container.appendChild(s);
@@ -617,6 +624,7 @@ export class SettingsScreen implements BaseScreen {
         const op = btn.dataset.timerOp as Operation;
         const t = Number(btn.dataset.timer) as TimerDuration;
         this.working.timerByOperation[op] = t;
+        this.persistWorkingSettings();
         container
           .querySelectorAll<HTMLElement>(`.timer-btn[data-timer-op="${op}"]`)
           .forEach((b) => b.classList.toggle("timer-btn--sel", b === btn));
@@ -642,6 +650,7 @@ export class SettingsScreen implements BaseScreen {
           }
         }
         tableMap[n] = !isSelected;
+        this.persistWorkingSettings();
         btn.classList.toggle("table-btn--sel", !isSelected);
         hint.classList.remove("sset-hint--show");
       });
@@ -660,6 +669,7 @@ export class SettingsScreen implements BaseScreen {
         if (!key) return;
         const value = Number(btn.dataset.level);
         (this.working as unknown as Record<string, number>)[key] = value;
+        this.persistWorkingSettings();
         container
           .querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`)
           .forEach((b) => b.classList.toggle("level-btn--sel", b === btn));
@@ -670,6 +680,7 @@ export class SettingsScreen implements BaseScreen {
       btn.addEventListener("click", () => {
         const muted = btn.dataset.mute === "true";
         this.working.muted = muted;
+        this.persistWorkingSettings();
         container.querySelector("#muteOn")?.classList.toggle("mute-btn--sel", !muted);
         container.querySelector("#muteOff")?.classList.toggle("mute-btn--sel", muted);
       });
@@ -691,19 +702,13 @@ export class SettingsScreen implements BaseScreen {
         btn.addEventListener("pointercancel", stop);
       });
     });
-
-    container.querySelector("#ssetSave")?.addEventListener("click", () => {
-      const shouldClearResults = progressSignature(this.settings) !== progressSignature(this.working);
-      this.onSettingsChange(this.mode, this.working);
-      if (shouldClearResults && this.mode === GameMode.Free) storage.clearResults(this.mode);
-      this.navigate(Screen.Home, this.mode);
-    });
   }
 
   private adjustGoal(op: Operation, delta: number): void {
     const current = this.working.gameTargetByOperation[op];
     const next = Math.max(1, Math.min(500, current + delta));
     this.working.gameTargetByOperation[op] = next;
+    this.persistWorkingSettings();
     this.container
       ?.querySelector<HTMLElement>(`.goal-value[data-goal-value="${op}"]`)
       ?.replaceChildren(document.createTextNode(String(next)));
@@ -728,5 +733,14 @@ export class SettingsScreen implements BaseScreen {
       window.clearInterval(this.holdInterval);
       this.holdInterval = null;
     }
+  }
+
+  private persistWorkingSettings(): void {
+    const shouldClearResults = progressSignature(this.settings) !== progressSignature(this.working);
+    this.onSettingsChange(this.mode, this.working);
+    if (shouldClearResults && this.mode === GameMode.Free) {
+      storage.clearResults(this.mode);
+    }
+    this.settings = structuredClone(this.working);
   }
 }

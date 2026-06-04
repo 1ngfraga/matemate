@@ -19,7 +19,6 @@ import {
   buildStarField,
   StarField,
   drawBackground,
-  drawPixelText,
 } from "../graphics/PixelArtRenderer";
 import { randomObstacleKind } from "../graphics/ObstacleSprites";
 import { storage } from "../storage/StorageService";
@@ -359,16 +358,6 @@ export class GameScreen implements BaseScreen {
     this.ctx.save();
     drawBackground(this.ctx, W, H, this.scrollX, this.starField);
     this.anim.update(this.ctx, W, H, dt);
-
-    // Score overlay on canvas (top-left corner)
-    drawPixelText(
-      this.ctx,
-      `${t("meta")} ${this.state.targetStreak}`,
-      8,
-      6,
-      12,
-      "#8888cc",
-    );
     this.ctx.restore();
   }
 
@@ -523,8 +512,7 @@ export class GameScreen implements BaseScreen {
     return `
       <div class="gs-root">
         <div class="gs-hud">
-          <button class="gs-exit-btn" id="gsExit" aria-label="Volver">←</button>
-          <span class="gs-stat" id="gsProgress">${t("meta")} 50</span>
+          <button class="btn nav-back-btn gs-exit-btn" id="gsExit" aria-label="Volver">← ${t("back")}</button>
           <div class="gs-timer-wrap">
             <div class="gs-timer-track">
               <div class="gs-timer-fill" id="gsTimerFill" style="width:100%"></div>
@@ -541,9 +529,12 @@ export class GameScreen implements BaseScreen {
         <canvas id="gsCanvas" class="gs-canvas"></canvas>
 
         <div class="gs-streak-hud">
-          <div class="gs-streak-coin">
-            <span class="gs-streak-val" id="gsStreakVal">0</span>
-            <canvas class="gs-face" id="gsFace" width="42" height="42"></canvas>
+          <div class="gs-streak-coin-wrap">
+            <div class="gs-streak-coin">
+              <span class="gs-streak-val" id="gsStreakVal">0</span>
+              <canvas class="gs-face" id="gsFace" width="42" height="42"></canvas>
+            </div>
+            <div class="gs-progress-chip" id="gsProgress">${t("meta")} 50</div>
           </div>
         </div>
 
@@ -603,15 +594,27 @@ export class GameScreen implements BaseScreen {
         border-bottom:2px solid #1e1e40; flex-shrink:0;
         min-height:34px;
       }
-      .gs-exit-btn {
-        background:#1a1a3a; border:2px solid #4a5acc;
-        color:#e8e8f0; font-family:'Courier New',monospace;
-        font-size:20px; font-weight:900;
-        padding:0; cursor:pointer; min-height:32px; min-width:32px;
+      .nav-back-btn {
+        font-size:14px;
+        padding:8px 14px;
+        min-height:40px;
+        min-width:110px;
+        background:#5050c0;
+        border:4px solid #8080ff;
+        color:#e8e8f0;
+        font-family:'Courier New',monospace;
+        font-weight:900;
+        cursor:pointer;
         display:flex; align-items:center; justify-content:center;
+        box-shadow:4px 4px 0 #2020a0;
+        line-height:1;
         -webkit-tap-highlight-color:transparent;
       }
-      .gs-exit-btn:active { background:#2a2a5a; }
+      .nav-back-btn:active {
+        transform:translate(2px, 2px);
+        box-shadow:2px 2px 0 #2020a0;
+      }
+      .nav-back-btn:hover { background:#6060d0; }
       .gs-mute-btn {
         background:transparent; border:none; font-size:16px;
         cursor:pointer; padding:2px 4px; line-height:1;
@@ -662,6 +665,12 @@ export class GameScreen implements BaseScreen {
         z-index:3;
         pointer-events:none;
       }
+      .gs-streak-coin-wrap {
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:6px;
+      }
       .gs-streak-coin {
         display:flex;
         align-items:center;
@@ -669,8 +678,22 @@ export class GameScreen implements BaseScreen {
         padding:5px 8px 5px 10px;
         background:rgba(10,10,26,0.78);
         border:2px solid #2a2a5a;
-        border-radius:999px;
+        border-radius:14px;
         box-shadow:0 3px 0 rgba(0,0,0,0.35);
+      }
+      .gs-progress-chip {
+        min-width:92px;
+        padding:4px 10px;
+        text-align:center;
+        font-family:'Courier New',monospace;
+        font-size:12px;
+        font-weight:900;
+        color:#f0c040;
+        background:rgba(10,10,26,0.82);
+        border:2px solid #5a4a14;
+        border-radius:10px;
+        box-shadow:0 3px 0 rgba(0,0,0,0.35);
+        letter-spacing:1px;
       }
       .gs-face {
         width:42px;
@@ -794,9 +817,18 @@ export class GameScreen implements BaseScreen {
           top:46px;
           right:6px;
         }
+        .gs-streak-coin-wrap {
+          gap:4px;
+        }
         .gs-streak-coin {
           gap:4px;
           padding:4px 6px 4px 8px;
+        }
+        .gs-progress-chip {
+          min-width:78px;
+          padding:3px 8px;
+          font-size:11px;
+          border-radius:8px;
         }
         .gs-face {
           width:34px;
