@@ -54,3 +54,8 @@ cd C:\APP\math-game\android
 
 pixelar:
 python scripts/pixel_art.py C:\APP\math-game\reference\unicorn_face.png
+
+release a android
+npm run build
+npx cap sync android
+npx cap open android
