@@ -31,7 +31,7 @@ const MESSAGES: Record<Locale, Messages> = {
 
 export const LOCALE_OPTIONS: Array<{ locale: Locale; flagClass: string }> = [
   { locale: Locale.Es, flagClass: 'es' },
-  { locale: Locale.En, flagClass: 'gb' },
+  { locale: Locale.En, flagClass: 'us' },
   { locale: Locale.De, flagClass: 'de' },
   { locale: Locale.Zh, flagClass: 'cn' },
   { locale: Locale.Hi, flagClass: 'in' },

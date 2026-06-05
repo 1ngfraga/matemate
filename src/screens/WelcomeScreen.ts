@@ -143,13 +143,41 @@ export class WelcomeScreen implements BaseScreen {
         .wl-flag--es {
           background:linear-gradient(to bottom, #c60b1e 0 25%, #ffc400 25% 75%, #c60b1e 75% 100%);
         }
-        .wl-flag--gb {
+        .wl-flag--us {
           background:
-            linear-gradient(to right, transparent 0 41%, #fff 41% 59%, transparent 59% 100%),
-            linear-gradient(to bottom, transparent 0 41%, #fff 41% 59%, transparent 59% 100%),
-            linear-gradient(to right, transparent 0 45%, #c8102e 45% 55%, transparent 55% 100%),
-            linear-gradient(to bottom, transparent 0 45%, #c8102e 45% 55%, transparent 55% 100%),
-            #012169;
+            linear-gradient(to bottom,
+              #b22234 0 7.69%,
+              #fff 7.69% 15.38%,
+              #b22234 15.38% 23.07%,
+              #fff 23.07% 30.76%,
+              #b22234 30.76% 38.45%,
+              #fff 38.45% 46.14%,
+              #b22234 46.14% 53.83%,
+              #fff 53.83% 61.52%,
+              #b22234 61.52% 69.21%,
+              #fff 69.21% 76.9%,
+              #b22234 76.9% 84.59%,
+              #fff 84.59% 92.28%,
+              #b22234 92.28% 100%);
+        }
+        .wl-flag--us::before {
+          content:'';
+          position:absolute;
+          left:0;
+          top:0;
+          width:13px;
+          height:14px;
+          background:#3c3b6e;
+          border-top-left-radius:50%;
+        }
+        .wl-flag--us::after {
+          content:'⋆⋆';
+          position:absolute;
+          left:2px;
+          top:2px;
+          font-size:6px;
+          letter-spacing:1px;
+          color:#fff;
         }
         .wl-flag--cn {
           background:#de2910;
