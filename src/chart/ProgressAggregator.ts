@@ -1,4 +1,5 @@
 import { GameResult, Operation } from '../core/Types'
+import { getLocale } from '../i18n/I18n'
 
 export interface DayOperationData {
   attempts: number
@@ -10,8 +11,6 @@ export interface DayData {
   label: string
   byOperation: Partial<Record<Operation, DayOperationData>>
 }
-
-const ES_DAYS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
 
 export class ProgressAggregator {
   static getLast14Days(results: GameResult[]): DayData[] {
@@ -28,7 +27,7 @@ export class ProgressAggregator {
       const d = new Date(now)
       d.setDate(d.getDate() - i)
       const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const label = ES_DAYS[d.getDay()]
+      const label = new Intl.DateTimeFormat(getLocale(), { weekday: 'narrow' }).format(d)
       const dayResults = byDate.get(iso) ?? []
 
       const byOperation: Partial<Record<Operation, DayOperationData>> = {}
