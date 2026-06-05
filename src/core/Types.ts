@@ -39,11 +39,13 @@ export const enum GameMode {
 
 export const enum Locale {
   Ar = 'ar',
+  De = 'de',
   En = 'en',
   Es = 'es',
   Fr = 'fr',
   Hi = 'hi',
   Ja = 'ja',
+  Ko = 'ko',
   Pt = 'pt',
   Ru = 'ru',
   Zh = 'zh',

@@ -15,11 +15,13 @@ import {
 const VALID_LOCALES = [
   Locale.Ar,
   Locale.Bn,
+  Locale.De,
   Locale.En,
   Locale.Es,
   Locale.Fr,
   Locale.Hi,
   Locale.Ja,
+  Locale.Ko,
   Locale.Pt,
   Locale.Ru,
   Locale.Zh,

@@ -2,7 +2,7 @@ import { GameMode, Screen } from "../core/Types";
 import { NavigateFn } from "../app/Router";
 import { BaseScreen } from "../app/ScreenManager";
 import { requestFullscreen } from "../core/Fullscreen";
-import { getFlagClass, getLocale, LOCALE_OPTIONS, setLocale, t } from "../i18n/I18n";
+import { getFlagClass, getLocale, getLocaleName, LOCALE_OPTIONS, setLocale, t } from "../i18n/I18n";
 import { storage } from "../storage/StorageService";
 
 export class WelcomeScreen implements BaseScreen {
@@ -29,11 +29,12 @@ export class WelcomeScreen implements BaseScreen {
         <img class="wl-bg" src="portada.png" alt="">
         <div class="wl-lang">
           <button class="wl-lang-current" id="wlLangCurrent" aria-label="${t("practiceIconLabel")}">
+            <span class="wl-lang-label">${getLocaleName(getLocale())}</span>
             <span class="wl-flag wl-flag--${getFlagClass(getLocale())}"></span>
           </button>
           <div class="wl-lang-menu wl-lang-menu--hidden" id="wlLangMenu">
             ${LOCALE_OPTIONS.map((option) =>
-              `<button class="wl-lang-btn${option.locale === getLocale() ? " wl-lang-btn--sel" : ""}" data-locale="${option.locale}" aria-label="${option.locale}">
+              `<button class="wl-lang-btn${option.locale === getLocale() ? " wl-lang-btn--sel" : ""}" data-locale="${option.locale}" aria-label="${getLocaleName(option.locale)}" title="${getLocaleName(option.locale)}">
                 <span class="wl-flag wl-flag--${option.flagClass}"></span>
               </button>`,
             ).join("")}
@@ -50,6 +51,8 @@ export class WelcomeScreen implements BaseScreen {
           </div>
           <p class="wl-hint" id="wlHint"></p>
         </div>
+
+        <div class="wl-footer">${t("welcomeFooterLove")}</div>
       </div>
 
       <style>
@@ -69,6 +72,22 @@ export class WelcomeScreen implements BaseScreen {
           display:flex; flex-direction:column; align-items:center;
           gap:clamp(10px,2vh,18px); padding:16px;
         }
+        .wl-footer {
+          position:absolute;
+          left:50%;
+          bottom:14px;
+          transform:translateX(-50%);
+          z-index:2;
+          padding:6px 12px;
+          border-radius:999px;
+          background:rgba(13,13,34,0.68);
+          color:#fff4f6;
+          font-family:'Courier New',monospace;
+          font-size:clamp(11px, 2vw, 15px);
+          text-shadow:0 2px 4px rgba(0,0,0,0.45);
+          letter-spacing:0.4px;
+          white-space:nowrap;
+        }
         .wl-lang {
           position:absolute;
           top:12px;
@@ -80,10 +99,9 @@ export class WelcomeScreen implements BaseScreen {
           gap:8px;
         }
         .wl-lang-current, .wl-lang-btn {
-          width:46px;
-          height:46px;
+          min-height:46px;
           border:3px solid #ffe080;
-          border-radius:50%;
+          border-radius:999px;
           background:rgba(13,13,34,0.95);
           color:#fff;
           font-size:24px;
@@ -91,9 +109,26 @@ export class WelcomeScreen implements BaseScreen {
           cursor:pointer;
           display:flex;
           align-items:center;
-          justify-content:center;
+          justify-content:space-between;
+          gap:10px;
+          padding:8px 10px 8px 14px;
           box-shadow:0 4px 0 rgba(0,0,0,0.35);
           transition:transform 80ms ease, border-color 120ms ease, box-shadow 120ms ease;
+        }
+        .wl-lang-btn {
+          width:46px;
+          min-width:46px;
+          padding:8px;
+          justify-content:center;
+        }
+        .wl-lang-label {
+          color:#fff;
+          font-family:'Trebuchet MS','Arial Black',sans-serif;
+          font-size:clamp(14px, 2vw, 18px);
+          font-weight:900;
+          letter-spacing:0.4px;
+          text-shadow:0 2px 4px rgba(0,0,0,0.45);
+          white-space:nowrap;
         }
         .wl-flag {
           display:block;
@@ -153,6 +188,9 @@ export class WelcomeScreen implements BaseScreen {
         .wl-flag--fr {
           background:linear-gradient(to right, #0055a4 0 33.33%, #fff 33.33% 66.66%, #ef4135 66.66% 100%);
         }
+        .wl-flag--de {
+          background:linear-gradient(to bottom, #111 0 33.33%, #d00 33.33% 66.66%, #ffce00 66.66% 100%);
+        }
         .wl-flag--bd {
           background:#006a4e;
         }
@@ -204,6 +242,20 @@ export class WelcomeScreen implements BaseScreen {
           background:#bc002d;
           left:7px;
           top:7px;
+        }
+        .wl-flag--kr {
+          background:#fff;
+        }
+        .wl-flag--kr::before {
+          content:'';
+          position:absolute;
+          left:7px;
+          top:6px;
+          width:12px;
+          height:12px;
+          border-radius:50%;
+          background:linear-gradient(to bottom, #c60c30 0 50%, #003478 50% 100%);
+          transform:rotate(35deg);
         }
         .wl-flag--globe {
           background:radial-gradient(circle at 30% 30%, #7fd3ff, #1d71b8);
