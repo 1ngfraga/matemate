@@ -34,7 +34,7 @@
   "resultPractice": "ПРАКТИКА ГОТОВА",
   "accuracyTotal": "общая точность",
   "resultWinMessage": "Цель выполнена. Теперь это заслуживает звезды.",
-  "resultPracticeMessage": "Практика не сохраняет награды и прогресс.",
+  "resultPracticeMessage": "",
   "correct": "верных",
   "incorrect": "ошибок",
   "goalReached": "цель достигнута",

@@ -34,7 +34,7 @@
   "resultPractice": "연습 완료",
   "accuracyTotal": "전체 정확도",
   "resultWinMessage": "목표를 달성했어요. 이번엔 별을 받을 수 있어요.",
-  "resultPracticeMessage": "연습 모드에서는 보상이나 진행 상황이 저장되지 않습니다.",
+  "resultPracticeMessage": "",
   "correct": "정답",
   "incorrect": "오답",
   "goalReached": "목표 달성",

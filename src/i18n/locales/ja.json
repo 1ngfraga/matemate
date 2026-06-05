@@ -34,7 +34,7 @@
   "resultPractice": "れんしゅうおわり",
   "accuracyTotal": "せいかいりつ",
   "resultWinMessage": "目標クリア。こんどはスターがもらえるよ。",
-  "resultPracticeMessage": "れんしゅうモードではごほうびやきろくは保存されません。",
+  "resultPracticeMessage": "",
   "correct": "せいかい",
   "incorrect": "まちがい",
   "goalReached": "たっせい目標",

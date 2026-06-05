@@ -34,7 +34,7 @@
   "resultPractice": "练习完成",
   "accuracyTotal": "总正确率",
   "resultWinMessage": "目标完成。这次可以拿到星星。",
-  "resultPracticeMessage": "练习模式不会保存奖励或进度。",
+  "resultPracticeMessage": "",
   "correct": "正确",
   "incorrect": "错误",
   "goalReached": "达到目标",

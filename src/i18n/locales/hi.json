@@ -34,7 +34,7 @@
   "resultPractice": "अभ्यास पूरा",
   "accuracyTotal": "कुल सटीकता",
   "resultWinMessage": "लक्ष्य पूरा हुआ। अब यह स्टार के लायक है।",
-  "resultPracticeMessage": "अभ्यास मोड इनाम या प्रोग्रेस सेव नहीं करता।",
+  "resultPracticeMessage": "",
   "correct": "सही",
   "incorrect": "गलत",
   "goalReached": "लक्ष्य पूरा",

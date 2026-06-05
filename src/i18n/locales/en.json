@@ -34,7 +34,7 @@
   "resultPractice": "PRACTICE DONE",
   "accuracyTotal": "total accuracy",
   "resultWinMessage": "Goal complete. This one earns a star.",
-  "resultPracticeMessage": "Practice mode does not save rewards or progress.",
+  "resultPracticeMessage": "",
   "correct": "correct",
   "incorrect": "incorrect",
   "goalReached": "goal reached",

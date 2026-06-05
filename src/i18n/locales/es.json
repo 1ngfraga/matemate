@@ -34,7 +34,7 @@
   "resultPractice": "PRÁCTICA LISTA",
   "accuracyTotal": "precisión total",
   "resultWinMessage": "Meta completada. Ahora sí vale estrella.",
-  "resultPracticeMessage": "En práctica no se guardan premios ni progreso.",
+  "resultPracticeMessage": "",
   "correct": "correctas",
   "incorrect": "incorrectas",
   "goalReached": "meta alcanzada",

@@ -1,18 +1,18 @@
-import { Animal, GameMode, Operation, Screen } from '../core/Types'
-import { NavigateFn, ResultScreenParams } from '../app/Router'
-import { BaseScreen } from '../app/ScreenManager'
-import { getAnimalVictoryGameSheet } from '../graphics/GameSprites'
-import { getOperationLabel, t } from '../i18n/I18n'
+import { Animal, GameMode, Operation, Screen } from "../core/Types";
+import { NavigateFn, ResultScreenParams } from "../app/Router";
+import { BaseScreen } from "../app/ScreenManager";
+import { getAnimalVictoryGameSheet } from "../graphics/GameSprites";
+import { getOperationLabel, t } from "../i18n/I18n";
 
 function formatTime(ms: number): string {
-  const s = Math.floor(ms / 1000)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export class ResultScreen implements BaseScreen {
-  private container: HTMLElement | null = null
-  private scoreRaf: number | null = null
-  private animalRaf: number | null = null
+  private container: HTMLElement | null = null;
+  private scoreRaf: number | null = null;
+  private animalRaf: number | null = null;
 
   constructor(
     private navigate: NavigateFn,
@@ -20,116 +20,126 @@ export class ResultScreen implements BaseScreen {
   ) {}
 
   mount(container: HTMLElement): void {
-    this.container = container
-    container.innerHTML = this.html()
-    this.attachStyles(container)
-    this.attachEvents(container)
-    this.animateScore(container)
-    this.animateAnimal(container)
+    this.container = container;
+    container.innerHTML = this.html();
+    this.attachStyles(container);
+    this.attachEvents(container);
+    this.animateScore(container);
+    this.animateAnimal(container);
   }
 
   unmount(): void {
-    if (this.scoreRaf !== null) cancelAnimationFrame(this.scoreRaf)
-    if (this.animalRaf !== null) cancelAnimationFrame(this.animalRaf)
-    this.scoreRaf = null
-    this.animalRaf = null
-    if (this.container) this.container.innerHTML = ''
-    this.container = null
+    if (this.scoreRaf !== null) cancelAnimationFrame(this.scoreRaf);
+    if (this.animalRaf !== null) cancelAnimationFrame(this.animalRaf);
+    this.scoreRaf = null;
+    this.animalRaf = null;
+    if (this.container) this.container.innerHTML = "";
+    this.container = null;
   }
 
   private html(): string {
-    const r = this.params.result
-    const opLabel = `${r.operation === Operation.Addition ? '+' : r.operation === Operation.Subtraction ? '−' : r.operation === Operation.Multiplication ? '×' : '÷'} ${getOperationLabel(r.operation)}`
+    const r = this.params.result;
+    const opLabel = `${r.operation === Operation.Addition ? "+" : r.operation === Operation.Subtraction ? "−" : r.operation === Operation.Multiplication ? "×" : "÷"} ${getOperationLabel(r.operation)}`;
 
     return `
       <div class="rs-root">
         <div class="rs-header">
           <span class="rs-op-label">${opLabel}</span>
-          <span class="rs-title">${this.params.mode === GameMode.Play ? t('resultWin') : t('resultPractice')}</span>
+          <span class="rs-title">${this.params.mode === GameMode.Play ? t("resultWin") : t("resultPractice")}</span>
         </div>
 
         <div class="rs-body">
           <div class="rs-score-wrap">
             <div class="rs-score" id="rScore">0%</div>
-            <div class="rs-score-sub">${t('accuracyTotal')}</div>
+            <div class="rs-score-sub">${t("accuracyTotal")}</div>
           </div>
 
           <div class="rs-hero">
-            <div class="rs-message">${this.params.mode === GameMode.Play ? t('resultWinMessage') : t('resultPracticeMessage')}</div>
+            <div class="rs-message">${t("resultWinMessage")}</div>
             <div class="rs-score-wrap">
               <canvas id="rAnimal" class="rs-animal" width="220" height="180"></canvas>
             </div>
           </div>
 
           <div class="rs-stats">
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#40d060">✓</span><span class="rs-stat-val">${r.correct}</span><span class="rs-stat-label">${t('correct')}</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#d04040">✗</span><span class="rs-stat-val">${r.incorrect}</span><span class="rs-stat-label">${t('incorrect')}</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#f0c040">${this.params.mode === GameMode.Play ? '★' : '○'}</span><span class="rs-stat-val">${r.currentTarget}</span><span class="rs-stat-label">${this.params.mode === GameMode.Play ? t('goalReached') : t('goalUsed')}</span></div>
-            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#8888cc">⏱</span><span class="rs-stat-val">${formatTime(r.durationMs)}</span><span class="rs-stat-label">${t('time')}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#40d060">✓</span><span class="rs-stat-val">${r.correct}</span><span class="rs-stat-label">${t("correct")}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#d04040">✗</span><span class="rs-stat-val">${r.incorrect}</span><span class="rs-stat-label">${t("incorrect")}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#f0c040">${this.params.mode === GameMode.Play ? "★" : "○"}</span><span class="rs-stat-val">${r.currentTarget}</span><span class="rs-stat-label">${this.params.mode === GameMode.Play ? t("goalReached") : t("goalUsed")}</span></div>
+            <div class="rs-stat-row"><span class="rs-stat-icon" style="color:#8888cc">⏱</span><span class="rs-stat-val">${formatTime(r.durationMs)}</span><span class="rs-stat-label">${t("time")}</span></div>
           </div>
         </div>
 
         <div class="rs-actions">
-          <button class="btn btn--accent rs-btn" id="rRetry">↺ ${t('retry')}</button>
-          <button class="btn rs-btn" id="rHome">⌂ ${t('menu')}</button>
+          <button class="btn btn--accent rs-btn" id="rRetry">↺ ${t("retry")}</button>
+          <button class="btn rs-btn" id="rHome">⌂ ${t("menu")}</button>
         </div>
-      </div>`
+      </div>`;
   }
 
   private animateScore(container: HTMLElement): void {
-    const target = this.params.result.percentCorrect
-    const el = container.querySelector<HTMLElement>('#rScore')
-    if (!el) return
-    const start = performance.now()
-    const duration = 1100
+    const target = this.params.result.percentCorrect;
+    const el = container.querySelector<HTMLElement>("#rScore");
+    if (!el) return;
+    const start = performance.now();
+    const duration = 1100;
 
     const step = (now: number) => {
-      const t = Math.min((now - start) / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
-      el.textContent = `${Math.round(eased * target)}%`
-      if (t < 1) this.scoreRaf = requestAnimationFrame(step)
-    }
-    this.scoreRaf = requestAnimationFrame(step)
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = `${Math.round(eased * target)}%`;
+      if (t < 1) this.scoreRaf = requestAnimationFrame(step);
+    };
+    this.scoreRaf = requestAnimationFrame(step);
   }
 
   private animateAnimal(container: HTMLElement): void {
-    const canvas = container.querySelector<HTMLCanvasElement>('#rAnimal')
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')!
-    const animal = this.params.animal as Animal
-    const sheet = getAnimalVictoryGameSheet(animal)
-    const loopFrames = [0, 1, 2, 1]
+    const canvas = container.querySelector<HTMLCanvasElement>("#rAnimal");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    const animal = this.params.animal as Animal;
+    const sheet = getAnimalVictoryGameSheet(animal);
+    const loopFrames = [0, 1, 2, 1];
 
     const draw = (ts: number) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const frame = sheet.frames[loopFrames[Math.floor(ts / 180) % loopFrames.length]] ?? sheet.frames[0]
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const frame =
+        sheet.frames[loopFrames[Math.floor(ts / 180) % loopFrames.length]] ??
+        sheet.frames[0];
       if (frame) {
-        const s = Math.max(1, Math.min(
-          Math.floor((canvas.width - 20) / frame.gridW),
-          Math.floor((canvas.height - 18) / frame.gridH),
-        ))
-        const bobY = loopFrames[Math.floor(ts / 180) % loopFrames.length] === 2 ? -4 : -1
-        const ox = Math.floor((canvas.width - frame.gridW * s) / 2)
-        const oy = Math.floor(canvas.height - frame.gridH * s - 6 + bobY)
-        frame.draw(ctx, ox, oy, s)
+        const s = Math.max(
+          1,
+          Math.min(
+            Math.floor((canvas.width - 20) / frame.gridW),
+            Math.floor((canvas.height - 18) / frame.gridH),
+          ),
+        );
+        const bobY =
+          loopFrames[Math.floor(ts / 180) % loopFrames.length] === 2 ? -4 : -1;
+        const ox = Math.floor((canvas.width - frame.gridW * s) / 2);
+        const oy = Math.floor(canvas.height - frame.gridH * s - 6 + bobY);
+        frame.draw(ctx, ox, oy, s);
       }
-      this.animalRaf = requestAnimationFrame(draw)
-    }
+      this.animalRaf = requestAnimationFrame(draw);
+    };
 
-    this.animalRaf = requestAnimationFrame(draw)
+    this.animalRaf = requestAnimationFrame(draw);
   }
 
   private attachEvents(container: HTMLElement): void {
-    container.querySelector('#rRetry')?.addEventListener('click', () =>
-      this.navigate(Screen.Game, this.params.result.operation),
-    )
-    container.querySelector('#rHome')?.addEventListener('click', () =>
-      this.navigate(Screen.Home, this.params.mode),
-    )
+    container
+      .querySelector("#rRetry")
+      ?.addEventListener("click", () =>
+        this.navigate(Screen.Game, this.params.result.operation),
+      );
+    container
+      .querySelector("#rHome")
+      ?.addEventListener("click", () =>
+        this.navigate(Screen.Home, this.params.mode),
+      );
   }
 
   private attachStyles(container: HTMLElement): void {
-    const s = document.createElement('style')
+    const s = document.createElement("style");
     s.textContent = `
       .rs-root {
         width:100%; height:100%; display:flex; flex-direction:column;
@@ -274,7 +284,7 @@ export class ResultScreen implements BaseScreen {
         }
         .rs-stats { grid-template-columns:1fr; }
       }
-    `
-    container.appendChild(s)
+    `;
+    container.appendChild(s);
   }
 }

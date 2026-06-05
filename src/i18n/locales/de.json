@@ -34,7 +34,7 @@
   "resultPractice": "ÜBUNG FERTIG",
   "accuracyTotal": "Gesamtgenauigkeit",
   "resultWinMessage": "Ziel erreicht. Dafür gibt es einen Stern.",
-  "resultPracticeMessage": "Im Übungsmodus werden Belohnungen und Fortschritt nicht gespeichert.",
+  "resultPracticeMessage": "",
   "correct": "richtig",
   "incorrect": "falsch",
   "goalReached": "Ziel erreicht",

@@ -34,7 +34,7 @@
   "resultPractice": "অনুশীলন শেষ",
   "accuracyTotal": "মোট নির্ভুলতা",
   "resultWinMessage": "লক্ষ্য পূরণ হয়েছে। এবার সত্যিই তারকা পাবে।",
-  "resultPracticeMessage": "অনুশীলন মোড পুরস্কার বা প্রগতি সেভ করে না।",
+  "resultPracticeMessage": "",
   "correct": "সঠিক",
   "incorrect": "ভুল",
   "goalReached": "লক্ষ্য পূরণ",

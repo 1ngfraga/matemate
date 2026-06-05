@@ -34,7 +34,7 @@
   "resultPractice": "PRATIQUE FINIE",
   "accuracyTotal": "précision totale",
   "resultWinMessage": "Objectif atteint. Cette fois, tu gagnes une étoile.",
-  "resultPracticeMessage": "Le mode pratique ne garde ni récompenses ni progression.",
+  "resultPracticeMessage": "",
   "correct": "correctes",
   "incorrect": "incorrectes",
   "goalReached": "objectif atteint",

@@ -34,7 +34,7 @@
   "resultPractice": "انتهى التدريب",
   "accuracyTotal": "الدقة الكلية",
   "resultWinMessage": "اكتمل الهدف. هذه المرة تستحق نجمة.",
-  "resultPracticeMessage": "وضع التدريب لا يحفظ الجوائز أو التقدم.",
+  "resultPracticeMessage": "",
   "correct": "صحيحة",
   "incorrect": "خاطئة",
   "goalReached": "الهدف المحقق",
