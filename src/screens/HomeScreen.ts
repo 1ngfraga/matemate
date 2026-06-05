@@ -34,7 +34,6 @@ export class HomeScreen implements BaseScreen {
   private settings: Settings
   private previewRaf: number | null = null
   private animalWindowStart = 0
-  private animalSlideDirection: -1 | 1 = 1
 
   constructor(
     private navigate: NavigateFn,
@@ -244,13 +243,6 @@ export class HomeScreen implements BaseScreen {
         gap:6px;
         flex-wrap:nowrap;
         flex:1;
-        transition:transform 220ms cubic-bezier(.22,1,.36,1), opacity 220ms ease;
-      }
-      .home-animals--slide-left {
-        animation:animalSlideLeft 220ms cubic-bezier(.22,1,.36,1);
-      }
-      .home-animals--slide-right {
-        animation:animalSlideRight 220ms cubic-bezier(.22,1,.36,1);
       }
       .animal-carousel {
         position:relative;
@@ -404,14 +396,6 @@ export class HomeScreen implements BaseScreen {
         }
       }
 
-      @keyframes animalSlideLeft {
-        from { opacity:0; transform:translateX(22px) scale(0.985); }
-        to   { opacity:1; transform:translateX(0) scale(1); }
-      }
-      @keyframes animalSlideRight {
-        from { opacity:0; transform:translateX(-22px) scale(0.985); }
-        to   { opacity:1; transform:translateX(0) scale(1); }
-      }
     `
     container.appendChild(s)
   }
@@ -491,7 +475,6 @@ export class HomeScreen implements BaseScreen {
         const animal = btn.dataset.animal as Animal
         if (!animal) return
         this.settings = { ...this.settings, animal }
-        this.animalWindowStart = this.resolveAnimalWindowStart(animal)
         this.onSettingsChange(this.mode, this.settings)
         this.renderAnimalWindow()
       })
@@ -531,9 +514,63 @@ export class HomeScreen implements BaseScreen {
 
   private shiftAnimals(direction: -1 | 1): void {
     if (!this.canShiftAnimals(direction)) return
-    this.animalSlideDirection = direction
+    if (!this.container) return
+
+    const viewport = this.container.querySelector<HTMLElement>('.home-animals-viewport')
+    const oldPanel = this.container.querySelector<HTMLElement>('#homeAnimals')
+    const prevBtn = this.container.querySelector<HTMLButtonElement>('#animalPrev')!
+    const nextBtn = this.container.querySelector<HTMLButtonElement>('#animalNext')!
+    if (!viewport || !oldPanel) return
+
+    prevBtn.disabled = true
+    nextBtn.disabled = true
+
     this.animalWindowStart += direction
-    this.renderAnimalWindow()
+
+    const newPanel = document.createElement('div')
+    newPanel.className = 'home-animals'
+    newPanel.innerHTML = this.visibleAnimals().map((a) => {
+      const sel = a === this.settings.animal
+      return `
+        <button class="animal-btn${sel ? ' animal-btn--selected' : ''}" data-animal="${a}">
+          <canvas class="animal-mini" width="104" height="84" data-animal="${a}"></canvas>
+          <span class="animal-label">${getHeroName(a)}</span>
+        </button>`
+    }).join('')
+
+    const vpW = viewport.offsetWidth
+    const vpH = oldPanel.offsetHeight
+    viewport.style.position = 'relative'
+    viewport.style.height = `${vpH}px`
+
+    const enterFrom = direction > 0 ? vpW : -vpW
+    const exitTo = -enterFrom
+
+    oldPanel.style.cssText = `position:absolute;top:0;left:0;width:${vpW}px;display:flex;gap:6px;flex-wrap:nowrap;`
+    newPanel.style.cssText = `position:absolute;top:0;left:0;width:${vpW}px;display:flex;gap:6px;flex-wrap:nowrap;transform:translateX(${enterFrom}px);`
+    viewport.appendChild(newPanel)
+
+    void newPanel.offsetWidth
+
+    const DUR = '340ms'
+    const EASE = 'cubic-bezier(.22,1,.36,1)'
+    oldPanel.style.transition = `transform ${DUR} ${EASE}`
+    oldPanel.style.transform = `translateX(${exitTo}px)`
+    newPanel.style.transition = `transform ${DUR} ${EASE}`
+    newPanel.style.transform = 'translateX(0)'
+
+    newPanel.addEventListener('transitionend', () => {
+      if (!this.container) return
+      oldPanel.remove()
+      newPanel.id = 'homeAnimals'
+      newPanel.removeAttribute('style')
+      viewport.style.height = ''
+      viewport.style.position = ''
+      prevBtn.disabled = !this.canShiftAnimals(-1)
+      nextBtn.disabled = !this.canShiftAnimals(1)
+      this.renderAnimalPreviews(this.container)
+      this.attachAnimalEvents()
+    }, { once: true })
   }
 
   private renderAnimalWindow(): void {
@@ -548,9 +585,6 @@ export class HomeScreen implements BaseScreen {
           <span class="animal-label">${getHeroName(a)}</span>
         </button>`
     }).join('')
-    animalsWrap.classList.remove('home-animals--slide-left', 'home-animals--slide-right')
-    void animalsWrap.offsetWidth
-    animalsWrap.classList.add(this.animalSlideDirection > 0 ? 'home-animals--slide-left' : 'home-animals--slide-right')
     this.container.querySelector<HTMLButtonElement>('#animalPrev')!.disabled = !this.canShiftAnimals(-1)
     this.container.querySelector<HTMLButtonElement>('#animalNext')!.disabled = !this.canShiftAnimals(1)
     this.renderAnimalPreviews(this.container)
@@ -564,7 +598,6 @@ export class HomeScreen implements BaseScreen {
         const animal = btn.dataset.animal as Animal
         if (!animal) return
         this.settings = { ...this.settings, animal }
-        this.animalWindowStart = this.resolveAnimalWindowStart(animal)
         this.onSettingsChange(this.mode, this.settings)
         this.renderAnimalWindow()
       }
