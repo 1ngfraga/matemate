@@ -56,5 +56,7 @@
   "timePerQuestionLabel": "Time per question",
   "numberSizeLabel": "Numbers of",
   "quantityLabel": "Quantity",
-  "tablesLabel": "Tables"
+  "tablesLabel": "Tables",
+  "notationLabel": "Notation",
+  "days14": "14 DAYS"
 }

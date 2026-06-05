@@ -76,6 +76,8 @@ export class MigrationService {
           additionOperandDigits:operandDigits,
           additionNumAddends:   2,
           subtractionDigits:    (subDigits === 1 || subDigits === 2 ? subDigits : 1) as 1 | 2,
+          divisionStyle:        DEFAULT_SETTINGS.divisionStyle,
+          multiplicationStyle:  DEFAULT_SETTINGS.multiplicationStyle,
         },
       }
     }

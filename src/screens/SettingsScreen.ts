@@ -1,7 +1,9 @@
 import {
   AdditionNumAddends,
   AdditionOperandDigits,
+  DivisionStyle,
   GameMode,
+  MultiplicationStyle,
   Operation,
   Screen,
   Settings,
@@ -135,6 +137,23 @@ export class SettingsScreen implements BaseScreen {
     );
   }
 
+  private styleBtns(
+    id: string,
+    options: Array<{ value: string; label: string }>,
+    current: string,
+  ): string {
+    return (
+      `<div class="level-row" id="${id}">` +
+      options
+        .map(
+          ({ value, label }) =>
+            `<button class="ui-option-btn level-btn${value === current ? " ui-option-btn--selected" : ""}" data-style-val="${value}" data-style-group="${id}">${label}</button>`,
+        )
+        .join("") +
+      `</div>`
+    );
+  }
+
   private timerBtns(op: Operation): string {
     const current = this.working.timerByOperation[op];
     return `<div class="timer-row" data-timer-group="${op}">` +
@@ -222,6 +241,12 @@ export class SettingsScreen implements BaseScreen {
             <div class="sset-sub">${t("multiplicationHelp")}</div>
             <div class="sset-hint" id="tableHintMultiplication">${t("tableHint")}</div>
             <div class="table-grid" id="tableGridMultiplication" data-table-group="multiplicationTables">${multiplicationTableBtns}</div>
+            <div class="sset-label" style="margin-top:8px;">${t("notationLabel")}</div>
+            ${this.styleBtns("multStyle", [
+              { value: "signo",      label: "4 × 3" },
+              { value: "punto",      label: "4 · 3" },
+              { value: "parentesis", label: "(4)(3)" },
+            ], w.multiplicationStyle ?? "signo")}
           </section>
 
           <section class="sset-section">
@@ -233,6 +258,12 @@ export class SettingsScreen implements BaseScreen {
             <div class="sset-sub">${t("divisionHelp")}</div>
             <div class="sset-hint" id="tableHintDivision">${t("tableHint")}</div>
             <div class="table-grid" id="tableGridDivision" data-table-group="divisionTables">${divisionTableBtns}</div>
+            <div class="sset-label" style="margin-top:8px;">${t("notationLabel")}</div>
+            ${this.styleBtns("divStyle", [
+              { value: "signo",   label: "12 ÷ 6" },
+              { value: "fraccion",label: "12/6" },
+              { value: "cajita",  label: "6 ⌐12" },
+            ], w.divisionStyle ?? "signo")}
           </section>
         </div>
       </div>`;
@@ -630,7 +661,7 @@ export class SettingsScreen implements BaseScreen {
       subLevel: "subtractionDigits",
     };
 
-    container.querySelectorAll<HTMLElement>(".level-btn").forEach((btn) => {
+    container.querySelectorAll<HTMLElement>(".level-btn[data-level]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const group = btn.dataset.group ?? "";
         const key = levelGroupMap[group];
@@ -640,6 +671,25 @@ export class SettingsScreen implements BaseScreen {
         this.persistWorkingSettings();
         container
           .querySelectorAll<HTMLElement>(`.level-btn[data-group="${group}"]`)
+          .forEach((b) => b.classList.toggle("ui-option-btn--selected", b === btn));
+      });
+    });
+
+    const styleGroupMap: Record<string, "multiplicationStyle" | "divisionStyle"> = {
+      multStyle: "multiplicationStyle",
+      divStyle:  "divisionStyle",
+    };
+
+    container.querySelectorAll<HTMLElement>(".level-btn[data-style-val]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const group = btn.dataset.styleGroup ?? "";
+        const key = styleGroupMap[group];
+        if (!key) return;
+        const value = btn.dataset.styleVal as MultiplicationStyle | DivisionStyle;
+        (this.working as unknown as Record<string, string>)[key] = value;
+        this.persistWorkingSettings();
+        container
+          .querySelectorAll<HTMLElement>(`.level-btn[data-style-group="${group}"]`)
           .forEach((b) => b.classList.toggle("ui-option-btn--selected", b === btn));
       });
     });

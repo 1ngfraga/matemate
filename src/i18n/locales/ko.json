@@ -56,5 +56,7 @@
   "timePerQuestionLabel": "문제당 시간",
   "numberSizeLabel": "숫자 자릿수",
   "quantityLabel": "개수",
-  "tablesLabel": "단"
+  "tablesLabel": "단",
+  "notationLabel": "표기법",
+  "days14": "14일"
 }

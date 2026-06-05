@@ -77,10 +77,16 @@ export function multiplicationPool(settings: Settings): Question[] {
   const tables = selectedTables(settings.multiplicationTables)
   const use    = tables.length > 0 ? tables : [5]   // safety fallback
 
+  const style = settings.multiplicationStyle ?? 'signo'
   const pool: Question[] = []
   for (const t of use)
-    for (let m = 1; m <= 10; m++)
-      pool.push(makeQ(Operation.Multiplication, t, m, t * m, `${t} × ${m}`))
+    for (let m = 1; m <= 10; m++) {
+      const display =
+        style === 'punto'      ? `${t} · ${m}` :
+        style === 'parentesis' ? `(${t})(${m})` :
+                                 `${t} × ${m}`
+      pool.push(makeQ(Operation.Multiplication, t, m, t * m, display))
+    }
   return pool
 }
 
@@ -91,11 +97,16 @@ export function divisionPool(settings: Settings): Question[] {
   const tables = selectedTables(settings.divisionTables)
   const use    = tables.length > 0 ? tables : [5]
 
+  const style = settings.divisionStyle ?? 'signo'
   const pool: Question[] = []
   for (const t of use)
     for (let m = 2; m <= 10; m++) {
       const dividend = t * m
-      pool.push(makeQ(Operation.Division, dividend, t, m, `${dividend} ÷ ${t}`))
+      const display =
+        style === 'fraccion' ? `${dividend}/${t}` :
+        style === 'cajita'   ? `${dividend} ÷ ${t}` : // GameScreen overrides cajita rendering
+                               `${dividend} ÷ ${t}`
+      pool.push(makeQ(Operation.Division, dividend, t, m, display))
     }
   return pool
 }

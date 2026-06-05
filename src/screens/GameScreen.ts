@@ -368,7 +368,13 @@ export class GameScreen implements BaseScreen {
     const choices = this.answers[this.state.currentIndex];
 
     const qEl = this.container.querySelector<HTMLElement>("#gsQText");
-    if (qEl) qEl.textContent = `${q.display} = ?`;
+    if (qEl) {
+      if (q.operation === Operation.Division && this.settings.divisionStyle === 'cajita') {
+        qEl.innerHTML = `<span class="cajita-wrap"><span class="cajita-divisor">${q.operandB}</span><span class="cajita-dividend">${q.operandA}</span></span> = ?`
+      } else {
+        qEl.textContent = `${q.display} = ?`
+      }
+    }
 
     const btns = this.container.querySelectorAll<HTMLElement>(".gs-ans");
     btns.forEach((btn, i) => {
@@ -734,6 +740,17 @@ export class GameScreen implements BaseScreen {
         letter-spacing:3px;
         text-shadow:2px 2px 0 #8a6000, 4px 4px 0 #3a2000;
         text-align:center;
+      }
+      .cajita-wrap {
+        display:inline-flex;
+        align-items:flex-end;
+        letter-spacing:0;
+      }
+      .cajita-dividend {
+        border-top:3px solid #f0c040;
+        border-left:3px solid #f0c040;
+        padding:2px 10px 0;
+        margin-left:3px;
       }
 
       /* Answer buttons */

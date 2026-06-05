@@ -61,6 +61,9 @@ export type AdditionNumAddends    = 2 | 3 | 4 | 5
 /** Subtraction operand size */
 export type SubtractionDigits     = 1 | 2
 
+export type DivisionStyle       = 'signo' | 'fraccion' | 'cajita'
+export type MultiplicationStyle = 'signo' | 'punto' | 'parentesis'
+
 // ── Settings ───────────────────────────────────────────────────────────────
 
 export interface Settings {
@@ -79,6 +82,9 @@ export interface Settings {
 
   // Resta
   subtractionDigits: SubtractionDigits
+
+  divisionStyle:       DivisionStyle
+  multiplicationStyle: MultiplicationStyle
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -107,6 +113,8 @@ export const DEFAULT_SETTINGS: Settings = {
   additionOperandDigits: 1,
   additionNumAddends:    2,
   subtractionDigits:     1,
+  divisionStyle:         'signo',
+  multiplicationStyle:   'signo',
 }
 
 // ── Question / Answer ──────────────────────────────────────────────────────
@@ -188,4 +196,4 @@ export const DEFAULT_APP_STATE: AppState = {
   locale: Locale.Es,
 }
 
-export const STORAGE_VERSION = 9
+export const STORAGE_VERSION = 10

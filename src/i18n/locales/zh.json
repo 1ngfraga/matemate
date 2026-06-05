@@ -56,5 +56,7 @@
   "timePerQuestionLabel": "每题时间",
   "numberSizeLabel": "数字位数",
   "quantityLabel": "数量",
-  "tablesLabel": "表"
+  "tablesLabel": "表",
+  "notationLabel": "格式",
+  "days14": "14天"
 }

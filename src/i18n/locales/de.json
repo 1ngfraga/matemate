@@ -56,5 +56,7 @@
   "timePerQuestionLabel": "Zeit pro Frage",
   "numberSizeLabel": "Zahlen mit",
   "quantityLabel": "Anzahl",
-  "tablesLabel": "Reihen"
+  "tablesLabel": "Reihen",
+  "notationLabel": "Schreibweise",
+  "days14": "14 TAGE"
 }

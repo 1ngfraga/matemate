@@ -56,5 +56,7 @@
   "timePerQuestionLabel": "الوقت لكل سؤال",
   "numberSizeLabel": "أرقام من",
   "quantityLabel": "الكمية",
-  "tablesLabel": "الجداول"
+  "tablesLabel": "الجداول",
+  "notationLabel": "الرمز",
+  "days14": "14 يوماً"
 }

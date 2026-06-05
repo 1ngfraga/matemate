@@ -56,5 +56,7 @@
   "timePerQuestionLabel": "প্রতি প্রশ্নের সময়",
   "numberSizeLabel": "এত অঙ্কের সংখ্যা",
   "quantityLabel": "কতগুলো",
-  "tablesLabel": "নামতা"
+  "tablesLabel": "নামতা",
+  "notationLabel": "চিহ্ন",
+  "days14": "14 দিন"
 }
